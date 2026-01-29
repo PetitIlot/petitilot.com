@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petit Îlot | En Croissance</title>
+    <style>
+        :root {
+            --beige: #F5E6D3;     /* Dominante : Sable/Papier */
+            --sauge: #A8B5A0;     /* Nature et Croissance */
+            --terracotta: #D4A59A; /* Chaleur et Artisanat */
+            --white: #FFFFFF;
+            --text: #4A4A4A;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: var(--beige);
+            color: var(--text);
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .stage {
+            position: relative;
+            width: 100%;
+            height: 60vh; /* Grand affichage central */
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .plant-svg {
+            height: 100%;
+            width: auto;
+            max-width: 500px;
+        }
+
+        /* Animation de la tige principale */
+        .stem {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: growStem 10s ease-in-out infinite;
+        }
+
+        /* Animation des feuilles (Sauge) */
+        .leaf {
+            transform: scale(0);
+            animation: growLeaf 10s ease-in-out infinite;
+        }
+        .leaf-left { transform-origin: 50px 75px; animation-delay: 1.5s; }
+        .leaf-right { transform-origin: 50px 45px; animation-delay: 2.5s; }
+
+        /* Animation de la fleur (Terracotta) */
+        .flower-group {
+            transform: scale(0);
+            transform-origin: 45px 15px; /* Aligné sur le sommet de la tige */
+            animation: growFlower 10s ease-in-out infinite;
+        }
+
+        @keyframes growStem {
+            0% { stroke-dashoffset: 1000; opacity: 0; }
+            10% { opacity: 1; }
+            40%, 85% { stroke-dashoffset: 0; }
+            95%, 100% { stroke-dashoffset: 0; opacity: 0; }
+        }
+
+        @keyframes growLeaf {
+            0%, 25% { transform: scale(0); opacity: 0; }
+            45%, 85% { transform: scale(1); opacity: 0.9; }
+            95%, 100% { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes growFlower {
+            0%, 45% { transform: scale(0); opacity: 0; }
+            55% { transform: scale(1.1); opacity: 1; }
+            60%, 85% { transform: scale(1); opacity: 1; }
+            95%, 100% { transform: scale(0); opacity: 0; }
+        }
+
+        /* Branding et Textes */
+        .content {
+            text-align: center;
+            padding: 20px;
+            z-index: 2;
+        }
+
+        h1 {
+            font-weight: normal;
+            font-size: clamp(1.8rem, 6vw, 2.8rem);
+            letter-spacing: 3px;
+            margin: 10px 0;
+            color: var(--text);
+        }
+
+        .tagline {
+            font-style: italic;
+            max-width: 550px;
+            margin: 0 auto 25px;
+            color: #666;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .expert-voices {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--sauge);
+            font-weight: bold;
+        }
+
+        .piliers {
+            margin-top: 30px;
+            font-size: 0.75rem;
+            letter-spacing: 4px;
+            color: var(--terracotta);
+            border-top: 1px solid rgba(212, 165, 154, 0.4);
+            padding-top: 15px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stage">
+        <svg class="plant-svg" viewBox="0 0 100 125" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path class="stem" d="M50 120C50 120 48 90 50 60C52 30 45 15 45 15" stroke="#A8B5A0" stroke-width="2.5" stroke-linecap="round"/>
+            
+            <path class="leaf leaf-left" d="M50 80C30 85 20 65 49 70" fill="#A8B5A0" />
+            <path class="leaf leaf-right" d="M51 50C71 45 81 25 53 40" fill="#A8B5A0" />
+
+            <g class="flower-group">
+                <circle cx="47" cy="3"  r="4.5" fill="#D4A59A" />
+                <circle cx="55" cy="8"  r="4.5" fill="#D4A59A" />
+                <circle cx="58" cy="18" r="4.5" fill="#D4A59A" />
+                <circle cx="52" cy="26" r="4.5" fill="#D4A59A" />
+                <circle cx="42" cy="26" r="4.5" fill="#D4A59A" />
+                <circle cx="34" cy="20" r="4.5" fill="#D4A59A" />
+                <circle cx="33" cy="10" r="4.5" fill="#D4A59A" />
+                <circle cx="38" cy="3"  r="4.5" fill="#D4A59A" />
+                
+                <circle cx="45" cy="15" r="7.5" fill="#FFFFFF" />
+            </g>
+        </svg>
+    </div>
+
+    <div class="content">
+        <h1>Petit Îlot</h1>
+        <p class="tagline">Our sanctuary of simple learning is thriving. <br> Let’s grow deep roots together for our 0 to 6-year-olds.</p>
+        
+      
+        
+        <div class="piliers">
+            NO-SCREEN | NO-SUGAR | LOW-MATERIAL
+        </div>
+    </div>
+
+</body>
+</html>

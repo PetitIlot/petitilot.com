@@ -1,0 +1,375 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { createClient } from '@/lib/supabase-client'
+import { Button } from '@/components/ui/button'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+
+type Language = 'fr' | 'en' | 'es'
+
+const translations = {
+  fr: {
+    login: 'Connexion',
+    signup: 'Inscription',
+    email: 'Email',
+    password: 'Mot de passe',
+    confirmPassword: 'Confirmer le mot de passe',
+    loginButton: 'Se connecter',
+    signupButton: "S'inscrire",
+    orContinueWith: 'Ou continuer avec',
+    google: 'Google',
+    noAccount: "Pas encore de compte ?",
+    hasAccount: 'Déjà un compte ?',
+    forgotPassword: 'Mot de passe oublié ?',
+    backHome: 'Retour',
+    loginSuccess: 'Connexion réussie !',
+    signupSuccess: 'Inscription réussie ! Vérifiez votre email.',
+    errorInvalidCredentials: 'Email ou mot de passe incorrect',
+    errorEmailExists: 'Cet email est déjà utilisé',
+    errorPasswordMismatch: 'Les mots de passe ne correspondent pas',
+    errorPasswordTooShort: 'Le mot de passe doit contenir au moins 6 caractères',
+    errorGeneric: 'Une erreur est survenue'
+  },
+  en: {
+    login: 'Login',
+    signup: 'Sign up',
+    email: 'Email',
+    password: 'Password',
+    confirmPassword: 'Confirm password',
+    loginButton: 'Log in',
+    signupButton: 'Sign up',
+    orContinueWith: 'Or continue with',
+    google: 'Google',
+    noAccount: "Don't have an account?",
+    hasAccount: 'Already have an account?',
+    forgotPassword: 'Forgot password?',
+    backHome: 'Back',
+    loginSuccess: 'Login successful!',
+    signupSuccess: 'Sign up successful! Check your email.',
+    errorInvalidCredentials: 'Invalid email or password',
+    errorEmailExists: 'This email is already in use',
+    errorPasswordMismatch: 'Passwords do not match',
+    errorPasswordTooShort: 'Password must be at least 6 characters',
+    errorGeneric: 'An error occurred'
+  },
+  es: {
+    login: 'Iniciar sesión',
+    signup: 'Registrarse',
+    email: 'Correo electrónico',
+    password: 'Contraseña',
+    confirmPassword: 'Confirmar contraseña',
+    loginButton: 'Iniciar sesión',
+    signupButton: 'Registrarse',
+    orContinueWith: 'O continuar con',
+    google: 'Google',
+    noAccount: '¿No tienes cuenta?',
+    hasAccount: '¿Ya tienes cuenta?',
+    forgotPassword: '¿Olvidaste tu contraseña?',
+    backHome: 'Volver',
+    loginSuccess: '¡Inicio de sesión exitoso!',
+    signupSuccess: '¡Registro exitoso! Revisa tu correo.',
+    errorInvalidCredentials: 'Correo o contraseña incorrectos',
+    errorEmailExists: 'Este correo ya está en uso',
+    errorPasswordMismatch: 'Las contraseñas no coinciden',
+    errorPasswordTooShort: 'La contraseña debe tener al menos 6 caracteres',
+    errorGeneric: 'Ocurrió un error'
+  }
+}
+
+export default function ConnexionPage({
+  params
+}: {
+  params: Promise<{ lang: string }>
+}) {
+  const router = useRouter()
+  const [lang, setLang] = useState<Language>('fr')
+  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  useEffect(() => {
+    params.then(({ lang: l }) => setLang(l as Language))
+  }, [params])
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        router.push(`/${lang}/profil`)
+      }
+    }
+    checkAuth()
+  }, [lang, router])
+
+  const t = translations[lang]
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setIsLoading(true)
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    if (error) {
+      setError(t.errorInvalidCredentials)
+      setIsLoading(false)
+      return
+    }
+
+    setSuccess(t.loginSuccess)
+    setTimeout(() => {
+      router.push(`/${lang}/profil`)
+    }, 1000)
+  }
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (password.length < 6) {
+      setError(t.errorPasswordTooShort)
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError(t.errorPasswordMismatch)
+      return
+    }
+
+    setIsLoading(true)
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          lang: lang
+        }
+      }
+    })
+
+    if (error) {
+      if (error.message.includes('already')) {
+        setError(t.errorEmailExists)
+      } else {
+        setError(t.errorGeneric)
+      }
+      setIsLoading(false)
+      return
+    }
+
+    setSuccess(t.signupSuccess)
+    setIsLoading(false)
+  }
+
+  const handleGoogleLogin = async () => {
+    const supabase = createClient()
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?lang=${lang}`
+      }
+    })
+  }
+
+  return (
+    <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center py-12 px-4 pt-16">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
+      >
+        {/* Back button */}
+        <Link
+          href={`/${lang}`}
+          className="inline-flex items-center gap-2 text-foreground-secondary dark:text-foreground-dark-secondary hover:text-foreground dark:hover:text-foreground-dark mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {t.backHome}
+        </Link>
+
+        {/* Card */}
+        <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-8" style={{ border: '1px solid var(--border)' }}>
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-sage flex items-center justify-center mx-auto mb-4">
+              <span className="text-white font-bold text-2xl">PI</span>
+            </div>
+            <h1 className="text-2xl font-bold text-foreground dark:text-foreground-dark">
+              {mode === 'login' ? t.login : t.signup}
+            </h1>
+          </div>
+
+          {/* Error/Success messages */}
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 p-3 rounded-lg bg-green-50 text-green-600 text-sm">
+              {success}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={mode === 'login' ? handleLogin : handleSignup} className="space-y-4">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-1">
+                {t.email}
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground-secondary dark:text-foreground-dark-secondary" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-surface-secondary dark:bg-surface-dark text-foreground dark:text-foreground-dark outline-none transition-all focus:ring-2 focus:ring-sage/30"
+                  style={{ border: '1px solid var(--border)' }}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-1">
+                {t.password}
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground-secondary dark:text-foreground-dark-secondary" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-12 py-3 rounded-xl bg-surface-secondary dark:bg-surface-dark text-foreground dark:text-foreground-dark outline-none transition-all focus:ring-2 focus:ring-sage/30"
+                  style={{ border: '1px solid var(--border)' }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-secondary dark:text-foreground-dark-secondary hover:text-foreground dark:hover:text-foreground-dark"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password (signup only) */}
+            {mode === 'signup' && (
+              <div>
+                <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-1">
+                  {t.confirmPassword}
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground-secondary dark:text-foreground-dark-secondary" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-surface-secondary dark:bg-surface-dark text-foreground dark:text-foreground-dark outline-none transition-all focus:ring-2 focus:ring-sage/30"
+                    style={{ border: '1px solid var(--border)' }}
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Forgot password (login only) */}
+            {mode === 'login' && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  className="text-sm text-sage hover:text-sage-light transition-colors"
+                >
+                  {t.forgotPassword}
+                </button>
+              </div>
+            )}
+
+            {/* Submit button */}
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-sage hover:bg-sage-light text-white py-3 rounded-xl font-semibold"
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                mode === 'login' ? t.loginButton : t.signupButton
+              )}
+            </Button>
+          </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 my-6">
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
+            <span className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary">{t.orContinueWith}</span>
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
+          </div>
+
+          {/* Google button */}
+          <Button
+            type="button"
+            onClick={handleGoogleLogin}
+            variant="outline"
+            className="w-full text-foreground dark:text-foreground-dark hover:bg-black/[0.05] dark:hover:bg-white/[0.08] py-3 rounded-xl font-semibold"
+            style={{ border: '1px solid var(--border)' }}
+          >
+            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            {t.google}
+          </Button>
+
+          {/* Toggle mode */}
+          <p className="text-center mt-6 text-foreground-secondary dark:text-foreground-dark-secondary">
+            {mode === 'login' ? t.noAccount : t.hasAccount}{' '}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === 'login' ? 'signup' : 'login')
+                setError('')
+                setSuccess('')
+              }}
+              className="text-sage font-semibold hover:text-sage-light transition-colors"
+            >
+              {mode === 'login' ? t.signup : t.login}
+            </button>
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  )
+}

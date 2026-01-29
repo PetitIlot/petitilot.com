@@ -1,0 +1,284 @@
+@import "tailwindcss";
+
+/* ========================================
+   APPLE-PROOF DESIGN SYSTEM
+   Petit Ilot × Apple Design Language
+   ======================================== */
+
+:root {
+  /* Background */
+  --background: #FAFAF8;
+  --surface: #FFFFFF;
+  --surface-secondary: #F5F5F7;
+
+  /* Foreground */
+  --foreground: #1D1D1F;
+  --foreground-secondary: #86868B;
+
+  /* Brand - Sublimated */
+  --sage: #7A8B6F;
+  --sage-light: #A8B5A0;
+  --terracotta: #C9A092;
+  --terracotta-light: #D4A59A;
+  --sky: #5AC8FA;
+  --sky-light: #C8D8E4;
+
+  /* Borders & Dividers */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.12);
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.5);
+
+  /* Icon Colors - Pastel */
+  --icon-sage: #A8B5A0;
+  --icon-sky: #C8D8E4;
+  --icon-terracotta: #D4A59A;
+  --icon-mauve: #CCA6C8;
+  --icon-neutral: #86868B;
+
+  /* Icon Backgrounds */
+  --icon-bg-sage: rgba(122, 139, 111, 0.15);
+  --icon-bg-sky: rgba(90, 200, 250, 0.15);
+  --icon-bg-terracotta: rgba(201, 160, 146, 0.15);
+  --icon-bg-mauve: rgba(204, 166, 200, 0.15);
+}
+
+.dark {
+  /* Background - Gris anthracite macOS */
+  --background: #1E1E1E;
+  --surface: #2D2D2D;
+  --surface-secondary: #3D3D3D;
+
+  /* Foreground */
+  --foreground: #F5F5F7;
+  --foreground-secondary: #A1A1A6;
+
+  /* Brand - Adjusted for dark */
+  --sage: #8FA382;
+  --sage-light: #A8B5A0;
+  --terracotta: #D4ADA0;
+  --terracotta-light: #E5BEB1;
+
+  /* Borders & Dividers */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.12);
+
+  /* Glass */
+  --glass-bg: rgba(28, 28, 30, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.1);
+
+  /* Icon Colors - Neon */
+  --icon-sage: #7FFF7F;
+  --icon-sky: #5AC8FA;
+  --icon-terracotta: #FF8A80;
+  --icon-mauve: #FF80EA;
+  --icon-neutral: #A1A1A6;
+
+  /* Icon Backgrounds - Darker */
+  --icon-bg-sage: rgba(127, 255, 127, 0.2);
+  --icon-bg-sky: rgba(90, 200, 250, 0.2);
+  --icon-bg-terracotta: rgba(255, 138, 128, 0.2);
+  --icon-bg-mauve: rgba(255, 128, 234, 0.2);
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   TYPOGRAPHY - Apple Style
+   ======================================== */
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 56px;
+  line-height: 1.07;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 40px;
+  line-height: 1.1;
+}
+
+h3 {
+  font-size: 28px;
+  line-height: 1.14;
+}
+
+h4 {
+  font-size: 21px;
+  line-height: 1.19;
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 40px;
+    line-height: 1.1;
+  }
+
+  h2 {
+    font-size: 32px;
+    line-height: 1.125;
+  }
+
+  h3 {
+    font-size: 24px;
+    line-height: 1.17;
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Glass morphism */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+/* Liquid Glass - iOS 26 style */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.dark .liquid-glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Apple-style focus ring */
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 4px rgba(122, 139, 111, 0.4);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(122, 139, 111, 0.3);
+  color: inherit;
+}
+
+/* ========================================
+   ANIMATIONS - Apple Spring Physics
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* Slide animations for Sheet */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* ========================================
+   BLOB ANIMATIONS - Coming Soon page
+   ======================================== */
+
+@keyframes blob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(20px, -30px) scale(1.05);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+  75% {
+    transform: translate(30px, 10px) scale(1.02);
+  }
+}
+
+.animate-blob {
+  animation: blob 15s ease-in-out infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
