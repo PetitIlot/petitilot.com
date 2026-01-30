@@ -239,17 +239,17 @@ const translations = {
 }
 
 const values = [
-  { key: 'valueLess', icon: Heart, gradient: 'from-sage/20 to-sage/5', iconBg: 'bg-sage' },
-  { key: 'valueNoScreen', icon: Tv, gradient: 'from-sky/20 to-sky/5', iconBg: 'bg-sky' },
-  { key: 'valueNature', icon: Leaf, gradient: 'from-sage/20 to-sage/5', iconBg: 'bg-sage' },
-  { key: 'valueAuthenticity', icon: Users, gradient: 'from-terracotta/20 to-terracotta/5', iconBg: 'bg-terracotta' }
+  { key: 'valueLess', icon: Heart, gradient: 'from-sage/20 to-sage/5', iconColor: 'var(--icon-sage)' },
+  { key: 'valueNoScreen', icon: Tv, gradient: 'from-sky/20 to-sky/5', iconColor: 'var(--icon-sky)' },
+  { key: 'valueNature', icon: Leaf, gradient: 'from-sage/20 to-sage/5', iconColor: 'var(--icon-sage)' },
+  { key: 'valueAuthenticity', icon: Users, gradient: 'from-terracotta/20 to-terracotta/5', iconColor: 'var(--icon-terracotta)' }
 ]
 
 const offers = [
-  { key: 'offer1', icon: Palette },
-  { key: 'offer2', icon: BookOpen },
-  { key: 'offer3', icon: Sparkles },
-  { key: 'offer4', icon: Users }
+  { key: 'offer1', icon: Palette, iconColor: 'var(--icon-sage)' },
+  { key: 'offer2', icon: BookOpen, iconColor: 'var(--icon-sky)' },
+  { key: 'offer3', icon: Sparkles, iconColor: 'var(--icon-terracotta)' },
+  { key: 'offer4', icon: Users, iconColor: 'var(--icon-sage)' }
 ]
 
 export default function AboutPage({
@@ -288,9 +288,9 @@ export default function AboutPage({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sage/10 dark:bg-sage/20 text-sage mb-6">
-              <Baby className="w-4 h-4" />
-              <span className="text-sm font-medium">0-6 ans</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{ backgroundColor: 'var(--icon-bg-sage)' }}>
+              <Baby className="w-4 h-4" style={{ color: 'var(--icon-sage)' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--icon-sage)' }}>0-6 ans</span>
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground dark:text-foreground-dark mb-6">
               {t.title}
@@ -350,8 +350,8 @@ export default function AboutPage({
               {/* Glassmorphism card */}
               <div className="absolute -bottom-6 -right-6 md:right-6 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl rounded-2xl p-6 shadow-apple max-w-[260px]" style={{ border: '1px solid var(--border)' }}>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-sage flex items-center justify-center">
-                    <Heart className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--icon-bg-sage)' }}>
+                    <Heart className="w-5 h-5" style={{ color: 'var(--icon-sage)' }} />
                   </div>
                   <span className="font-semibold text-foreground dark:text-foreground-dark">Simple & efficace</span>
                 </div>
@@ -446,8 +446,8 @@ export default function AboutPage({
                     style={{ border: '1px solid var(--border)' }}
                   >
                     <div className="flex items-start gap-5">
-                      <div className={`flex-shrink-0 w-14 h-14 rounded-xl ${value.iconBg} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                        <Icon className="w-7 h-7 text-white" />
+                      <div className="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <Icon className="w-7 h-7" style={{ color: value.iconColor }} />
                       </div>
                       <div className="flex-1">
                         <h3 className="text-xl font-bold text-foreground dark:text-foreground-dark mb-3">
@@ -491,8 +491,8 @@ export default function AboutPage({
                   className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple text-center"
                   style={{ border: '1px solid var(--border)' }}
                 >
-                  <div className="w-14 h-14 rounded-full bg-sage/10 dark:bg-sage/20 flex items-center justify-center mx-auto mb-4">
-                    <Icon className="w-7 h-7 text-sage" />
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Icon className="w-7 h-7" style={{ color: offer.iconColor }} />
                   </div>
                   <h3 className="text-lg font-bold text-foreground dark:text-foreground-dark mb-2">
                     {t[`${offer.key}Title` as keyof typeof t]}
@@ -529,8 +529,8 @@ export default function AboutPage({
                     transition={{ delay: index * 0.05 }}
                     className="flex items-start gap-3"
                   >
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-sage/10 dark:bg-sage/20 flex items-center justify-center mt-0.5">
-                      <Check className="w-4 h-4 text-sage" />
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5" style={{ backgroundColor: 'var(--icon-bg-sage)' }}>
+                      <Check className="w-4 h-4" style={{ color: 'var(--icon-sage)' }} />
                     </div>
                     <span className="text-foreground-secondary dark:text-foreground-dark-secondary text-sm">
                       {reason}
@@ -548,7 +548,7 @@ export default function AboutPage({
               className="bg-surface dark:bg-surface-dark rounded-3xl p-8 md:p-10 shadow-apple relative"
               style={{ border: '1px solid var(--border)' }}
             >
-              <Quote className="w-10 h-10 text-sage/20 absolute top-6 left-6" />
+              <Quote className="w-10 h-10 absolute top-6 left-6 opacity-30" style={{ color: 'var(--icon-sage)' }} />
               <div className="relative z-10">
                 <p className="text-lg text-foreground dark:text-foreground-dark leading-relaxed mb-6 italic">
                   {t.testimonialQuote}
@@ -636,8 +636,8 @@ export default function AboutPage({
             <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full translate-y-1/2 -translate-x-1/2" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
 
             <div className="relative z-10">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(255,255,255,0.25)' }}>
-                <Mail className="w-8 h-8" style={{ color: 'white' }} />
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 bg-white/20">
+                <Mail className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold mb-4" style={{ color: 'white' }}>
                 {t.contactTitle}
