@@ -1,21 +1,21 @@
 # Journal de Développement Petit Ilot
 
-> Dernière mise à jour : 29 janvier 2025 - Planification roadmap
+> Dernière mise à jour : 30 janvier 2025 - Phase 1 Stabilisation complétée
 
 ---
 
 ## ROADMAP (Janvier 2025+)
 
-### Phase 1 : Stabilisation & Nettoyage (Priorité immédiate)
+### Phase 1 : Stabilisation & Nettoyage ✅ COMPLÉTÉ
 
 | # | Tâche | Statut | Notes |
 |---|-------|--------|-------|
-| 1.1 | Fix redirection OAuth Google | ⬜ TODO | Callback URL à vérifier |
-| 1.2 | Page Profil : masquer jeux/livres | ⬜ TODO | Comme Header/Footer |
-| 1.3 | Page Profil : centre de notifications | ⬜ TODO | Créateurs suivis + alertes |
-| 1.4 | Page Profil : bouton créateur conditionnel | ⬜ TODO | Visible seulement si validé admin |
-| 1.5 | Fix sauvegarde filtres/alertes | ⬜ TODO | Bug à investiguer |
-| 1.6 | Refonte page "À propos" | ⬜ TODO | Nouvelle version complète |
+| 1.1 | Fix redirection OAuth Google | ✅ OK | Gestion erreurs callback + affichage page connexion |
+| 1.2 | Page Profil : masquer jeux/livres | ✅ OK | Commenté comme Header/Footer |
+| 1.3 | Page Profil : centre de notifications | ✅ OK | Card alertes → lien /profil/alertes |
+| 1.4 | Page Profil : bouton créateur conditionnel | ✅ OK | Approuvé/En attente/Devenir créateur |
+| 1.5 | Fix sauvegarde filtres/alertes | ✅ OK | Auth check + buildFilterUrl 18 filtres + AgeSlider multi-sélection |
+| 1.6 | Refonte page "À propos" | ✅ OK | Hero, mission, valeurs, équipe, CTAs terracotta/mauve |
 
 ### Phase 2 : Nouvelles Fiches Activités
 
@@ -55,9 +55,70 @@
 ## État Actuel
 
 Site en mode "Coming Soon" sur petitilot.com. Code secret dans env var `NEXT_PUBLIC_SITE_ACCESS_CODE`.
-Sprints 1-3 (rôles, créateur, achats) complétés. Sprint 4 (Stripe) en attente.
+Sprints 1-3 (rôles, créateur, achats) complétés. Phase 1 stabilisation complétée. Sprint 4 (Stripe) en attente.
 
-### Dernière Session - Page Coming Soon + Déploiement Vercel
+### Dernière Session - Phase 1 Stabilisation
+- **Date** : 30 janvier 2025
+- **Objectif** : Stabiliser le site avant Sprint 4 (Stripe)
+- **Complété** :
+
+**1.1 Fix OAuth Google** :
+- Gestion erreur callback si utilisateur refuse ou erreur session
+- Redirection vers `/connexion?error=oauth_cancelled` ou `session_failed`
+- Affichage message d'erreur traduit FR/EN/ES sur page connexion
+
+**1.2 Masquer Jeux/Livres dans Profil** :
+- Stats cards commentées
+- Onglets commentés (reste Activités + Newsletter)
+- Pattern `{/* MASQUÉ TEMPORAIREMENT */}` cohérent
+
+**1.3 Centre notifications** :
+- Card "Alertes & Notifications" avec icône Bell
+- Lien vers `/profil/alertes`
+- Traductions FR/EN/ES
+
+**1.4 Bouton créateur conditionnel** :
+- Query `is_approved` depuis table `creators`
+- 3 états : "Gérer mes ressources" (approuvé) / "En attente d'approbation" / "Devenir créateur"
+
+**1.5 Fix sauvegarde filtres/alertes** :
+- `buildFilterUrl()` complété avec les 18 filtres
+- Vérification auth avant ouverture modal (redirect si non connecté)
+- Props `isLoggedIn` et `onLoginRequired` passées au FilterPanel
+- `AgeSlider` refait : sélection multiple de tranches adjacentes (range)
+- Inline styles pour garantir les couleurs des tags
+
+**1.6 Refonte page "À propos"** :
+- Hero avec gradient + stats
+- Section mission avec image
+- 4 cards valeurs (Nature, Authenticité, Moins mais mieux, Sans écran)
+- Section équipe + créateurs
+- CTA contact avec gradient terracotta
+- Animations Framer Motion (whileInView)
+
+**Bonus - Page Contact** :
+- Fix CTAs blanc sur blanc → inline styles
+- Icône créateur terracotta, icône partenaire mauve
+- Bouton "Envoyer" avec fond sage
+
+**Fichiers modifiés** :
+- `app/auth/callback/route.ts` - Gestion erreurs OAuth
+- `app/[lang]/connexion/page.tsx` - Affichage erreurs
+- `app/[lang]/profil/page.tsx` - Masquage jeux/livres, card alertes, bouton créateur
+- `app/[lang]/profil/alertes/page.tsx` - buildFilterUrl complète
+- `app/[lang]/activites/page.tsx` - Auth check + props FilterPanel
+- `app/[lang]/a-propos/page.tsx` - Refonte complète
+- `app/[lang]/contact/page.tsx` - Fix couleurs CTAs
+- `components/filters/AgeSlider.tsx` - Multi-sélection + inline styles
+- `components/ui/button.tsx` - Fix outline variant light mode
+
+**Commit** : `e40c8b9` - feat: Phase 1 stabilisation - OAuth, profil, filtres, UI
+
+- **Prochaine priorité** : Tests prod, puis Sprint 4 - Intégration Stripe
+
+---
+
+### Session Précédente - Page Coming Soon + Déploiement Vercel
 - **Date** : 29 janvier 2025
 - **Objectif** : Créer une page d'accueil temporaire professionnelle et déployer sur Vercel
 - **Complété** :
