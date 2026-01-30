@@ -18,8 +18,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const variants = {
       default: "bg-sage text-white hover:bg-sage-dark rounded-[16px]",
       secondary: "bg-foreground text-white hover:bg-foreground/90 rounded-[16px]",
-      ghost: "hover:bg-white/10 dark:hover:bg-white/5 text-foreground rounded-[12px]",
-      outline: "border border-white/20 bg-transparent hover:bg-white/10 text-foreground rounded-[16px]"
+      ghost: "hover:bg-black/5 dark:hover:bg-white/5 text-foreground dark:text-foreground-dark rounded-[12px]",
+      outline: "border border-[var(--border)] bg-transparent hover:bg-black/5 dark:hover:bg-white/10 text-foreground dark:text-foreground-dark rounded-[16px]"
     }
 
     const sizes = {

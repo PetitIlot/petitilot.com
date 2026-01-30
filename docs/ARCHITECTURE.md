@@ -344,6 +344,36 @@ CREATE POLICY "Users can view own purchases" ON purchases
 
 CREATE POLICY "Users can insert own purchases" ON purchases
   FOR INSERT WITH CHECK (buyer_id = auth.uid());
+
+-- UNLOCKS : Déblocages ressources - accès propriétaire uniquement
+CREATE POLICY "unlocks_select_own" ON unlocks
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "unlocks_insert_own" ON unlocks
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- SAVED_SEARCHES : Alertes utilisateur - accès propriétaire uniquement
+CREATE POLICY "saved_searches_select_own" ON saved_searches
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "saved_searches_insert_own" ON saved_searches
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "saved_searches_update_own" ON saved_searches
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "saved_searches_delete_own" ON saved_searches
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- NOTIFICATIONS : Notifications utilisateur - accès propriétaire uniquement
+CREATE POLICY "notifications_select_own" ON notifications
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "notifications_update_own" ON notifications
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "notifications_delete_own" ON notifications
+  FOR DELETE USING (auth.uid() = user_id);
 ```
 
 ---

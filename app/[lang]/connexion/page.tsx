@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
@@ -31,7 +31,9 @@ const translations = {
     errorEmailExists: 'Cet email est déjà utilisé',
     errorPasswordMismatch: 'Les mots de passe ne correspondent pas',
     errorPasswordTooShort: 'Le mot de passe doit contenir au moins 6 caractères',
-    errorGeneric: 'Une erreur est survenue'
+    errorGeneric: 'Une erreur est survenue',
+    errorOAuthCancelled: 'Connexion Google annulée',
+    errorSessionFailed: 'Erreur lors de la connexion Google. Veuillez réessayer.'
   },
   en: {
     login: 'Login',
@@ -53,7 +55,9 @@ const translations = {
     errorEmailExists: 'This email is already in use',
     errorPasswordMismatch: 'Passwords do not match',
     errorPasswordTooShort: 'Password must be at least 6 characters',
-    errorGeneric: 'An error occurred'
+    errorGeneric: 'An error occurred',
+    errorOAuthCancelled: 'Google login cancelled',
+    errorSessionFailed: 'Error during Google login. Please try again.'
   },
   es: {
     login: 'Iniciar sesión',
@@ -75,7 +79,9 @@ const translations = {
     errorEmailExists: 'Este correo ya está en uso',
     errorPasswordMismatch: 'Las contraseñas no coinciden',
     errorPasswordTooShort: 'La contraseña debe tener al menos 6 caracteres',
-    errorGeneric: 'Ocurrió un error'
+    errorGeneric: 'Ocurrió un error',
+    errorOAuthCancelled: 'Inicio de sesión con Google cancelado',
+    errorSessionFailed: 'Error al iniciar sesión con Google. Inténtalo de nuevo.'
   }
 }
 
@@ -85,6 +91,7 @@ export default function ConnexionPage({
   params: Promise<{ lang: string }>
 }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [lang, setLang] = useState<Language>('fr')
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
@@ -98,6 +105,19 @@ export default function ConnexionPage({
   useEffect(() => {
     params.then(({ lang: l }) => setLang(l as Language))
   }, [params])
+
+  // Handle OAuth errors from URL params
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam) {
+      const t = translations[lang]
+      if (errorParam === 'oauth_cancelled') {
+        setError(t.errorOAuthCancelled)
+      } else if (errorParam === 'session_failed') {
+        setError(t.errorSessionFailed)
+      }
+    }
+  }, [searchParams, lang])
 
   useEffect(() => {
     const checkAuth = async () => {

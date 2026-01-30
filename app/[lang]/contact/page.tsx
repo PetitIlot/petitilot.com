@@ -281,7 +281,8 @@ export default function ContactPage({
                     <Button
                       type="submit"
                       disabled={loading}
-                      className="w-full bg-sage hover:bg-sage-light text-white h-11 font-semibold"
+                      className="w-full h-11 font-semibold"
+                      style={{ backgroundColor: '#7A8B6F', color: 'white' }}
                     >
                       {loading ? '...' : t.send}
                       <Send className="w-4 h-4 ml-2" />
@@ -312,8 +313,8 @@ export default function ContactPage({
             transition={{ delay: 0.2 }}
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-terracotta flex items-center justify-center">
-                <Users className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                <Users className="w-5 h-5" style={{ color: '#C9A092' }} />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-foreground dark:text-foreground-dark">{t.creatorTitle}</h2>
@@ -356,7 +357,8 @@ export default function ContactPage({
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <Link
                   href={`/${lang}/devenir-createur`}
-                  className="inline-flex items-center gap-2 font-semibold text-white bg-terracotta hover:bg-terracotta/90 px-6 py-3 rounded-full transition-colors"
+                  className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-full transition-colors"
+                  style={{ backgroundColor: '#C9A092', color: 'white' }}
                 >
                   {t.creatorCta}
                   <ArrowRight className="w-4 h-4" />
@@ -378,8 +380,8 @@ export default function ContactPage({
             transition={{ delay: 0.3 }}
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-foreground dark:bg-foreground-dark flex items-center justify-center">
-                <Handshake className="w-5 h-5 text-surface dark:text-surface-dark" />
+              <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                <Handshake className="w-5 h-5" style={{ color: '#CCA6C8' }} />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-foreground dark:text-foreground-dark">{t.partnerTitle}</h2>
@@ -392,7 +394,8 @@ export default function ContactPage({
 
               <a
                 href="mailto:partnership@petitilot.ca"
-                className="inline-flex items-center gap-2 font-semibold text-surface dark:text-surface-dark bg-foreground dark:bg-foreground-dark hover:opacity-90 px-6 py-3 rounded-full transition-colors mb-8"
+                className="inline-flex items-center gap-2 font-semibold hover:opacity-90 px-6 py-3 rounded-full transition-colors mb-8"
+                style={{ backgroundColor: '#CCA6C8', color: 'white' }}
               >
                 {t.partnerCta}
                 <Mail className="w-4 h-4" />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, Heart, Mail, LogOut, BookOpen, Palette, Dumbbell, Coins, ShoppingBag, Sparkles } from 'lucide-react'
+import { User, Heart, Mail, LogOut, BookOpen, Palette, Dumbbell, Coins, ShoppingBag, Sparkles, Bell } from 'lucide-react'
 import { Language, Ressource } from '@/lib/types'
 import { createClient } from '@/lib/supabase-client'
 import { getProfile, toggleNewsletter, Profile } from '@/lib/auth'
@@ -48,7 +48,10 @@ const translations = {
     creatorSpace: 'Espace créateur',
     becomeCreator: 'Devenir créateur',
     creatorDashboard: 'Gérer mes ressources',
-    creatorCta: 'Partagez vos créations'
+    creatorCta: 'Partagez vos créations',
+    manageAlerts: 'Gérer mes alertes',
+    alertsDesc: 'Recherches sauvegardées et créateurs suivis',
+    pendingApproval: 'Demande en cours de validation'
   },
   en: {
     myProfile: 'My Profile',
@@ -83,7 +86,10 @@ const translations = {
     creatorSpace: 'Creator space',
     becomeCreator: 'Become a creator',
     creatorDashboard: 'Manage my resources',
-    creatorCta: 'Share your creations'
+    creatorCta: 'Share your creations',
+    manageAlerts: 'Manage my alerts',
+    alertsDesc: 'Saved searches and followed creators',
+    pendingApproval: 'Request pending approval'
   },
   es: {
     myProfile: 'Mi Perfil',
@@ -118,7 +124,10 @@ const translations = {
     creatorSpace: 'Espacio creador',
     becomeCreator: 'Convertirse en creador',
     creatorDashboard: 'Gestionar mis recursos',
-    creatorCta: 'Comparte tus creaciones'
+    creatorCta: 'Comparte tus creaciones',
+    manageAlerts: 'Gestionar mis alertas',
+    alertsDesc: 'Búsquedas guardadas y creadores seguidos',
+    pendingApproval: 'Solicitud pendiente de aprobación'
   }
 }
 
@@ -131,13 +140,14 @@ export default function ProfilPage({
   const [lang, setLang] = useState<Language>('fr')
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [activeTab, setActiveTab] = useState<'activities' | 'books' | 'games' | 'newsletter'>('activities')
+  const [activeTab, setActiveTab] = useState<'activities' | 'newsletter'>('activities')
   const [activities, setActivities] = useState<Ressource[]>([])
   const [books, setBooks] = useState<Ressource[]>([])
   const [games, setGames] = useState<Ressource[]>([])
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [creditsBalance, setCreditsBalance] = useState(0)
-  const [isCreator, setIsCreator] = useState(false)
+  const [isApprovedCreator, setIsApprovedCreator] = useState(false)
+  const [hasPendingRequest, setHasPendingRequest] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -173,14 +183,17 @@ export default function ProfilPage({
         setCreditsBalance(profileData.credits_balance || 0)
       }
 
-      // Check if user is a creator
+      // Check if user is a creator and their approval status
       const { data: creatorData } = await supabase
         .from('creators')
-        .select('id')
+        .select('id, is_approved')
         .eq('user_id', authUser.id)
         .single()
 
-      setIsCreator(!!creatorData)
+      if (creatorData) {
+        setIsApprovedCreator(creatorData.is_approved === true)
+        setHasPendingRequest(!creatorData.is_approved)
+      }
 
       // Fetch bookmarked ressources
       const [activitiesData, booksData, gamesData, countsData] = await Promise.all([
@@ -267,7 +280,7 @@ export default function ProfilPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
         >
           <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
             <div className="flex items-center justify-between">
@@ -279,6 +292,7 @@ export default function ProfilPage({
             </div>
           </div>
 
+          {/* MASQUÉ TEMPORAIREMENT - Droits d'auteur à clarifier
           <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
             <div className="flex items-center justify-between">
               <BookOpen className="w-8 h-8" style={{ color: 'var(--icon-sky)' }} />
@@ -298,6 +312,7 @@ export default function ProfilPage({
               </div>
             </div>
           </div>
+          */}
 
           <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
             <div className="flex items-center justify-between">
@@ -348,6 +363,33 @@ export default function ProfilPage({
           </Link>
         </motion.div>
 
+        {/* Alerts Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.17 }}
+          className="mb-8"
+        >
+          <Link href={`/${lang}/profil/alertes`}>
+            <div
+              className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
+              style={{ border: '1px solid var(--border)' }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary">
+                    {t.alertsDesc}
+                  </p>
+                  <p className="text-xl font-bold mt-1 text-foreground dark:text-foreground-dark">
+                    {t.manageAlerts}
+                  </p>
+                </div>
+                <Bell className="w-12 h-12" style={{ color: 'var(--icon-sage)', opacity: 0.3 }} />
+              </div>
+            </div>
+          </Link>
+        </motion.div>
+
         {/* Creator Space Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -355,9 +397,9 @@ export default function ProfilPage({
           transition={{ delay: 0.18 }}
           className="mb-8"
         >
-          <Link href={isCreator ? `/${lang}/createur` : `/${lang}/devenir-createur`}>
+          {hasPendingRequest ? (
             <div
-              className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
+              className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple"
               style={{ border: '1px solid var(--border)' }}
             >
               <div className="flex items-center justify-between">
@@ -366,16 +408,35 @@ export default function ProfilPage({
                     {t.creatorSpace}
                   </p>
                   <p className="text-xl font-bold mt-1 text-foreground dark:text-foreground-dark">
-                    {isCreator ? t.creatorDashboard : t.becomeCreator}
+                    {t.pendingApproval}
                   </p>
-                  {!isCreator && (
-                    <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary mt-2">{t.creatorCta}</p>
-                  )}
                 </div>
                 <Sparkles className="w-12 h-12" style={{ color: 'var(--icon-sky)', opacity: 0.3 }} />
               </div>
             </div>
-          </Link>
+          ) : (
+            <Link href={isApprovedCreator ? `/${lang}/createur` : `/${lang}/devenir-createur`}>
+              <div
+                className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
+                style={{ border: '1px solid var(--border)' }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary">
+                      {t.creatorSpace}
+                    </p>
+                    <p className="text-xl font-bold mt-1 text-foreground dark:text-foreground-dark">
+                      {isApprovedCreator ? t.creatorDashboard : t.becomeCreator}
+                    </p>
+                    {!isApprovedCreator && (
+                      <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary mt-2">{t.creatorCta}</p>
+                    )}
+                  </div>
+                  <Sparkles className="w-12 h-12" style={{ color: 'var(--icon-sky)', opacity: 0.3 }} />
+                </div>
+              </div>
+            </Link>
+          )}
         </motion.div>
 
         {/* Tabs */}
@@ -397,6 +458,7 @@ export default function ProfilPage({
               <Heart className="w-4 h-4 inline mr-2" />
               {t.myActivities}
             </button>
+            {/* MASQUÉ TEMPORAIREMENT - Droits d'auteur à clarifier
             <button
               onClick={() => setActiveTab('books')}
               className={`px-6 py-3 rounded-full font-semibold transition-colors ${
@@ -421,6 +483,7 @@ export default function ProfilPage({
               <Dumbbell className="w-4 h-4 inline mr-2" />
               {t.myGames}
             </button>
+            */}
             <button
               onClick={() => setActiveTab('newsletter')}
               className={`px-6 py-3 rounded-full font-semibold transition-colors ${
@@ -457,6 +520,7 @@ export default function ProfilPage({
               )
             )}
 
+            {/* MASQUÉ TEMPORAIREMENT - Droits d'auteur à clarifier
             {activeTab === 'books' && (
               books.length === 0 ? (
                 <div className="py-16 text-center">
@@ -496,6 +560,7 @@ export default function ProfilPage({
                 </div>
               )
             )}
+            */}
 
             {activeTab === 'newsletter' && (
               <div>

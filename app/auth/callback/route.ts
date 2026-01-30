@@ -7,9 +7,21 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code')
   const lang = requestUrl.searchParams.get('lang') || 'fr'
 
+  // Handle OAuth error (user refused or cancelled)
+  const error = requestUrl.searchParams.get('error')
+  if (error) {
+    return NextResponse.redirect(new URL(`/${lang}/connexion?error=oauth_cancelled`, request.url))
+  }
+
   if (code) {
     const supabase = await createClient()
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+    // Handle session exchange error
+    if (exchangeError) {
+      console.error('OAuth session exchange error:', exchangeError.message)
+      return NextResponse.redirect(new URL(`/${lang}/connexion?error=session_failed`, request.url))
+    }
   }
 
   return NextResponse.redirect(new URL(`/${lang}/profil`, request.url))

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, X, SlidersHorizontal } from 'lucide-react'
+import { createClient } from '@/lib/supabase-client'
 import { getFilteredRessources } from '@/lib/supabase-queries'
 import { Language, Ressource } from '@/lib/types'
 import { useFilters } from '@/lib/hooks/useFilters'
@@ -50,6 +52,7 @@ const translations = {
 function ActivitesContent({ lang }: { lang: Language }) {
   const t = translations[lang]
   const filterT = FILTER_TRANSLATIONS[lang]
+  const router = useRouter()
 
   // Hook de filtres avec sync URL
   const {
@@ -68,6 +71,25 @@ function ActivitesContent({ lang }: { lang: Language }) {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
   const [activites, setActivites] = useState<Ressource[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  // Vérifier l'état d'authentification
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setIsLoggedIn(!!user)
+    }
+    checkAuth()
+
+    // Écouter les changements d'auth
+    const supabase = createClient()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   // Filtrage client-side (themes, competences, materials, intensity)
   const filteredActivites = useFilteredResources(activites, clientFilters)
@@ -282,6 +304,8 @@ function ActivitesContent({ lang }: { lang: Language }) {
         activeFiltersCount={activeFiltersCount}
         resultCount={filteredActivites.length}
         lang={lang}
+        isLoggedIn={isLoggedIn}
+        onLoginRequired={() => router.push(`/${lang}/connexion`)}
       />
     </div>
   )

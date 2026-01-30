@@ -199,30 +199,87 @@ export default function AlertesPage({ params }: PageProps) {
     }
   }
 
-  // Build URL from filters
+  // Build URL from filters - includes ALL filter types
   const buildFilterUrl = (filters: Record<string, unknown>): string => {
     const params = new URLSearchParams()
 
+    // Types (activite, motricite, alimentation)
+    const types = filters.types as string[] | undefined
+    if (types?.length) params.set('type', types.join(','))
+
+    // Categories
     const categories = filters.categories as string[] | undefined
     if (categories?.length) params.set('cat', categories.join(','))
 
+    // Themes
     const themes = filters.themes as string[] | undefined
     if (themes?.length) params.set('themes', themes.join(','))
 
+    // Competences
     const competences = filters.competences as string[] | undefined
     if (competences?.length) params.set('skills', competences.join(','))
 
+    // Age range
     const ageMin = filters.ageMin as number | null
     if (ageMin !== null && ageMin !== undefined) params.set('age_min', String(ageMin))
 
     const ageMax = filters.ageMax as number | null
     if (ageMax !== null && ageMax !== undefined) params.set('age_max', String(ageMax))
 
+    // Duration
+    const duration = filters.duration as number | null
+    if (duration !== null && duration !== undefined) params.set('dur', String(duration))
+
+    // Prep time
+    const prepTime = filters.prepTime as number | null
+    if (prepTime !== null && prepTime !== undefined) params.set('prep', String(prepTime))
+
+    // Difficulty
     const difficulty = filters.difficulty as string | null
     if (difficulty) params.set('diff', difficulty)
 
+    // Intensity
+    const intensity = filters.intensity as string | null
+    if (intensity) params.set('int', intensity)
+
+    // Autonomy
+    const autonomy = filters.autonomy as boolean | null
+    if (autonomy !== null && autonomy !== undefined) params.set('auto', autonomy ? '1' : '0')
+
+    // Materials
+    const materials = filters.materials as string[] | undefined
+    if (materials?.length) params.set('mat', materials.join(','))
+
+    // Material mode
+    const materialMode = filters.materialMode as string | null
+    if (materialMode && materialMode !== 'filter') params.set('matmode', materialMode)
+
+    // Has download
+    const hasDownload = filters.hasDownload as boolean | null
+    if (hasDownload !== null && hasDownload !== undefined) params.set('dl', hasDownload ? '1' : '0')
+
+    // Is free
     const isFree = filters.isFree as boolean | null
     if (isFree !== null && isFree !== undefined) params.set('free', isFree ? '1' : '0')
+
+    // Price range
+    const priceMin = filters.priceMin as number | null
+    if (priceMin !== null && priceMin !== undefined) params.set('price_min', String(priceMin))
+
+    const priceMax = filters.priceMax as number | null
+    if (priceMax !== null && priceMax !== undefined) params.set('price_max', String(priceMax))
+
+    // Creator slug
+    const creatorSlug = filters.creatorSlug as string | null
+    if (creatorSlug) params.set('creator', creatorSlug)
+
+    // Sort
+    const sort = filters.sort as string | null
+    if (sort && sort !== 'recent') params.set('sort', sort)
+
+    // Search query
+    const search = filters.search as string | null
+    if (search) params.set('q', search)
 
     return `/${lang}/activites?${params.toString()}`
   }
