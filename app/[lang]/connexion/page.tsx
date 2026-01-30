@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
@@ -85,14 +85,9 @@ const translations = {
   }
 }
 
-export default function ConnexionPage({
-  params
-}: {
-  params: Promise<{ lang: string }>
-}) {
+function ConnexionContent({ lang }: { lang: Language }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [lang, setLang] = useState<Language>('fr')
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -101,10 +96,6 @@ export default function ConnexionPage({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-
-  useEffect(() => {
-    params.then(({ lang: l }) => setLang(l as Language))
-  }, [params])
 
   // Handle OAuth errors from URL params
   useEffect(() => {
@@ -391,5 +382,28 @@ export default function ConnexionPage({
         </div>
       </motion.div>
     </div>
+  )
+}
+
+// Wrapper avec Suspense pour useSearchParams
+export default function ConnexionPage({
+  params
+}: {
+  params: Promise<{ lang: string }>
+}) {
+  const [lang, setLang] = useState<Language>('fr')
+
+  useEffect(() => {
+    params.then(({ lang: l }) => setLang(l as Language))
+  }, [params])
+
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center">
+        <div className="animate-pulse text-foreground-secondary">Chargement...</div>
+      </div>
+    }>
+      <ConnexionContent lang={lang} />
+    </Suspense>
   )
 }
