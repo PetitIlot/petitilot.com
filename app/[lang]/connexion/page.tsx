@@ -115,11 +115,12 @@ function ConnexionContent({ lang }: { lang: Language }) {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        router.push(`/${lang}/profil`)
+        const redirectTo = searchParams.get('redirect') || `/${lang}/profil`
+        router.push(redirectTo)
       }
     }
     checkAuth()
-  }, [lang, router])
+  }, [lang, router, searchParams])
 
   const t = translations[lang]
 
@@ -141,8 +142,9 @@ function ConnexionContent({ lang }: { lang: Language }) {
     }
 
     setSuccess(t.loginSuccess)
+    const redirectTo = searchParams.get('redirect') || `/${lang}/profil`
     setTimeout(() => {
-      router.push(`/${lang}/profil`)
+      router.push(redirectTo)
     }, 1000)
   }
 
@@ -189,10 +191,16 @@ function ConnexionContent({ lang }: { lang: Language }) {
 
   const handleGoogleLogin = async () => {
     const supabase = createClient()
+    const redirectParam = searchParams.get('redirect')
+    const callbackUrl = new URL('/auth/callback', window.location.origin)
+    callbackUrl.searchParams.set('lang', lang)
+    if (redirectParam) {
+      callbackUrl.searchParams.set('redirect', redirectParam)
+    }
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?lang=${lang}`
+        redirectTo: callbackUrl.toString()
       }
     })
   }

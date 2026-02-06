@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const lang = requestUrl.searchParams.get('lang') || 'fr'
+  const redirectTo = requestUrl.searchParams.get('redirect')
 
   // Handle OAuth error (user refused or cancelled)
   const error = requestUrl.searchParams.get('error')
@@ -24,5 +25,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(new URL(`/${lang}/profil`, request.url))
+  const successUrl = redirectTo || `/${lang}/profil`
+  return NextResponse.redirect(new URL(successUrl, request.url))
 }
