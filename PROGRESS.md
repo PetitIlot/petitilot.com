@@ -1,6 +1,6 @@
 # Journal de Développement Petit Ilot
 
-> Dernière mise à jour : 30 janvier 2025 - Phase 1 Stabilisation complétée
+> Dernière mise à jour : 30 janvier 2025 - Phase 4 Crédits v2 complétée
 
 ---
 
@@ -33,14 +33,18 @@
 | 3.2 | Upload PDF via Dropbox → Supabase Storage | ⬜ TODO | Meilleur paywall, maintenance liens |
 | 3.3 | Preview fiche complète avant validation | ⬜ TODO | Voir rendu final |
 
-### Phase 4 : Système Crédits v2
+### Phase 4 : Système Crédits v2 ✅ COMPLÉTÉ
 
 | # | Tâche | Statut | Notes |
 |---|-------|--------|-------|
-| 4.1 | Crédits gratuits vs payants | ⬜ TODO | Pour promos, lancement |
-| 4.2 | Valeur dynamique des crédits | ⬜ TODO | 5cr=5$, 10cr=8$, 20cr=15$... |
-| 4.3 | Calcul reversement créateur | ⬜ TODO | 90% de la valeur réelle du crédit |
-| 4.4 | Mise à jour wizard en conséquence | ⬜ TODO | Prix en crédits |
+| 4.1 | Crédits gratuits vs payants | ✅ OK | Double balance (free/paid) |
+| 4.2 | Valeur dynamique des crédits | ✅ OK | unit_value_cents dans credit_units |
+| 4.3 | Calcul reversement créateur | ✅ OK | 90% valeur EUR (FIFO) |
+| 4.4 | Admin codes promo | ✅ OK | CRUD complet + rédemption |
+| 4.5 | Admin grant crédits | ✅ OK | Attribution manuelle free/paid |
+| 4.6 | Bonus inscription | ✅ OK | 5 crédits gratuits (configurable) |
+| 4.7 | Bonus achat | ✅ OK | Configurable par pack |
+| 4.8 | Mise à jour wizard | ⬜ TODO | Option créateur accept/reject crédits gratuits |
 
 ### Phase 5 : Console Admin
 
@@ -49,15 +53,105 @@
 | 5.1 | Approuver/rejeter demandes créateur | ⬜ TODO | Workflow validation |
 | 5.2 | Approuver/rejeter/modifier fiches | ⬜ TODO | Modération contenu |
 | 5.3 | Dashboard stats | ⬜ TODO | KPIs, graphiques |
+| 5.4 | Admin codes promo/grant crédits/Bonus inscription/Bonus achat
 
 ---
 
 ## État Actuel
 
 Site en mode "Coming Soon" sur petitilot.com. Code secret dans env var `NEXT_PUBLIC_SITE_ACCESS_CODE`.
-Sprints 1-3 (rôles, créateur, achats) complétés. Phase 1 stabilisation complétée. Sprint 4 (Stripe) en attente.
+Sprints 1-3 complétés. Phase 4 Crédits v2 complétée. Migrations SQL prêtes à exécuter.
 
-### Dernière Session - Phase 1 Stabilisation
+### Dernière Session - Phase 4 Crédits v2
+- **Date** : 30 janvier 2025
+- **Objectif** : Implémenter le système de crédits à deux types (gratuits/payants) avec outils admin
+- **Complété** :
+
+**Architecture Base de Données** :
+- Table `profiles` : ajout `free_credits_balance`, `paid_credits_balance`
+- Trigger `update_total_credits_balance` : maintient rétrocompatibilité `credits_balance = free + paid`
+- Table `credit_units` : tracking valeur unitaire (unit_value_cents, source, acquired_at)
+- Table `promo_codes` : codes promo avec max_uses, allow_multiple_per_user, expiration
+- Table `promo_code_redemptions` : historique utilisation codes
+- Table `purchase_bonuses` : config bonus gratuits par pack Stripe
+- Table `app_config` : config bonus inscription (enabled, free_credits)
+- Extension `credits_transactions` : credit_type, unit_value_cents, promo_code_id
+- Extension `purchases` : free_credits_used, paid_credits_used, total_eur_value_cents
+
+**Fonctions RPC PostgreSQL** :
+- `purchase_ressource_v2(user_id, ressource_id)` : achat avec FIFO (gratuits d'abord, puis payants par date)
+- `apply_promo_code(user_id, code)` : rédemption code promo avec validations
+- `admin_grant_credits(target_user_id, credit_type, amount, reason, admin_user_id)` : attribution manuelle
+- `grant_registration_bonus(user_id)` : bonus inscription (appelé via trigger + auth callback)
+- `add_stripe_credits(user_id, pack_id, credits, price_cents)` : webhook Stripe avec bonus auto
+- `get_credit_breakdown(user_id)` : retourne free_credits, paid_credits, total, recent_transactions
+
+**APIs créées** :
+- `POST /api/credits/redeem-promo` : applique un code promo
+- `GET /api/credits/balance` : retourne breakdown complet des crédits
+- `GET/POST /api/admin/promo-codes` : liste et création codes promo
+- `PATCH/DELETE /api/admin/promo-codes/[id]` : modification/suppression
+- `POST /api/admin/credits/grant` : attribution manuelle crédits
+- `GET/PATCH /api/admin/config` : config app (registration_bonus)
+- `GET/PATCH /api/admin/config/purchase-bonuses` : config bonus par pack
+
+**Modifications APIs existantes** :
+- Webhook Stripe : utilise `add_stripe_credits` RPC, gère bonus achat automatique
+- Auth callback : appelle `grant_registration_bonus` pour nouveaux users OAuth
+
+**Pages Admin créées** :
+- `/admin/credits` : hub avec stats (codes actifs, redemptions, crédits distribués)
+- `/admin/credits/promo-codes` : CRUD codes promo (tableau, modal création, toggle actif, suppression)
+- `/admin/credits/grant` : recherche user par email, affiche balances, form attribution free/paid
+- `/admin/credits/settings` : toggle/montant bonus inscription + bonus par pack Stripe
+
+**Frontend utilisateur** :
+- Page `/profil/credits` refonte : double balance (cards vert/or), formulaire code promo, historique enrichi avec badges type crédit
+- `PurchaseButton` : affiche répartition FIFO avant achat ("3 gratuits + 2 payants")
+
+**Logique FIFO** :
+1. Les crédits gratuits sont dépensés en premier
+2. Les crédits payants sont consommés par date d'acquisition (FIFO)
+3. La valeur EUR pour le créateur = somme des unit_value_cents des crédits payants consommés
+4. Crédits gratuits = 0€ pour le créateur
+
+**Décisions clés** :
+- Bonus inscription : 5 crédits gratuits (configurable via admin)
+- Rémunération créateur sur crédits gratuits : 0€
+- Codes promo : option `allow_multiple_per_user` configurable à la création
+- Backward compatibility : `credits_balance` maintenu via trigger
+
+**Fichiers créés** :
+- `supabase/migrations/010_credits_v2_schema.sql` - Schéma tables et triggers
+- `supabase/migrations/011_credits_v2_functions.sql` - Fonctions RPC
+- `supabase/migrations/012_registration_bonus_trigger.sql` - Trigger bonus inscription
+- `app/api/credits/redeem-promo/route.ts`
+- `app/api/credits/balance/route.ts`
+- `app/api/admin/promo-codes/route.ts`
+- `app/api/admin/promo-codes/[id]/route.ts`
+- `app/api/admin/credits/grant/route.ts`
+- `app/api/admin/config/route.ts`
+- `app/api/admin/config/purchase-bonuses/route.ts`
+- `app/[lang]/admin/credits/page.tsx`
+- `app/[lang]/admin/credits/promo-codes/page.tsx`
+- `app/[lang]/admin/credits/grant/page.tsx`
+- `app/[lang]/admin/credits/settings/page.tsx`
+
+**Fichiers modifiés** :
+- `lib/types.ts` - Types CreditType, PromoCode, PurchaseBonus, CreditBreakdown, etc.
+- `app/api/webhooks/stripe/route.ts` - Utilise add_stripe_credits RPC
+- `app/auth/callback/route.ts` - Appelle grant_registration_bonus
+- `app/[lang]/profil/credits/page.tsx` - Refonte complète double balance
+- `components/PurchaseButton.tsx` - Affichage répartition FIFO
+
+**Prochaines étapes** :
+1. Exécuter les 3 migrations SQL dans Supabase
+2. Tester le flow complet (Stripe test → bonus → achat ressource → répartition)
+3. Phase 4.8 : Option wizard créateur pour accepter/rejeter crédits gratuits
+
+---
+
+### Session Précédente - Phase 1 Stabilisation
 - **Date** : 30 janvier 2025
 - **Objectif** : Stabiliser le site avant Sprint 4 (Stripe)
 - **Complété** :

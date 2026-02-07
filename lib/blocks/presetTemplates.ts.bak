@@ -1,0 +1,366 @@
+/**
+ * Templates prédéfinis pour le système block-based
+ * Ces templates sont modifiables par les créateurs
+ */
+
+import {
+  ContentBlocksData,
+  ContentBlock,
+  DEFAULT_CANVAS_CONFIG,
+  createBlock,
+  TitleBlockData,
+  ImageBlockData,
+  CarouselBlockData,
+  CreatorBlockData,
+  TextBlockData,
+  ListBlockData,
+  ListLinksBlockData,
+  PurchaseBlockData,
+  TipBlockData,
+  VideoBlockData,
+  SeparatorBlockData
+} from './types'
+
+// ============================================
+// Template 1: Fiche de Base (classique)
+// ============================================
+
+export function createBaseTemplate(): ContentBlocksData {
+  const blocks: ContentBlock[] = []
+
+  // 1. Image hero pleine largeur
+  blocks.push(createBlock(
+    'image',
+    {
+      imageIndex: 0,
+      objectFit: 'cover',
+      showOverlay: false
+    } as ImageBlockData,
+    { x: 0, y: 0, width: 100, height: 280, zIndex: 1 },
+    { borderRadius: 16, padding: 0 }
+  ))
+
+  // 2. Bloc titre complet
+  blocks.push(createBlock(
+    'title',
+    {
+      showBadges: true,
+      showThemes: true,
+      showCompetences: true,
+      titleSize: 'lg',
+      alignment: 'left'
+    } as TitleBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 10 },
+    { padding: 0 }
+  ))
+
+  // 3. Widget créateur
+  blocks.push(createBlock(
+    'creator',
+    {
+      variant: 'full',
+      showFollowButton: true,
+      showStats: true
+    } as CreatorBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 5 },
+    { padding: 0 }
+  ))
+
+  // 4. Description
+  blocks.push(createBlock(
+    'text',
+    {
+      content: '',  // Utilise automatiquement activity.description
+      fontSize: 'md',
+      fontWeight: 'normal',
+      alignment: 'left'
+    } as TextBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 1 },
+    { padding: 0 }
+  ))
+
+  // 5. Carrousel galerie (si disponible)
+  blocks.push(createBlock(
+    'carousel',
+    {
+      showDots: true,
+      showArrows: true,
+      autoPlay: false,
+      interval: 3000
+    } as CarouselBlockData,
+    { x: 0, y: 0, width: 60, height: 250, zIndex: 1 },
+    { borderRadius: 12 }
+  ))
+
+  // 6. Liste matériel
+  blocks.push(createBlock(
+    'list',
+    {
+      title: 'Matériel nécessaire',
+      sourceField: 'materiel_json',
+      showRecupBadge: true,
+      bulletStyle: 'dot',
+      columns: 1
+    } as ListBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 1 },
+    { backgroundPreset: 'surface', borderRadius: 16, padding: 24, border: true }
+  ))
+
+  // 7. Liste liens d'achat
+  blocks.push(createBlock(
+    'list-links',
+    {
+      title: 'Où acheter',
+      sourceField: 'materiel_json',
+      showAffiliateNote: true
+    } as ListLinksBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 1 },
+    { backgroundPreset: 'surface', borderRadius: 16, padding: 24, border: true }
+  ))
+
+  // 8. Bloc astuce
+  blocks.push(createBlock(
+    'tip',
+    {
+      icon: 'lightbulb',
+      accentColor: 'sage'
+    } as TipBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 1 },
+    { padding: 0 }
+  ))
+
+  // 9. Vidéo embed (si disponible)
+  blocks.push(createBlock(
+    'video',
+    {
+      platform: 'auto',
+      aspectRatio: '16:9'
+    } as VideoBlockData,
+    { x: 0, y: 0, width: 100, height: 350, zIndex: 1 },
+    { borderRadius: 12 }
+  ))
+
+  // 10. Bouton achat/téléchargement
+  blocks.push(createBlock(
+    'purchase',
+    {
+      variant: 'full',
+      showPrice: true
+    } as PurchaseBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 20 },
+    { padding: 0 }
+  ))
+
+  return {
+    version: 1,
+    canvas: {
+      ...DEFAULT_CANVAS_CONFIG,
+      height: 'auto'
+    },
+    layout: {
+      desktop: blocks
+    },
+    metadata: {
+      templateName: 'base'
+    }
+  }
+}
+
+// ============================================
+// Template 2: Fiche Recette
+// ============================================
+
+export function createRecipeTemplate(): ContentBlocksData {
+  const blocks: ContentBlock[] = []
+
+  // 1. Hero image grande (style recette)
+  blocks.push(createBlock(
+    'image',
+    {
+      imageIndex: 0,
+      objectFit: 'cover',
+      showOverlay: true  // Overlay sombre pour texte par-dessus
+    } as ImageBlockData,
+    { x: 0, y: 0, width: 100, height: 350, zIndex: 1 },
+    { borderRadius: 0, padding: 0 }  // Pas d'arrondi pour effet full-bleed
+  ))
+
+  // 2. Titre avec style recette (sans badges pour un look plus clean)
+  blocks.push(createBlock(
+    'title',
+    {
+      showBadges: true,
+      showThemes: false,
+      showCompetences: false,
+      titleSize: 'xl',
+      alignment: 'center'
+    } as TitleBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 10 },
+    { padding: 16 }
+  ))
+
+  // 3. Séparateur élégant
+  blocks.push(createBlock(
+    'separator',
+    {
+      style: 'dots',
+      thickness: 2,
+      color: '#D4A59A'  // Terracotta
+    } as SeparatorBlockData,
+    { x: 0, y: 0, width: 40, height: 32, zIndex: 1 },
+    { padding: 0 }
+  ))
+
+  // 4. Widget créateur compact
+  blocks.push(createBlock(
+    'creator',
+    {
+      variant: 'compact',
+      showFollowButton: true,
+      showStats: false
+    } as CreatorBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 5 },
+    { padding: 0 }
+  ))
+
+  // 5. Ingrédients avec style recette
+  blocks.push(createBlock(
+    'list',
+    {
+      title: '🥄 Ingrédients',
+      sourceField: 'materiel_json',
+      showRecupBadge: false,
+      bulletStyle: 'check',
+      columns: 2
+    } as ListBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 1 },
+    { backgroundPreset: 'terracotta', borderRadius: 16, padding: 24, border: false }
+  ))
+
+  // 6. Description/Instructions
+  blocks.push(createBlock(
+    'text',
+    {
+      content: '',
+      fontSize: 'md',
+      fontWeight: 'normal',
+      alignment: 'left'
+    } as TextBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 1 },
+    { backgroundPreset: 'surface', borderRadius: 16, padding: 24, border: true }
+  ))
+
+  // 7. Galerie photos de la recette
+  blocks.push(createBlock(
+    'carousel',
+    {
+      showDots: true,
+      showArrows: true,
+      autoPlay: false,
+      interval: 4000
+    } as CarouselBlockData,
+    { x: 0, y: 0, width: 100, height: 300, zIndex: 1 },
+    { borderRadius: 16 }
+  ))
+
+  // 8. Astuces du chef
+  blocks.push(createBlock(
+    'tip',
+    {
+      icon: 'star',
+      accentColor: 'terracotta'
+    } as TipBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 1 },
+    { padding: 0 }
+  ))
+
+  // 9. Liens où acheter
+  blocks.push(createBlock(
+    'list-links',
+    {
+      title: '🛒 Où trouver les ingrédients',
+      sourceField: 'materiel_json',
+      showAffiliateNote: true
+    } as ListLinksBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 1 },
+    { backgroundPreset: 'surface', borderRadius: 16, padding: 20, border: true }
+  ))
+
+  // 10. Vidéo (si recette en vidéo)
+  blocks.push(createBlock(
+    'video',
+    {
+      platform: 'auto',
+      aspectRatio: '4:5'  // Format vertical pour recettes
+    } as VideoBlockData,
+    { x: 0, y: 0, width: 70, height: 400, zIndex: 1 },
+    { borderRadius: 16 }
+  ))
+
+  // 11. Bouton télécharger la recette
+  blocks.push(createBlock(
+    'purchase',
+    {
+      variant: 'full',
+      showPrice: true,
+      buttonText: 'Télécharger la recette PDF'
+    } as PurchaseBlockData,
+    { x: 0, y: 0, width: 100, height: 'auto', zIndex: 20 },
+    { backgroundPreset: 'terracotta', borderRadius: 16, padding: 20 }
+  ))
+
+  return {
+    version: 1,
+    canvas: {
+      ...DEFAULT_CANVAS_CONFIG,
+      height: 'auto'
+    },
+    layout: {
+      desktop: blocks
+    },
+    metadata: {
+      templateName: 'recipe'
+    }
+  }
+}
+
+// ============================================
+// Export des templates disponibles
+// ============================================
+
+export const PRESET_TEMPLATES = {
+  base: {
+    id: 'base',
+    name: {
+      fr: 'Fiche de base',
+      en: 'Basic card',
+      es: 'Ficha básica'
+    },
+    description: {
+      fr: 'Layout classique avec image, titre, description, matériel et astuces',
+      en: 'Classic layout with image, title, description, materials and tips',
+      es: 'Diseño clásico con imagen, título, descripción, materiales y consejos'
+    },
+    icon: '📄',
+    color: '#A8B5A0',  // Sage
+    create: createBaseTemplate
+  },
+  recipe: {
+    id: 'recipe',
+    name: {
+      fr: 'Fiche recette',
+      en: 'Recipe card',
+      es: 'Ficha de receta'
+    },
+    description: {
+      fr: 'Style cuisine avec ingrédients en check-list, astuces du chef et photos appétissantes',
+      en: 'Cooking style with checklist ingredients, chef tips and appetizing photos',
+      es: 'Estilo cocina con ingredientes en checklist, consejos del chef y fotos apetitosas'
+    },
+    icon: '👨‍🍳',
+    color: '#D4A59A',  // Terracotta
+    create: createRecipeTemplate
+  }
+} as const
+
+export type PresetTemplateKey = keyof typeof PRESET_TEMPLATES

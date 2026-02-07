@@ -8,21 +8,23 @@ import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
 import type { Language } from '@/lib/types'
 
-// Step components
+// Step components (v2 - 6 étapes, Collaboration intégrée dans Step1)
 import StepBasicInfo from './wizard/StepBasicInfo'
 import StepPedagogy from './wizard/StepPedagogy'
 import StepCategories from './wizard/StepCategories'
 import StepMaterials from './wizard/StepMaterials'
-import StepMedia from './wizard/StepMedia'
+import StepCanvas from './wizard/StepCanvas'  // Remplace StepMedia + StepLayout
 import StepReview from './wizard/StepReview'
+import type { ContentBlocksData } from '@/lib/blocks'
 
 const translations = {
   fr: {
+    // 6 étapes v2: Infos (+ Collab) → Catégories → Pédagogie → Matériel → Canvas → Validation
     step1: 'Infos',
-    step2: 'Pédagogie',
-    step3: 'Catégories',
+    step2: 'Catégories',
+    step3: 'Pédagogie',
     step4: 'Matériel',
-    step5: 'Médias',
+    step5: 'Canvas',
     step6: 'Validation',
     back: 'Retour',
     next: 'Suivant',
@@ -34,10 +36,10 @@ const translations = {
   },
   en: {
     step1: 'Info',
-    step2: 'Pedagogy',
-    step3: 'Categories',
+    step2: 'Categories',
+    step3: 'Pedagogy',
     step4: 'Materials',
-    step5: 'Media',
+    step5: 'Canvas',
     step6: 'Review',
     back: 'Back',
     next: 'Next',
@@ -49,10 +51,10 @@ const translations = {
   },
   es: {
     step1: 'Info',
-    step2: 'Pedagogía',
-    step3: 'Categorías',
+    step2: 'Categorías',
+    step3: 'Pedagogía',
     step4: 'Materiales',
-    step5: 'Medios',
+    step5: 'Canvas',
     step6: 'Revisión',
     back: 'Volver',
     next: 'Siguiente',
@@ -64,24 +66,39 @@ const translations = {
   }
 }
 
-// Types pour le matériel
+// Types pour le matériel (v2 - sans URL, géré via bloc list-links)
 export interface MaterielItem {
   item: string
-  url: string | null
   recup: boolean
   isCustom?: boolean
 }
 
-// Type complet du formulaire
-export interface ResourceFormData {
-  // Step 1: Infos de base
-  title: string
-  subtitle: string
-  description: string
-  price_credits: number
-  astuces: string
+// Types pour les collaborateurs
+export interface CollaboratorData {
+  id: string                   // ID unique du collaborateur invitation
+  email: string               // Email du collaborateur
+  creator_id?: string          // ID du créateur (quand accepté)
+  display_name?: string        // Nom affiché (quand accepté)
+  avatar_url?: string
+  can_edit: boolean
+  can_publish: boolean
+  revenue_share: number       // Pourcentage (0-100)
+  status: 'pending' | 'accepted' | 'rejected'
+}
 
-  // Step 2: Pédagogie
+// Type complet du formulaire (v2 - simplifié)
+export interface ResourceFormData {
+  // Step 1: Infos de base (simplifié)
+  title: string
+  vignette_url: string        // URL image vignette
+  price_credits: number
+  accept_free_credits: boolean  // NOUVEAU: accepte crédits gratuits
+
+  // Step 1.5: Collaboration (optionnel)
+  collaborators: CollaboratorData[]
+  owner_revenue_share: number   // Part du créateur principal (%)
+
+  // Step 2: Pédagogie (inchangé)
   age_min: number | null
   age_max: number | null
   duration: number | null
@@ -90,36 +107,55 @@ export interface ResourceFormData {
   difficulte: 'beginner' | 'advanced' | 'expert' | null
   autonomie: boolean
 
-  // Step 3: Catégorisation
+  // Step 3: Catégorisation (inchangé)
   categories: string[]
   themes: string[]
   competences: string[]
   keywords: string[]
-  customThemes: string[]      // Thèmes custom à review
-  customCompetences: string[] // Compétences custom à review
+  customThemes: string[]
+  customCompetences: string[]
 
-  // Step 4: Matériel
+  // Step 4: Matériel (simplifié - sans liens affiliés)
   materials: string[]
   materiel_json: MaterielItem[]
 
-  // Step 5: Médias (URLs uniquement)
-  vignette_url: string
-  images_urls: string[]
-  gallery_urls: string[]
-  video_url: string
-  pdf_url: string
-  meta_seo: string
+  // Step 5: Canvas Editor (tout est dans content_blocks)
+  content_blocks: ContentBlocksData | null
+
+  // ============================================
+  // Champs obsolètes (conservés pour migration)
+  // À supprimer après migration des données
+  // ============================================
+  /** @deprecated Utiliser bloc texte dans content_blocks */
+  subtitle?: string
+  /** @deprecated Utiliser bloc texte dans content_blocks */
+  description?: string
+  /** @deprecated Utiliser bloc tip dans content_blocks */
+  astuces?: string
+  /** @deprecated Utiliser bloc image dans content_blocks */
+  images_urls?: string[]
+  /** @deprecated Utiliser bloc carousel dans content_blocks */
+  gallery_urls?: string[]
+  /** @deprecated Utiliser bloc video dans content_blocks */
+  video_url?: string
+  /** @deprecated Utiliser upload dans bloc purchase */
+  pdf_url?: string
+  /** @deprecated Supprimé */
+  meta_seo?: string
 }
 
 export const initialFormData: ResourceFormData = {
-  // Step 1
+  // Step 1: Infos de base (v2 simplifié)
   title: '',
-  subtitle: '',
-  description: '',
+  vignette_url: '',
   price_credits: 0,
-  astuces: '',
+  accept_free_credits: true, // Par défaut accepte les crédits gratuits
 
-  // Step 2
+  // Collaboration
+  collaborators: [],
+  owner_revenue_share: 100, // Par défaut 100% pour le créateur
+
+  // Step 2: Pédagogie
   age_min: null,
   age_max: null,
   duration: null,
@@ -128,7 +164,7 @@ export const initialFormData: ResourceFormData = {
   difficulte: null,
   autonomie: false,
 
-  // Step 3
+  // Step 3: Catégorisation
   categories: [],
   themes: [],
   competences: [],
@@ -136,24 +172,28 @@ export const initialFormData: ResourceFormData = {
   customThemes: [],
   customCompetences: [],
 
-  // Step 4
+  // Step 4: Matériel
   materials: [],
   materiel_json: [],
 
-  // Step 5
-  vignette_url: '',
+  // Step 5: Canvas
+  content_blocks: null,
+
+  // Legacy (vide pour nouvelles ressources)
+  subtitle: '',
+  description: '',
+  astuces: '',
   images_urls: [],
   gallery_urls: [],
   video_url: '',
-  pdf_url: '',
-  meta_seo: ''
+  pdf_url: ''
 }
 
 interface ResourceWizardProps {
   lang: Language
   creatorId: string
   initialData?: Partial<ResourceFormData>
-  resourceId?: string // Pour mode édition
+  resourceId?: string
 }
 
 export default function ResourceWizard({ lang, creatorId, initialData, resourceId }: ResourceWizardProps) {
@@ -167,16 +207,18 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
   const [error, setError] = useState('')
 
   const t = translations[lang]
-  const totalSteps = 6
+  const totalSteps = 6  // v2: 6 étapes (Collaboration intégrée dans Step1)
   const isEditMode = !!resourceId
+  const isCanvasStep = currentStep === 5
 
+  // v2: 6 étapes - Infos (+ Collab) → Pédagogie → Catégories → Matériel → Canvas → Validation
   const steps = [
-    { number: 1, label: t.step1 },
-    { number: 2, label: t.step2 },
-    { number: 3, label: t.step3 },
-    { number: 4, label: t.step4 },
-    { number: 5, label: t.step5 },
-    { number: 6, label: t.step6 }
+    { number: 1, label: t.step1 },  // Infos de base + Collaboration
+    { number: 2, label: t.step2 },  // Pédagogie
+    { number: 3, label: t.step3 },  // Catégories
+    { number: 4, label: t.step4 },  // Matériel
+    { number: 5, label: t.step5 },  // Canvas Editor
+    { number: 6, label: t.step6 }   // Validation/Review
   ]
 
   const updateFormData = (updates: Partial<ResourceFormData>) => {
@@ -186,17 +228,25 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
   const canProceed = (): boolean => {
     switch (currentStep) {
       case 1:
-        return formData.title.trim() !== '' && formData.description.trim() !== ''
+        // v2: Titre requis + si collaborateurs, vérifier partage total = 100%
+        if (formData.title.trim() === '') return false
+        if (formData.collaborators.length > 0) {
+          const total = formData.owner_revenue_share +
+            formData.collaborators.reduce((sum, c) => sum + c.revenue_share, 0)
+          return total === 100
+        }
+        return true
       case 2:
-        return true // Champs optionnels
+        return true // Pédagogie - Champs optionnels
       case 3:
+        // Au moins une catégorie ou un thème
         return formData.categories.length > 0 || formData.themes.length > 0
       case 4:
         return true // Matériel optionnel
       case 5:
-        return true // Lien ressource optionnel
+        return true // Canvas - optionnel mais recommandé
       case 6:
-        return true
+        return true // Review - toujours OK
       default:
         return false
     }
@@ -231,7 +281,7 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
     try {
       const supabase = createClient()
 
-      // Données à insérer/mettre à jour
+      // v2: Données simplifiées avec content_blocks
       const resourceData = {
         // Identifiants (seulement pour création)
         ...(isEditMode ? {} : {
@@ -242,11 +292,9 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
           type: 'activite' as const,
         }),
 
-        // Contenu
+        // Contenu principal (v2)
         title: formData.title || 'Brouillon sans titre',
-        subtitle: formData.subtitle || null,
-        description: formData.description || '',
-        astuces: formData.astuces || null,
+        vignette_url: formData.vignette_url || null,
 
         // Pédagogie
         age_min: formData.age_min,
@@ -267,19 +315,27 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
         materials: formData.materials,
         materiel_json: formData.materiel_json,
 
-        // Médias
-        vignette_url: formData.vignette_url || null,
-        images_urls: formData.images_urls,
-        gallery_urls: formData.gallery_urls,
+        // Marketplace (v2)
+        price_credits: formData.price_credits,
+        // accept_free_credits: formData.accept_free_credits,  // Requiert migration SQL
+        is_premium: formData.price_credits > 0,
+
+        // Statut
+        status: asDraft ? 'draft' : 'pending_review',
+        updated_at: new Date().toISOString(),
+
+        // v2: Tout le contenu visuel est dans content_blocks
+        content_blocks: formData.content_blocks,
+
+        // Champs legacy (conservés pour migration, seront null/vide pour nouvelles ressources)
+        subtitle: formData.subtitle || null,
+        description: formData.description || '',
+        astuces: formData.astuces || null,
+        images_urls: formData.images_urls || [],
+        gallery_urls: formData.gallery_urls || [],
         video_url: formData.video_url || null,
         pdf_url: formData.pdf_url || null,
-
-        // SEO & Marketplace
-        meta_seo: formData.meta_seo ? { description: formData.meta_seo } : {},
-        price_credits: formData.price_credits,
-        is_premium: formData.price_credits > 0,
-        status: asDraft ? 'draft' : 'pending_review',
-        updated_at: new Date().toISOString()
+        meta_seo: {}
       }
 
       let finalResourceId = resourceId
@@ -304,6 +360,11 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
         finalResourceId = inserted.id
       }
 
+      // TODO Phase 6: Sauvegarder les collaborateurs
+      // if (formData.collaborators.length > 0) {
+      //   await saveCollaborators(supabase, finalResourceId, formData.collaborators)
+      // }
+
       // Soumettre les tags custom pour review admin
       const customTags: { type: string; value: string }[] = []
 
@@ -325,7 +386,7 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
         })
 
       // Insérer les custom tags via la fonction RPC
-      if (customTags.length > 0) {
+      if (customTags.length > 0 && finalResourceId) {
         await Promise.all(
           customTags.map(tag =>
             supabase.rpc('submit_custom_tag', {
@@ -350,17 +411,101 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
   const renderStep = () => {
     const props = { formData, updateFormData, lang }
 
+    // v2: 6 étapes - Infos (+ Collab) → Catégories → Pédagogie → Matériel → Canvas → Review
     switch (currentStep) {
       case 1: return <StepBasicInfo {...props} />
-      case 2: return <StepPedagogy {...props} />
-      case 3: return <StepCategories {...props} />
+      case 2: return <StepCategories {...props} />
+      case 3: return <StepPedagogy {...props} />
       case 4: return <StepMaterials {...props} />
-      case 5: return <StepMedia {...props} creatorId={creatorId} />
+      case 5: return <StepCanvas {...props} creatorId={creatorId} />
       case 6: return <StepReview {...props} />
       default: return null
     }
   }
 
+  // Layout spécial pour l'étape Canvas (plein écran)
+  if (isCanvasStep) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col bg-[#FAF9F6]">
+        {/* Header minimal avec navigation */}
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
+          {/* Progress mini */}
+          <div className="flex items-center gap-2">
+            {steps.map((step, index) => (
+              <div key={step.number} className="flex items-center">
+                <button
+                  onClick={() => step.number < currentStep && setCurrentStep(step.number)}
+                  disabled={step.number > currentStep}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                    currentStep > step.number
+                      ? 'bg-[#A8B5A0] text-white cursor-pointer hover:bg-[#95a28f]'
+                      : currentStep === step.number
+                      ? 'bg-[#5D5A4E] text-white'
+                      : 'bg-[#F5E6D3] text-[#5D5A4E]/40 cursor-not-allowed'
+                  }`}
+                >
+                  {currentStep > step.number ? <Check className="w-4 h-4" /> : step.number}
+                </button>
+                {index < steps.length - 1 && (
+                  <div className={`w-4 h-0.5 mx-1 rounded ${
+                    currentStep > step.number ? 'bg-[#A8B5A0]' : 'bg-[#F5E6D3]'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Navigation buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBack}
+              disabled={isSubmitting}
+              className="border-[#5D5A4E]/20"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              {t.back}
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleSubmit(true)}
+              disabled={isSubmitting || !formData.title.trim()}
+              className="border-[#5D5A4E]/20"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+              {t.saveDraft}
+            </Button>
+
+            <Button
+              size="sm"
+              onClick={handleNext}
+              disabled={!canProceed()}
+              className="bg-[#A8B5A0] hover:bg-[#95a28f] text-white"
+            >
+              {t.next}
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Canvas en plein écran */}
+        <div className="flex-1 overflow-hidden">
+          <StepCanvas formData={formData} updateFormData={updateFormData} lang={lang} creatorId={creatorId} />
+        </div>
+
+        {error && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm shadow-lg">
+            {error}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Layout normal pour les autres étapes
   return (
     <div className="max-w-3xl mx-auto">
       {/* Progress Steps */}

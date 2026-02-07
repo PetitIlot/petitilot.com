@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { X, Link as LinkIcon, Recycle, Sparkles } from 'lucide-react'
+import { X, Recycle, Sparkles } from 'lucide-react'
 import type { Language } from '@/lib/types'
 import type { ResourceFormData, MaterielItem } from '../ResourceWizard'
 import AutocompleteTag, { TagItem } from './AutocompleteTag'
@@ -182,8 +181,7 @@ interface StepMaterialsProps {
 
 export default function StepMaterials({ formData, updateFormData, lang }: StepMaterialsProps) {
   const t = translations[lang]
-  const [editingUrl, setEditingUrl] = useState<number | null>(null)
-  const [urlValue, setUrlValue] = useState('')
+  // v2: URL supprimées (liens affiliés gérés via bloc list-links dans le canvas)
 
   const toggleMaterial = (value: string) => {
     const current = formData.materials
@@ -198,9 +196,9 @@ export default function StepMaterials({ formData, updateFormData, lang }: StepMa
     // Éviter les doublons
     if (formData.materiel_json.some(m => m.item === value)) return
 
+    // v2: Plus de champ URL (géré via bloc list-links dans le canvas)
     const newItem: MaterielItem = {
       item: value,
-      url: null,
       recup: false,
       isCustom
     }
@@ -221,13 +219,7 @@ export default function StepMaterials({ formData, updateFormData, lang }: StepMa
     updateFormData({ materiel_json: updated })
   }
 
-  const saveUrl = (index: number) => {
-    const updated = [...formData.materiel_json]
-    updated[index].url = urlValue.trim() || null
-    updateFormData({ materiel_json: updated })
-    setEditingUrl(null)
-    setUrlValue('')
-  }
+  // v2: saveUrl supprimé - URLs gérées via bloc list-links dans le canvas
 
   const getLabel = (item: string): string => {
     const predefined = predefinedMaterials.find(m => m.value === item)
@@ -310,49 +302,7 @@ export default function StepMaterials({ formData, updateFormData, lang }: StepMa
                   )}
                 </div>
 
-                {/* URL */}
-                {editingUrl === index ? (
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="url"
-                      value={urlValue}
-                      onChange={(e) => setUrlValue(e.target.value)}
-                      placeholder={t.urlPlaceholder}
-                      className="w-40 px-2 py-1 text-xs rounded-lg border border-[#A8B5A0]/30 focus:border-[#A8B5A0] outline-none"
-                      autoFocus
-                      onKeyDown={(e) => e.key === 'Enter' && saveUrl(index)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => saveUrl(index)}
-                      className="px-2 py-1 text-xs bg-[#A8B5A0] text-white rounded-lg"
-                    >
-                      OK
-                    </button>
-                  </div>
-                ) : item.url ? (
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-[#A8B5A0] hover:underline truncate max-w-[100px]"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <LinkIcon className="w-3 h-3 inline mr-1" />
-                    Lien
-                  </a>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingUrl(index)
-                      setUrlValue(item.url || '')
-                    }}
-                    className="text-xs text-[#5D5A4E]/40 hover:text-[#A8B5A0] transition-colors"
-                  >
-                    <LinkIcon className="w-4 h-4" />
-                  </button>
-                )}
+                {/* v2: URL section supprimée - liens affiliés gérés via bloc list-links dans le canvas */}
 
                 {/* Récup toggle */}
                 <button

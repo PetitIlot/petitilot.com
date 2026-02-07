@@ -37,6 +37,7 @@
   ],
   "exclude": [
     "node_modules",
-    "PROTOTYPEBASE44"
+    "PROTOTYPEBASE44",
+    "components/blocks-v1-backup"
   ]
 }

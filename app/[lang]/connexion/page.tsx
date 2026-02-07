@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Check, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
@@ -30,10 +30,15 @@ const translations = {
     errorInvalidCredentials: 'Email ou mot de passe incorrect',
     errorEmailExists: 'Cet email est déjà utilisé',
     errorPasswordMismatch: 'Les mots de passe ne correspondent pas',
-    errorPasswordTooShort: 'Le mot de passe doit contenir au moins 6 caractères',
+    errorPasswordTooShort: 'Le mot de passe doit contenir au moins 8 caractères',
+    errorPasswordWeak: 'Le mot de passe ne respecte pas tous les critères',
     errorGeneric: 'Une erreur est survenue',
     errorOAuthCancelled: 'Connexion Google annulée',
-    errorSessionFailed: 'Erreur lors de la connexion Google. Veuillez réessayer.'
+    errorSessionFailed: 'Erreur lors de la connexion Google. Veuillez réessayer.',
+    pwMinLength: 'Au moins 8 caractères',
+    pwUppercase: 'Au moins une majuscule',
+    pwNumber: 'Au moins un chiffre',
+    pwSpecial: 'Au moins un caractère spécial'
   },
   en: {
     login: 'Login',
@@ -54,10 +59,15 @@ const translations = {
     errorInvalidCredentials: 'Invalid email or password',
     errorEmailExists: 'This email is already in use',
     errorPasswordMismatch: 'Passwords do not match',
-    errorPasswordTooShort: 'Password must be at least 6 characters',
+    errorPasswordTooShort: 'Password must be at least 8 characters',
+    errorPasswordWeak: 'Password does not meet all requirements',
     errorGeneric: 'An error occurred',
     errorOAuthCancelled: 'Google login cancelled',
-    errorSessionFailed: 'Error during Google login. Please try again.'
+    errorSessionFailed: 'Error during Google login. Please try again.',
+    pwMinLength: 'At least 8 characters',
+    pwUppercase: 'At least one uppercase letter',
+    pwNumber: 'At least one number',
+    pwSpecial: 'At least one special character'
   },
   es: {
     login: 'Iniciar sesión',
@@ -78,10 +88,15 @@ const translations = {
     errorInvalidCredentials: 'Correo o contraseña incorrectos',
     errorEmailExists: 'Este correo ya está en uso',
     errorPasswordMismatch: 'Las contraseñas no coinciden',
-    errorPasswordTooShort: 'La contraseña debe tener al menos 6 caracteres',
+    errorPasswordTooShort: 'La contraseña debe tener al menos 8 caracteres',
+    errorPasswordWeak: 'La contraseña no cumple todos los requisitos',
     errorGeneric: 'Ocurrió un error',
     errorOAuthCancelled: 'Inicio de sesión con Google cancelado',
-    errorSessionFailed: 'Error al iniciar sesión con Google. Inténtalo de nuevo.'
+    errorSessionFailed: 'Error al iniciar sesión con Google. Inténtalo de nuevo.',
+    pwMinLength: 'Al menos 8 caracteres',
+    pwUppercase: 'Al menos una mayúscula',
+    pwNumber: 'Al menos un número',
+    pwSpecial: 'Al menos un carácter especial'
   }
 }
 
@@ -150,8 +165,13 @@ function ConnexionContent({ lang }: { lang: Language }) {
     e.preventDefault()
     setError('')
 
-    if (password.length < 6) {
-      setError(t.errorPasswordTooShort)
+    const hasMinLength = password.length >= 8
+    const hasUppercase = /[A-Z]/.test(password)
+    const hasNumber = /[0-9]/.test(password)
+    const hasSpecial = /[^A-Za-z0-9]/.test(password)
+
+    if (!hasMinLength || !hasUppercase || !hasNumber || !hasSpecial) {
+      setError(t.errorPasswordWeak)
       return
     }
 
@@ -174,10 +194,11 @@ function ConnexionContent({ lang }: { lang: Language }) {
     })
 
     if (error) {
+      console.error('Signup error:', error.message, error.status)
       if (error.message.includes('already')) {
         setError(t.errorEmailExists)
       } else {
-        setError(t.errorGeneric)
+        setError(`${t.errorGeneric}: ${error.message}`)
       }
       setIsLoading(false)
       return
@@ -281,6 +302,29 @@ function ConnexionContent({ lang }: { lang: Language }) {
                 </button>
               </div>
             </div>
+
+            {/* Password criteria (signup only) */}
+            {mode === 'signup' && password.length > 0 && (
+              <div className="space-y-1.5 -mt-1">
+                {[
+                  { met: password.length >= 8, label: t.pwMinLength },
+                  { met: /[A-Z]/.test(password), label: t.pwUppercase },
+                  { met: /[0-9]/.test(password), label: t.pwNumber },
+                  { met: /[^A-Za-z0-9]/.test(password), label: t.pwSpecial },
+                ].map(({ met, label }) => (
+                  <div key={label} className="flex items-center gap-2">
+                    {met ? (
+                      <Check className="w-3.5 h-3.5 text-sage" />
+                    ) : (
+                      <X className="w-3.5 h-3.5 text-foreground-secondary/40 dark:text-foreground-dark-secondary/40" />
+                    )}
+                    <span className={`text-xs transition-colors ${met ? 'text-sage' : 'text-foreground-secondary/60 dark:text-foreground-dark-secondary/60'}`}>
+                      {label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Confirm Password (signup only) */}
             {mode === 'signup' && (

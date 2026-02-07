@@ -46,21 +46,17 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // 1. Créditer l'utilisateur
-      const { error: updateError } = await supabaseAdmin
-        .from('profiles')
-        .update({
-          credits_balance: supabaseAdmin.rpc('increment_credits', {
-            user_id: userId,
-            amount: credits
-          })
-        })
-        .eq('id', userId)
-
-      // Alternative : utiliser la fonction RPC directement
-      const { data: newBalance, error: rpcError } = await supabaseAdmin.rpc('increment_credits', {
-        user_id: userId,
-        amount: credits
+      // Utiliser la nouvelle fonction RPC qui gère :
+      // - Ajout des crédits payants avec valeur unitaire
+      // - Création des credit_units pour le tracking FIFO
+      // - Vérification et ajout du bonus gratuit si applicable
+      // - Logging des transactions
+      const { data: result, error: rpcError } = await supabaseAdmin.rpc('add_stripe_credits', {
+        p_user_id: userId,
+        p_pack_id: packId,
+        p_credits: credits,
+        p_price_cents: session.amount_total || 0,
+        p_stripe_payment_intent_id: session.payment_intent as string
       })
 
       if (rpcError) {
@@ -68,23 +64,13 @@ export async function POST(request: NextRequest) {
         throw rpcError
       }
 
-      // 2. Enregistrer la transaction
-      const { error: txError } = await supabaseAdmin
-        .from('credits_transactions')
-        .insert({
-          user_id: userId,
-          type: 'purchase',
-          credits_amount: credits,
-          price_eur_cents: session.amount_total,
-          stripe_payment_intent_id: session.payment_intent as string,
-          description: `Achat ${packId}`
-        })
+      const { paid_credits_added, bonus_credits_added, unit_value_cents } = result || {}
 
-      if (txError) {
-        console.error('Error recording transaction:', txError)
+      console.log(`Successfully credited user ${userId}:`)
+      console.log(`  - ${paid_credits_added} paid credits (${unit_value_cents} cents/unit)`)
+      if (bonus_credits_added > 0) {
+        console.log(`  - ${bonus_credits_added} bonus free credits`)
       }
-
-      console.log(`Successfully credited ${credits} credits to user ${userId}. New balance: ${newBalance}`)
     } catch (error) {
       console.error('Error processing payment:', error)
       // On retourne quand même 200 pour éviter les retries Stripe

@@ -43,6 +43,8 @@ const translations = {
     subscribe: "S'abonner",
     newsletterDesc: 'Recevez nos activités en PDF et ressources exclusives',
     credits: 'Crédits',
+    freeCredits: 'Gratuits',
+    paidCredits: 'Payants',
     myPurchases: 'Mes achats',
     buyCredits: 'Acheter des crédits',
     creatorSpace: 'Espace créateur',
@@ -81,6 +83,8 @@ const translations = {
     subscribe: 'Subscribe',
     newsletterDesc: 'Receive our activities in PDF and exclusive resources',
     credits: 'Credits',
+    freeCredits: 'Free',
+    paidCredits: 'Paid',
     myPurchases: 'My purchases',
     buyCredits: 'Buy credits',
     creatorSpace: 'Creator space',
@@ -119,6 +123,8 @@ const translations = {
     subscribe: 'Suscribirse',
     newsletterDesc: 'Recibe nuestras actividades en PDF y recursos exclusivos',
     credits: 'Créditos',
+    freeCredits: 'Gratis',
+    paidCredits: 'Pagados',
     myPurchases: 'Mis compras',
     buyCredits: 'Comprar créditos',
     creatorSpace: 'Espacio creador',
@@ -145,9 +151,10 @@ export default function ProfilPage({
   const [books, setBooks] = useState<Ressource[]>([])
   const [games, setGames] = useState<Ressource[]>([])
   const [counts, setCounts] = useState<Record<string, number>>({})
-  const [creditsBalance, setCreditsBalance] = useState(0)
+  const [freeCredits, setFreeCredits] = useState(0)
+  const [paidCredits, setPaidCredits] = useState(0)
   const [isApprovedCreator, setIsApprovedCreator] = useState(false)
-  const [hasPendingRequest, setHasPendingRequest] = useState(false)
+  const [isOnboardedCreator, setIsOnboardedCreator] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -172,27 +179,30 @@ export default function ProfilPage({
       const userProfile = await getProfile(authUser.id)
       setProfile(userProfile)
 
-      // Fetch credits balance
+      // Fetch credits balances (free + paid)
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('credits_balance')
+        .select('free_credits_balance, paid_credits_balance')
         .eq('id', authUser.id)
         .single()
 
       if (profileData) {
-        setCreditsBalance(profileData.credits_balance || 0)
+        setFreeCredits(profileData.free_credits_balance || 0)
+        setPaidCredits(profileData.paid_credits_balance || 0)
       }
 
       // Check if user is a creator and their approval status
       const { data: creatorData } = await supabase
         .from('creators')
-        .select('id, is_approved')
+        .select('id, is_approved, slug')
         .eq('user_id', authUser.id)
         .single()
 
       if (creatorData) {
+        // Only show creator section if approved (invited by admin)
         setIsApprovedCreator(creatorData.is_approved === true)
-        setHasPendingRequest(!creatorData.is_approved)
+        // Onboarded = has completed registration (has a slug)
+        setIsOnboardedCreator(creatorData.is_approved === true && !!creatorData.slug)
       }
 
       // Fetch bookmarked ressources
@@ -327,38 +337,66 @@ export default function ProfilPage({
           </div>
         </motion.div>
 
-        {/* Credits & Purchases Cards */}
+        {/* Credits Cards (Free + Paid) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
         >
+          {/* Free Credits - Green */}
           <Link href={`/${lang}/profil/credits`}>
             <div
-              className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
-              style={{ border: '1px solid var(--border)' }}
+              className="rounded-2xl p-5 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
+              style={{
+                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                border: '1px solid rgba(255,255,255,0.2)'
+              }}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-foreground-secondary dark:text-foreground-dark-secondary text-sm">{t.credits}</p>
-                  <p className="text-4xl font-bold text-foreground dark:text-foreground-dark mt-1">{creditsBalance}</p>
-                </div>
-                <Coins className="w-12 h-12" style={{ color: 'var(--icon-sage)', opacity: 0.3 }} />
+              <div className="flex flex-col">
+                <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{t.freeCredits}</p>
+                <p className="text-3xl font-bold text-white mt-1">{freeCredits}</p>
               </div>
-              <p className="text-sm text-sage mt-4">{t.buyCredits} →</p>
+              <Coins className="w-8 h-8 text-white/30 mt-2" />
             </div>
           </Link>
 
-          <Link href={`/${lang}/profil/achats`}>
-            <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer" style={{ border: '1px solid var(--border)' }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-foreground-secondary dark:text-foreground-dark-secondary text-sm">{t.myPurchases}</p>
-                  <p className="text-xl font-bold text-foreground dark:text-foreground-dark mt-1">Voir mes ressources</p>
-                </div>
-                <ShoppingBag className="w-12 h-12" style={{ color: 'var(--icon-terracotta)', opacity: 0.3 }} />
+          {/* Paid Credits - Gold */}
+          <Link href={`/${lang}/profil/credits`}>
+            <div
+              className="rounded-2xl p-5 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                border: '1px solid rgba(255,255,255,0.2)'
+              }}
+            >
+              <div className="flex flex-col">
+                <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{t.paidCredits}</p>
+                <p className="text-3xl font-bold text-white mt-1">{paidCredits}</p>
               </div>
+              <Coins className="w-8 h-8 text-white/30 mt-2" />
+            </div>
+          </Link>
+
+          {/* Buy Credits CTA */}
+          <Link href={`/${lang}/profil/credits`}>
+            <div
+              className="bg-surface dark:bg-surface-dark rounded-2xl p-5 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer h-full flex flex-col justify-center"
+              style={{ border: '1px solid var(--border)' }}
+            >
+              <p className="text-foreground-secondary dark:text-foreground-dark-secondary text-xs">{t.credits}</p>
+              <p className="text-sm font-semibold text-sage mt-1">{t.buyCredits} →</p>
+            </div>
+          </Link>
+
+          {/* My Purchases */}
+          <Link href={`/${lang}/profil/achats`}>
+            <div
+              className="bg-surface dark:bg-surface-dark rounded-2xl p-5 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer h-full flex flex-col justify-center"
+              style={{ border: '1px solid var(--border)' }}
+            >
+              <p className="text-foreground-secondary dark:text-foreground-dark-secondary text-xs">{t.myPurchases}</p>
+              <p className="text-sm font-semibold text-foreground dark:text-foreground-dark mt-1">Voir →</p>
             </div>
           </Link>
         </motion.div>
@@ -390,32 +428,15 @@ export default function ProfilPage({
           </Link>
         </motion.div>
 
-        {/* Creator Space Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18 }}
-          className="mb-8"
-        >
-          {hasPendingRequest ? (
-            <div
-              className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple"
-              style={{ border: '1px solid var(--border)' }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary">
-                    {t.creatorSpace}
-                  </p>
-                  <p className="text-xl font-bold mt-1 text-foreground dark:text-foreground-dark">
-                    {t.pendingApproval}
-                  </p>
-                </div>
-                <Sparkles className="w-12 h-12" style={{ color: 'var(--icon-sky)', opacity: 0.3 }} />
-              </div>
-            </div>
-          ) : (
-            <Link href={isApprovedCreator ? `/${lang}/createur` : `/${lang}/devenir-createur`}>
+        {/* Creator Space Card - Only visible if approved by admin */}
+        {isApprovedCreator && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className="mb-8"
+          >
+            <Link href={isOnboardedCreator ? `/${lang}/createur` : `/${lang}/inscription-createur`}>
               <div
                 className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
                 style={{ border: '1px solid var(--border)' }}
@@ -426,9 +447,9 @@ export default function ProfilPage({
                       {t.creatorSpace}
                     </p>
                     <p className="text-xl font-bold mt-1 text-foreground dark:text-foreground-dark">
-                      {isApprovedCreator ? t.creatorDashboard : t.becomeCreator}
+                      {isOnboardedCreator ? t.creatorDashboard : t.becomeCreator}
                     </p>
-                    {!isApprovedCreator && (
+                    {!isOnboardedCreator && (
                       <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary mt-2">{t.creatorCta}</p>
                     )}
                   </div>
@@ -436,8 +457,8 @@ export default function ProfilPage({
                 </div>
               </div>
             </Link>
-          )}
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* Tabs */}
         <motion.div

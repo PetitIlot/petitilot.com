@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShoppingCart, Check, Loader2, Download, Lock } from 'lucide-react'
+import { ShoppingCart, Check, Loader2, Download, Lock, Gift, Coins } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
 import type { Language } from '@/lib/types'
@@ -18,7 +18,9 @@ const translations = {
     insufficientCredits: 'Crédits insuffisants',
     buyCredits: 'Acheter des crédits',
     error: 'Erreur',
-    free: 'Gratuit'
+    free: 'Gratuit',
+    freeCredits: 'gratuits',
+    paidCredits: 'payants'
   },
   en: {
     buy: 'Buy',
@@ -30,7 +32,9 @@ const translations = {
     insufficientCredits: 'Insufficient credits',
     buyCredits: 'Buy credits',
     error: 'Error',
-    free: 'Free'
+    free: 'Free',
+    freeCredits: 'free',
+    paidCredits: 'paid'
   },
   es: {
     buy: 'Comprar',
@@ -42,7 +46,9 @@ const translations = {
     insufficientCredits: 'Créditos insuficientes',
     buyCredits: 'Comprar créditos',
     error: 'Error',
-    free: 'Gratis'
+    free: 'Gratis',
+    freeCredits: 'gratis',
+    paidCredits: 'pagados'
   }
 }
 
@@ -65,7 +71,8 @@ export default function PurchaseButton({
   const t = translations[lang]
 
   const [user, setUser] = useState<{ id: string } | null>(null)
-  const [creditsBalance, setCreditsBalance] = useState(0)
+  const [freeCredits, setFreeCredits] = useState(0)
+  const [paidCredits, setPaidCredits] = useState(0)
   const [hasPurchased, setHasPurchased] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isPurchasing, setIsPurchasing] = useState(false)
@@ -79,15 +86,16 @@ export default function PurchaseButton({
       if (user) {
         setUser(user)
 
-        // Récupérer le solde de crédits
+        // Récupérer les deux balances
         const { data: profile } = await supabase
           .from('profiles')
-          .select('credits_balance')
+          .select('free_credits_balance, paid_credits_balance')
           .eq('id', user.id)
           .single()
 
         if (profile) {
-          setCreditsBalance(profile.credits_balance || 0)
+          setFreeCredits(profile.free_credits_balance || 0)
+          setPaidCredits(profile.paid_credits_balance || 0)
         }
 
         // Vérifier si déjà acheté
@@ -105,13 +113,18 @@ export default function PurchaseButton({
     checkStatus()
   }, [ressourceId])
 
+  // Calculer la répartition FIFO
+  const totalCredits = freeCredits + paidCredits
+  const freeToSpend = Math.min(freeCredits, priceCredits)
+  const paidToSpend = priceCredits - freeToSpend
+
   const handlePurchase = async () => {
     if (!user) {
       router.push(`/${lang}/connexion`)
       return
     }
 
-    if (creditsBalance < priceCredits) {
+    if (totalCredits < priceCredits) {
       router.push(`/${lang}/profil/credits`)
       return
     }
@@ -130,7 +143,13 @@ export default function PurchaseButton({
 
       if (data.success) {
         setHasPurchased(true)
-        setCreditsBalance(data.new_balance)
+        // Mettre à jour les balances avec les nouvelles valeurs
+        if (data.new_free_balance !== undefined) {
+          setFreeCredits(data.new_free_balance)
+        }
+        if (data.new_paid_balance !== undefined) {
+          setPaidCredits(data.new_paid_balance)
+        }
       } else {
         setError(data.error || t.error)
       }
@@ -219,7 +238,7 @@ export default function PurchaseButton({
   }
 
   // Crédits insuffisants
-  if (creditsBalance < priceCredits) {
+  if (totalCredits < priceCredits) {
     return (
       <div className="space-y-2">
         <Button
@@ -234,7 +253,7 @@ export default function PurchaseButton({
     )
   }
 
-  // Bouton d'achat
+  // Bouton d'achat avec répartition
   return (
     <div className="space-y-2">
       <Button
@@ -254,6 +273,30 @@ export default function PurchaseButton({
           </>
         )}
       </Button>
+
+      {/* Afficher la répartition si mixte */}
+      {!isPurchasing && freeToSpend > 0 && paidToSpend > 0 && (
+        <div className="flex items-center justify-center gap-2 text-xs">
+          <span className="flex items-center gap-1 text-green-600">
+            <Gift className="w-3 h-3" />
+            {freeToSpend} {t.freeCredits}
+          </span>
+          <span className="text-gray-400">+</span>
+          <span className="flex items-center gap-1 text-amber-600">
+            <Coins className="w-3 h-3" />
+            {paidToSpend} {t.paidCredits}
+          </span>
+        </div>
+      )}
+
+      {/* Si tout gratuit */}
+      {!isPurchasing && freeToSpend > 0 && paidToSpend === 0 && (
+        <p className="text-xs text-green-600 flex items-center justify-center gap-1">
+          <Gift className="w-3 h-3" />
+          {freeToSpend} {t.freeCredits}
+        </p>
+      )}
+
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   )

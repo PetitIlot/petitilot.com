@@ -206,7 +206,10 @@ export default function CreatorDashboardPage({
               </p>
             </div>
             <Link href={`/${lang}/createur/ressources/nouvelle`}>
-              <Button className="bg-sage hover:bg-sage-light text-white">
+              <Button
+                className="text-white font-semibold px-5 py-2 rounded-xl transition-all hover:opacity-90"
+                style={{ backgroundColor: '#FDBA74' }}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 {t.newResource}
               </Button>
@@ -325,8 +328,11 @@ export default function CreatorDashboardPage({
               <Package className="w-16 h-16 text-foreground/20 dark:text-foreground-dark/20 mx-auto mb-4" />
               <p className="text-foreground-secondary dark:text-foreground-dark-secondary mb-4">{t.noResources}</p>
               <Link href={`/${lang}/createur/ressources/nouvelle`}>
-                <Button className="bg-sage hover:bg-sage-light text-white">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button
+                  className="text-white font-semibold px-6 py-3 rounded-xl transition-all hover:opacity-90"
+                  style={{ backgroundColor: '#B794C0' }}
+                >
+                  <Plus className="w-5 h-5 mr-2" />
                   {t.createFirst}
                 </Button>
               </Link>

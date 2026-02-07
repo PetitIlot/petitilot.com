@@ -15,12 +15,29 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient()
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
     // Handle session exchange error
     if (exchangeError) {
       console.error('OAuth session exchange error:', exchangeError.message)
       return NextResponse.redirect(new URL(`/${lang}/connexion?error=session_failed`, request.url))
+    }
+
+    // Accorder le bonus d'inscription si c'est un nouvel utilisateur
+    if (sessionData?.user) {
+      try {
+        const { data: bonusResult, error: bonusError } = await supabase.rpc('grant_registration_bonus', {
+          p_user_id: sessionData.user.id
+        })
+
+        if (bonusError) {
+          console.error('Registration bonus error:', bonusError)
+        } else if (bonusResult?.credits_added > 0) {
+          console.log(`Granted ${bonusResult.credits_added} registration bonus credits to user ${sessionData.user.id}`)
+        }
+      } catch (err) {
+        console.error('Error granting registration bonus:', err)
+      }
     }
   }
 

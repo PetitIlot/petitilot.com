@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, Sparkles, Users, DollarSign, Heart } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Sparkles, Users, DollarSign, Heart, Send } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
@@ -12,7 +12,7 @@ import type { Language } from '@/lib/types'
 const translations = {
   fr: {
     title: 'Devenir Créateur',
-    subtitle: 'Partagez vos ressources éducatives avec la communauté Petit Ilot',
+    subtitle: 'Rejoignez la communauté de créateurs Petit Ilot',
     benefit1: 'Publiez vos ressources',
     benefit1Desc: 'Partagez vos activités, fiches et créations avec des milliers de parents',
     benefit2: 'Gagnez des revenus',
@@ -21,28 +21,28 @@ const translations = {
     benefit3Desc: 'Connectez-vous avec d\'autres éducateurs passionnés',
     benefit4: 'Faites la différence',
     benefit4Desc: 'Aidez les familles à offrir le meilleur à leurs enfants',
-    displayName: 'Nom d\'affichage',
-    displayNamePlaceholder: 'Ex: Marie Éducatrice',
-    slug: 'URL personnalisée',
-    slugPlaceholder: 'marie-educatrice',
-    slugHelp: 'petitilot.com/createurs/',
-    bio: 'Courte bio',
-    bioPlaceholder: 'Présentez-vous en quelques mots...',
-    philosophy: 'Votre philosophie éducative',
-    philosophyPlaceholder: 'Qu\'est-ce qui vous anime dans l\'éducation des enfants ?',
-    submit: 'Soumettre ma candidature',
+    formTitle: 'Postuler pour devenir créateur',
+    displayName: 'Votre nom',
+    displayNamePlaceholder: 'Ex: Marie Dupont',
+    email: 'Email',
+    motivation: 'Pourquoi souhaitez-vous devenir créateur ?',
+    motivationPlaceholder: 'Parlez-nous de vous, de votre expérience avec les enfants, de ce que vous aimeriez partager...',
+    submit: 'Envoyer ma candidature',
     submitting: 'Envoi en cours...',
     success: 'Candidature envoyée !',
-    successDesc: 'Nous examinons votre candidature et vous répondrons sous 48h.',
+    successDesc: 'Merci pour votre intérêt ! Nous examinons votre candidature et vous contacterons par email si elle est retenue.',
     back: 'Retour',
+    alreadyApplied: 'Candidature déjà envoyée',
+    alreadyAppliedDesc: 'Votre candidature est en cours d\'examen. Nous vous contacterons bientôt !',
     alreadyCreator: 'Vous êtes déjà créateur !',
     goToDashboard: 'Aller au dashboard',
-    loginFirst: 'Connectez-vous pour devenir créateur',
+    completeRegistration: 'Compléter mon inscription',
+    loginFirst: 'Connectez-vous pour postuler',
     login: 'Se connecter'
   },
   en: {
     title: 'Become a Creator',
-    subtitle: 'Share your educational resources with the Petit Ilot community',
+    subtitle: 'Join the Petit Ilot creator community',
     benefit1: 'Publish your resources',
     benefit1Desc: 'Share your activities, worksheets, and creations with thousands of parents',
     benefit2: 'Earn revenue',
@@ -51,28 +51,28 @@ const translations = {
     benefit3Desc: 'Connect with other passionate educators',
     benefit4: 'Make a difference',
     benefit4Desc: 'Help families give the best to their children',
-    displayName: 'Display name',
-    displayNamePlaceholder: 'Ex: Marie Educator',
-    slug: 'Custom URL',
-    slugPlaceholder: 'marie-educator',
-    slugHelp: 'petitilot.com/creators/',
-    bio: 'Short bio',
-    bioPlaceholder: 'Introduce yourself in a few words...',
-    philosophy: 'Your educational philosophy',
-    philosophyPlaceholder: 'What drives you in educating children?',
+    formTitle: 'Apply to become a creator',
+    displayName: 'Your name',
+    displayNamePlaceholder: 'Ex: Marie Dupont',
+    email: 'Email',
+    motivation: 'Why do you want to become a creator?',
+    motivationPlaceholder: 'Tell us about yourself, your experience with children, what you would like to share...',
     submit: 'Submit my application',
     submitting: 'Submitting...',
     success: 'Application sent!',
-    successDesc: 'We will review your application and respond within 48 hours.',
+    successDesc: 'Thank you for your interest! We will review your application and contact you by email if selected.',
     back: 'Back',
+    alreadyApplied: 'Application already submitted',
+    alreadyAppliedDesc: 'Your application is being reviewed. We will contact you soon!',
     alreadyCreator: 'You are already a creator!',
     goToDashboard: 'Go to dashboard',
-    loginFirst: 'Log in to become a creator',
+    completeRegistration: 'Complete my registration',
+    loginFirst: 'Log in to apply',
     login: 'Log in'
   },
   es: {
     title: 'Conviértete en Creador',
-    subtitle: 'Comparte tus recursos educativos con la comunidad Petit Ilot',
+    subtitle: 'Únete a la comunidad de creadores de Petit Ilot',
     benefit1: 'Publica tus recursos',
     benefit1Desc: 'Comparte tus actividades y creaciones con miles de padres',
     benefit2: 'Gana ingresos',
@@ -81,23 +81,23 @@ const translations = {
     benefit3Desc: 'Conecta con otros educadores apasionados',
     benefit4: 'Marca la diferencia',
     benefit4Desc: 'Ayuda a las familias a dar lo mejor a sus hijos',
-    displayName: 'Nombre visible',
-    displayNamePlaceholder: 'Ej: María Educadora',
-    slug: 'URL personalizada',
-    slugPlaceholder: 'maria-educadora',
-    slugHelp: 'petitilot.com/creadores/',
-    bio: 'Bio corta',
-    bioPlaceholder: 'Preséntate en pocas palabras...',
-    philosophy: 'Tu filosofía educativa',
-    philosophyPlaceholder: '¿Qué te motiva en la educación infantil?',
+    formTitle: 'Solicitar ser creador',
+    displayName: 'Tu nombre',
+    displayNamePlaceholder: 'Ej: María García',
+    email: 'Email',
+    motivation: '¿Por qué quieres ser creador?',
+    motivationPlaceholder: 'Cuéntanos sobre ti, tu experiencia con niños, lo que te gustaría compartir...',
     submit: 'Enviar mi solicitud',
     submitting: 'Enviando...',
     success: '¡Solicitud enviada!',
-    successDesc: 'Revisaremos tu solicitud y responderemos en 48 horas.',
+    successDesc: '¡Gracias por tu interés! Revisaremos tu solicitud y te contactaremos por email si es seleccionada.',
     back: 'Volver',
+    alreadyApplied: 'Solicitud ya enviada',
+    alreadyAppliedDesc: 'Tu solicitud está siendo revisada. ¡Te contactaremos pronto!',
     alreadyCreator: '¡Ya eres creador!',
     goToDashboard: 'Ir al panel',
-    loginFirst: 'Inicia sesión para convertirte en creador',
+    completeRegistration: 'Completar mi registro',
+    loginFirst: 'Inicia sesión para solicitar',
     login: 'Iniciar sesión'
   }
 }
@@ -117,9 +117,7 @@ export default function BecomeCreatorPage({
 
   const [formData, setFormData] = useState({
     displayName: '',
-    slug: '',
-    bio: '',
-    philosophy: ''
+    motivation: ''
   })
 
   useEffect(() => {
@@ -150,17 +148,6 @@ export default function BecomeCreatorPage({
     checkAuth()
   }, [])
 
-  const handleSlugChange = (value: string) => {
-    const slug = value
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-
-    setFormData(prev => ({ ...prev, slug }))
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
@@ -168,18 +155,18 @@ export default function BecomeCreatorPage({
     setIsSubmitting(true)
 
     const supabase = createClient()
+
+    // Créer une entrée dans creators avec is_approved: false et PAS de slug
     const { error } = await supabase.from('creators').insert({
       user_id: user.id,
-      slug: formData.slug,
       display_name: formData.displayName,
-      bio: formData.bio,
-      philosophy: formData.philosophy,
+      application_motivation: formData.motivation,
       is_approved: false,
-      cgu_accepted_at: new Date().toISOString()
+      // slug: NULL - pas de slug à ce stade
     })
 
     if (error) {
-      console.error('Error creating creator:', error.message, error.code, error.details, error.hint)
+      console.error('Error creating application:', error.message)
       alert(`Erreur: ${error.message}`)
       setIsSubmitting(false)
       return
@@ -216,18 +203,63 @@ export default function BecomeCreatorPage({
     )
   }
 
-  // Already a creator
+  // Already has a creator entry
   if (existingCreator) {
+    // If approved and has slug → already a creator
+    if (existingCreator.is_approved && existingCreator.slug) {
+      return (
+        <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center py-12 px-4">
+          <div className="text-center">
+            <CheckCircle className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--icon-sage)' }} />
+            <h1 className="font-quicksand text-2xl font-bold text-foreground dark:text-foreground-dark mb-2">
+              {t.alreadyCreator}
+            </h1>
+            <Link href={`/${lang}/createur`}>
+              <Button className="mt-4 bg-sage hover:bg-sage-light text-white">
+                {t.goToDashboard}
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )
+    }
+
+    // If approved but no slug → needs to complete registration
+    if (existingCreator.is_approved && !existingCreator.slug) {
+      return (
+        <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center py-12 px-4">
+          <div className="text-center">
+            <Sparkles className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--icon-sage)' }} />
+            <h1 className="font-quicksand text-2xl font-bold text-foreground dark:text-foreground-dark mb-2">
+              🎉 Invitation acceptée !
+            </h1>
+            <p className="text-foreground-secondary dark:text-foreground-dark-secondary mb-4">
+              Complétez votre profil créateur pour commencer.
+            </p>
+            <Link href={`/${lang}/inscription-createur`}>
+              <Button className="mt-4 bg-sage hover:bg-sage-light text-white">
+                {t.completeRegistration}
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )
+    }
+
+    // If not approved → application pending
     return (
       <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center py-12 px-4">
         <div className="text-center">
-          <CheckCircle className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--icon-sage)' }} />
+          <Send className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--icon-sky)' }} />
           <h1 className="font-quicksand text-2xl font-bold text-foreground dark:text-foreground-dark mb-2">
-            {t.alreadyCreator}
+            {t.alreadyApplied}
           </h1>
-          <Link href={`/${lang}/createur`}>
-            <Button className="mt-4 bg-sage hover:bg-sage-light text-white">
-              {t.goToDashboard}
+          <p className="text-foreground-secondary dark:text-foreground-dark-secondary max-w-md mx-auto">
+            {t.alreadyAppliedDesc}
+          </p>
+          <Link href={`/${lang}`}>
+            <Button variant="outline" className="mt-6" style={{ border: '1px solid var(--border)' }}>
+              {t.back}
             </Button>
           </Link>
         </div>
@@ -302,8 +334,11 @@ export default function BecomeCreatorPage({
             ))}
           </div>
 
-          {/* Form */}
+          {/* Simplified Application Form */}
           <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-8" style={{ border: '1px solid var(--border)' }}>
+            <h2 className="text-xl font-bold text-foreground dark:text-foreground-dark mb-6">
+              {t.formTitle}
+            </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-2">
@@ -322,54 +357,40 @@ export default function BecomeCreatorPage({
 
               <div>
                 <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-2">
-                  {t.slug} *
+                  {t.email}
                 </label>
-                <div className="flex items-center">
-                  <span className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary mr-2">{t.slugHelp}</span>
-                  <input
-                    type="text"
-                    value={formData.slug}
-                    onChange={(e) => handleSlugChange(e.target.value)}
-                    placeholder={t.slugPlaceholder}
-                    className="flex-1 px-4 py-3 rounded-xl bg-surface dark:bg-surface-dark text-foreground dark:text-foreground-dark outline-none transition-all focus:ring-2 focus:ring-sage/30"
-                    style={{ border: '1px solid var(--border)' }}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-2">
-                  {t.bio}
-                </label>
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                  placeholder={t.bioPlaceholder}
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-xl bg-surface dark:bg-surface-dark text-foreground dark:text-foreground-dark outline-none transition-all resize-none focus:ring-2 focus:ring-sage/30"
+                <input
+                  type="email"
+                  value={user?.email || ''}
+                  disabled
+                  className="w-full px-4 py-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 cursor-not-allowed"
                   style={{ border: '1px solid var(--border)' }}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-2">
-                  {t.philosophy}
+                  {t.motivation} *
                 </label>
                 <textarea
-                  value={formData.philosophy}
-                  onChange={(e) => setFormData(prev => ({ ...prev, philosophy: e.target.value }))}
-                  placeholder={t.philosophyPlaceholder}
-                  rows={4}
+                  value={formData.motivation}
+                  onChange={(e) => setFormData(prev => ({ ...prev, motivation: e.target.value }))}
+                  placeholder={t.motivationPlaceholder}
+                  rows={5}
                   className="w-full px-4 py-3 rounded-xl bg-surface dark:bg-surface-dark text-foreground dark:text-foreground-dark outline-none transition-all resize-none focus:ring-2 focus:ring-sage/30"
                   style={{ border: '1px solid var(--border)' }}
+                  required
                 />
               </div>
 
               <Button
                 type="submit"
-                disabled={isSubmitting || !formData.displayName || !formData.slug}
-                className="w-full bg-sage hover:bg-sage-light text-white py-3 rounded-xl font-semibold"
+                disabled={isSubmitting || !formData.displayName || !formData.motivation}
+                className="w-full py-3 rounded-xl font-semibold text-white transition-colors"
+                style={{
+                  backgroundColor: isSubmitting || !formData.displayName || !formData.motivation ? '#9ca3af' : '#7A8B6F',
+                  cursor: isSubmitting || !formData.displayName || !formData.motivation ? 'not-allowed' : 'pointer'
+                }}
               >
                 {isSubmitting ? t.submitting : t.submit}
               </Button>

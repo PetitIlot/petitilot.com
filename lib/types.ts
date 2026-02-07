@@ -44,6 +44,7 @@ export interface Ressource {
   is_premium: boolean
   materiel_json: MaterielItem[] | null
   price_credits?: number | null
+  content_blocks?: unknown | null  // Block-based layout (ContentBlocksData)
   created_at?: string
   updated_at?: string
 }
@@ -58,7 +59,9 @@ export interface Profile {
   id: string
   email: string
   role: UserRole
-  credits_balance: number
+  credits_balance: number // Total (rétrocompatibilité)
+  free_credits_balance: number // Crédits gratuits (vert)
+  paid_credits_balance: number // Crédits payants (or)
   created_at?: string
   updated_at?: string
 }
@@ -183,30 +186,157 @@ export interface Notification {
   saved_search?: SavedSearch
 }
 
-// Types pour achats (futur Sprint 3)
+// Types pour achats
 export interface Purchase {
   id: string
   buyer_id: string
-  resource_id: string
+  ressource_id: string
   credits_spent: number
-  price_eur: number | null
+  free_credits_spent: number
+  paid_credits_spent: number
+  paid_value_eur_cents: number
+  creator_earning_eur_cents: number
   purchased_at: string
-  download_url: string | null
-  download_count: number
-  last_download_at: string | null
 }
+
+// Types Crédits V2
+export type CreditType = 'free' | 'paid' | 'mixed'
+export type TransactionType = 'purchase' | 'spent' | 'refund' | 'bonus' | 'sale_earning' | 'promo_code' | 'registration_bonus' | 'purchase_bonus' | 'admin_grant'
 
 export interface CreditsTransaction {
   id: string
   user_id: string
-  type: 'purchase' | 'spent' | 'refund' | 'bonus'
+  type: TransactionType
   credits_amount: number
-  price_eur: number | null
+  credit_type: CreditType | null
+  free_amount: number
+  paid_amount: number
+  unit_value_cents: number | null
+  price_eur_cents: number | null
   stripe_payment_intent_id: string | null
-  stripe_charge_id: string | null
+  promo_code_id: string | null
   related_purchase_id: string | null
+  related_ressource_id: string | null
   description: string | null
   created_at: string
+}
+
+export interface CreditUnit {
+  id: string
+  user_id: string
+  credit_type: 'free' | 'paid'
+  quantity: number
+  unit_value_cents: number
+  source: 'stripe_pack' | 'promo_code' | 'registration' | 'admin_grant' | 'purchase_bonus'
+  source_ref: string | null
+  acquired_at: string
+}
+
+export interface PromoCode {
+  id: string
+  code: string
+  free_credits: number
+  max_uses: number | null
+  current_uses: number
+  allow_multiple_per_user: boolean
+  expires_at: string | null
+  created_by: string | null
+  is_active: boolean
+  description: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PromoCodeRedemption {
+  id: string
+  promo_code_id: string
+  user_id: string
+  credits_granted: number
+  redeemed_at: string
+}
+
+export interface PurchaseBonus {
+  id: string
+  pack_id: string
+  pack_name: string | null
+  pack_credits: number
+  pack_price_cents: number
+  bonus_free_credits: number
+  is_active: boolean
+}
+
+export interface AppConfig {
+  key: string
+  value: Record<string, unknown>
+  description: string | null
+  updated_at: string
+}
+
+export interface RegistrationBonusConfig {
+  enabled: boolean
+  free_credits: number
+}
+
+export interface CreditBreakdown {
+  free_balance: number
+  paid_balance: number
+  total_balance: number
+  paid_total_value_cents: number
+  paid_avg_unit_value_cents: number
+}
+
+// Credit packs pour Stripe
+export interface CreditPack {
+  id: string
+  name: string
+  credits: number
+  price_cents: number
+  unit_value_cents: number
+  bonus_free_credits: number
+}
+
+// ==========================================
+// BUNDLES / PACKS
+// ==========================================
+
+/** Item simplifié d'un bundle (référence à une ressource) */
+export interface BundleItem {
+  id: string
+  title: string
+  vignette_url: string | null
+  price_credits?: number
+}
+
+/** Bundle/Pack de ressources */
+export interface Bundle {
+  id: string
+  creator_id: string
+  slug: string
+  title: string
+  description: string | null
+  vignette_url: string | null
+  /** Liste des ressources incluses dans le pack */
+  items: BundleItem[]
+  /** IDs des ressources (pour les queries) */
+  ressource_ids: string[]
+  /** Prix du pack en crédits */
+  price_credits: number
+  /** Prix total si acheté séparément (calculé ou override) */
+  original_price_credits: number | null
+  age_min: number | null
+  age_max: number | null
+  themes: string[] | null
+  categories: string[] | null
+  is_published: boolean
+  published_at: string | null
+  created_at: string
+  updated_at: string
+  // Relations
+  creator?: Creator
+}
+
+export interface BundleWithCreator extends Bundle {
+  creator: Creator
 }
 
 // Helpers

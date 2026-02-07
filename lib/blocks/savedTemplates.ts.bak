@@ -1,0 +1,210 @@
+/**
+ * Saved Templates Management
+ * CRUD operations for user-saved custom templates
+ */
+
+import { createClient } from '@/lib/supabase-client'
+import { ContentBlocksData } from './types'
+
+// ============================================
+// Types
+// ============================================
+
+export interface SavedTemplate {
+  id: string
+  creator_id: string
+  name: string
+  description: string | null
+  icon: string
+  color: string
+  template_data: ContentBlocksData
+  is_public: boolean
+  use_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateTemplateInput {
+  name: string
+  description?: string
+  icon?: string
+  color?: string
+  template_data: ContentBlocksData
+}
+
+export interface UpdateTemplateInput {
+  name?: string
+  description?: string
+  icon?: string
+  color?: string
+  template_data?: ContentBlocksData
+}
+
+// ============================================
+// CRUD Functions
+// ============================================
+
+/**
+ * Fetch all templates for a creator
+ */
+export async function getCreatorTemplates(creatorId: string): Promise<SavedTemplate[]> {
+  const supabase = createClient()
+
+  const { data, error } = await supabase
+    .from('creator_templates')
+    .select('*')
+    .eq('creator_id', creatorId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching creator templates:', error)
+    return []
+  }
+
+  return data || []
+}
+
+/**
+ * Create a new template
+ */
+export async function createTemplate(
+  creatorId: string,
+  input: CreateTemplateInput
+): Promise<SavedTemplate | null> {
+  const supabase = createClient()
+
+  // Clean the template data - remove any activity-specific data
+  const cleanedTemplateData = cleanTemplateData(input.template_data)
+
+  const { data, error } = await supabase
+    .from('creator_templates')
+    .insert({
+      creator_id: creatorId,
+      name: input.name,
+      description: input.description || null,
+      icon: input.icon || '📐',
+      color: input.color || '#A8B5A0',
+      template_data: cleanedTemplateData
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating template:', error)
+    return null
+  }
+
+  return data
+}
+
+/**
+ * Update an existing template
+ */
+export async function updateTemplate(
+  templateId: string,
+  input: UpdateTemplateInput
+): Promise<SavedTemplate | null> {
+  const supabase = createClient()
+
+  const updates: Record<string, unknown> = {}
+
+  if (input.name !== undefined) updates.name = input.name
+  if (input.description !== undefined) updates.description = input.description
+  if (input.icon !== undefined) updates.icon = input.icon
+  if (input.color !== undefined) updates.color = input.color
+  if (input.template_data !== undefined) {
+    updates.template_data = cleanTemplateData(input.template_data)
+  }
+
+  const { data, error } = await supabase
+    .from('creator_templates')
+    .update(updates)
+    .eq('id', templateId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating template:', error)
+    return null
+  }
+
+  return data
+}
+
+/**
+ * Delete a template
+ */
+export async function deleteTemplate(templateId: string): Promise<boolean> {
+  const supabase = createClient()
+
+  const { error } = await supabase
+    .from('creator_templates')
+    .delete()
+    .eq('id', templateId)
+
+  if (error) {
+    console.error('Error deleting template:', error)
+    return false
+  }
+
+  return true
+}
+
+/**
+ * Increment use count when a template is applied
+ */
+export async function incrementTemplateUseCount(templateId: string): Promise<void> {
+  const supabase = createClient()
+
+  await supabase.rpc('increment_template_use_count', { template_id: templateId })
+}
+
+// ============================================
+// Helper Functions
+// ============================================
+
+/**
+ * Clean template data to remove activity-specific content
+ * This ensures the template is reusable across different resources
+ */
+function cleanTemplateData(data: ContentBlocksData): ContentBlocksData {
+  const cleanedBlocks = data.layout.desktop.map(block => {
+    // Create a copy of the block
+    const cleanBlock = { ...block }
+
+    // For text blocks, clear the custom content (will use activity.description)
+    if (block.type === 'text' && block.data) {
+      cleanBlock.data = { ...block.data, content: '' }
+    }
+
+    return cleanBlock
+  })
+
+  return {
+    ...data,
+    layout: {
+      ...data.layout,
+      desktop: cleanedBlocks
+    },
+    metadata: {
+      ...data.metadata,
+      templateName: 'custom'
+    }
+  }
+}
+
+/**
+ * Convert a saved template to the format needed for the template selector
+ */
+export function savedTemplateToSelector(template: SavedTemplate, lang: 'fr' | 'en' | 'es') {
+  return {
+    id: template.id,
+    name: template.name,
+    description: template.description || '',
+    icon: template.icon,
+    color: template.color,
+    isSaved: true,
+    createdAt: template.created_at,
+    useCount: template.use_count
+  }
+}

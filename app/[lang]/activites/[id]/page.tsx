@@ -16,6 +16,9 @@ import PurchaseButton from '@/components/PurchaseButton'
 import RatingHearts from '@/components/RatingHearts'
 import GalleryCarousel from '@/components/ui/GalleryCarousel'
 import { getActivityImageUrl } from '@/lib/cloudinary'
+import { ActivityDetailRouter, detectPageTemplate } from '@/components/templates'
+import { BlockCanvas } from '@/components/blocks'
+import { ContentBlocksData, generateDefaultLayout } from '@/lib/blocks'
 
 const categoryColors = {
   activite: 'bg-[#A8B5A0]',
@@ -141,6 +144,51 @@ export default function ActivityDetailPage({
     )
   }
 
+  // Priorité 1: Si content_blocks existe, utiliser le système de blocs v2
+  // Le canvas occupe 100% de la page - pas de conteneur limité
+  const hasCustomBlocks = activity.content_blocks &&
+    (activity.content_blocks as ContentBlocksData)?.layout?.desktop?.length > 0
+
+  if (hasCustomBlocks) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-background-dark pt-16">
+        {/* Back button - floating */}
+        <Link href={`/${lang}/activites`}>
+          <Button
+            variant="ghost"
+            className="fixed top-20 left-4 z-10 text-foreground dark:text-foreground-dark hover:bg-black/[0.05] dark:hover:bg-white/[0.08] bg-white/80 dark:bg-surface-dark/80 backdrop-blur-sm shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {t.backToActivities}
+          </Button>
+        </Link>
+
+        {/* Block-based content - 100% width, no container limits */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="w-full"
+        >
+          <BlockCanvas
+            blocksData={activity.content_blocks as ContentBlocksData}
+            activity={activity}
+            lang={lang}
+            isEditing={false}
+          />
+        </motion.div>
+      </div>
+    )
+  }
+
+  // Priorité 2: Détecte si un template spécialisé doit être utilisé
+  const templateType = detectPageTemplate(activity.categories, activity.type)
+
+  // Si un template spécialisé existe, utiliser le routeur
+  if (templateType !== 'default') {
+    return <ActivityDetailRouter activity={activity} lang={lang} />
+  }
+
+  // Priorité 3: Utiliser le template par défaut ci-dessous
   const materiels = activity.materiel_json || []
   const imageSource = activity.images_urls?.[0]
   const imageUrl = imageSource

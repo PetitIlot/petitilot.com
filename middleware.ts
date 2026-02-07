@@ -13,7 +13,7 @@ const protectedRoutes = {
 }
 
 // Mode maintenance : si true, le site est protégé par code secret
-const MAINTENANCE_MODE = true
+const MAINTENANCE_MODE = false
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
