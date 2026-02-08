@@ -14,13 +14,13 @@ import type {
 // Form data type for real data preview
 interface FormDataPreview {
   title?: string
-  vignette_url?: string
-  price_credits?: number
+  vignette_url?: string | null
+  price_credits?: number | null
   age_min?: number | null
   age_max?: number | null
   duration?: number | null
   difficulte?: string | null
-  themes?: string[]
+  themes?: string[] | null
 }
 
 interface BlockPreviewProps {
