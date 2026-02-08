@@ -16,7 +16,7 @@ export * from '@/lib/blocks/types'
 // Activity data type for real data display
 interface ActivityData {
   title?: string
-  price_credits?: number
+  price_credits?: number | null
   age_min?: number | null
   age_max?: number | null
   duration?: number | null
