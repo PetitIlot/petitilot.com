@@ -21,8 +21,8 @@ interface ActivityData {
   age_max?: number | null
   duration?: number | null
   difficulte?: string | null
-  themes?: string[]
-  vignette_url?: string
+  themes?: string[] | null
+  vignette_url?: string | null
 }
 
 // Props interface pour BlockCanvas
