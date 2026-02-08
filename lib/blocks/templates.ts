@@ -18,7 +18,7 @@ export function createActivityTemplate(): ContentBlocksData {
       showBadges: true,
       showThemes: true,
       showCompetences: false,
-      titleSize: 'xl' as const,
+      titleSize: 40,
       alignment: 'left' as const
     }, { x: 32, y: 32, width: 540, height: 'auto', zIndex: 1 }),
 
@@ -84,7 +84,7 @@ export function createRecipeTemplate(): ContentBlocksData {
       showBadges: true,
       showThemes: false,
       showCompetences: false,
-      titleSize: 'xl' as const,
+      titleSize: 40,
       alignment: 'center' as const
     }, { x: 100, y: 32, width: 600, height: 'auto', zIndex: 1 }),
 
@@ -154,7 +154,7 @@ export function createGalleryTemplate(): ContentBlocksData {
       showBadges: false,
       showThemes: true,
       showCompetences: false,
-      titleSize: 'lg' as const,
+      titleSize: 32,
       alignment: 'center' as const
     }, { x: 100, y: 32, width: 600, height: 'auto', zIndex: 1 }),
 
@@ -214,7 +214,7 @@ export function createVideoTutorialTemplate(): ContentBlocksData {
       showBadges: true,
       showThemes: false,
       showCompetences: true,
-      titleSize: 'xl' as const,
+      titleSize: 40,
       alignment: 'left' as const
     }, { x: 32, y: 32, width: 500, height: 'auto', zIndex: 1 }),
 
@@ -281,7 +281,7 @@ export function createDocumentTemplate(): ContentBlocksData {
       showBadges: true,
       showThemes: true,
       showCompetences: false,
-      titleSize: 'xl' as const,
+      titleSize: 40,
       alignment: 'center' as const
     }, { x: 100, y: 32, width: 600, height: 'auto', zIndex: 1 }),
 
@@ -352,7 +352,7 @@ export function createMinimalTemplate(): ContentBlocksData {
       showBadges: true,
       showThemes: false,
       showCompetences: false,
-      titleSize: 'lg' as const,
+      titleSize: 32,
       alignment: 'center' as const
     }, { x: 150, y: 50, width: 500, height: 'auto', zIndex: 1 }),
 
