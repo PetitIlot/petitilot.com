@@ -1,32 +1,33 @@
 /**
- * Block-based Content System v2
+ * Block-based Content System v3
  * Structure de données pour le système de blocs modulaires (canvas libre)
  *
- * CHANGEMENTS v2:
- * - Position en pixels (pas en %) pour positionnement libre
- * - ImageBlockData: stocke URL directement
- * - CarouselBlockData: stocke array d'URLs
- * - VideoBlockData: stocke URL directement
- * - PurchaseBlockData: fichier uploadé vers Storage
- * - TextBlockData: rich text avec HTML
- * - ListLinksBlockData: items custom uniquement
- * - SeparatorBlockData: direction ajoutée
+ * CHANGEMENTS v3:
+ * - BlockStyle enrichi : gradient, glass, borderWidth/Style, padding granulaire
+ * - TextBlockData : support Tiptap (contentJson + HTML)
+ * - Nouveaux blocs : image-grid, faq
+ * - Thèmes one-click (blockThemes.ts)
  */
 
-// Types de blocs disponibles (v2.1 - tip supprimé car doublon avec text)
+// Types de blocs disponibles (v3)
 export type BlockType =
   | 'title'          // Bloc titre complet avec badges, tags, âge, durée, difficulté
   | 'image'          // Image unique (URL saisie directement)
   | 'carousel'       // Galerie/carrousel d'images (URLs saisies)
-  | 'carousel-video' // Galerie/carrousel de vidéos (NOUVEAU v2.1)
+  | 'carousel-video' // Galerie/carrousel de vidéos
   | 'creator'        // Widget créateur
-  | 'text'           // Zone de texte libre (avec styles)
+  | 'text'           // Zone de texte riche (Tiptap)
   | 'list'           // Liste simple (items custom)
   | 'list-links'     // Liste avec liens (items + URLs)
   | 'purchase'       // Bouton achat/téléchargement + upload fichier
   | 'video'          // Lecteur vidéo embed (URL saisie)
-  | 'tip'            // @deprecated - utiliser text à la place
   | 'separator'      // Séparateur visuel
+  | 'image-grid'     // Grille d'images (2-6 images)
+  | 'faq'            // FAQ / Accordéon
+  | 'material'       // Liste matériel (depuis materiel_json du wizard)
+  | 'download'       // Téléchargement gratuit (fichier + bouton download)
+  | 'paid-video'     // Vidéo payante (lecteur caché derrière achat)
+  | 'paywall'        // Rideau payant (voile flou pleine largeur)
 
 // ============================================
 // Position libre sur canvas (en pixels)
@@ -40,30 +41,72 @@ export interface BlockPosition {
   zIndex: number      // Ordre d'empilement (z-index)
 }
 
-// Style personnalisable d'un bloc
+// Style personnalisable d'un bloc (v3 — enrichi)
 export interface BlockStyle {
   backgroundColor?: string    // Couleur de fond (hex, rgba, ou preset)
   backgroundPreset?: 'sage' | 'terracotta' | 'sky' | 'mauve' | 'transparent' | 'surface'
+  backgroundGradient?: {
+    type: 'linear' | 'radial'
+    angle?: number             // 0-360 pour linear
+    colors: Array<{ color: string; position: number }>  // position 0-100%
+  }
   borderRadius?: number       // Arrondi des coins en px
-  padding?: number            // Padding interne en px
+  padding?: number            // Padding interne en px (uniforme)
+  paddingTop?: number         // Padding granulaire
+  paddingRight?: number
+  paddingBottom?: number
+  paddingLeft?: number
   shadow?: 'none' | 'sm' | 'md' | 'lg' | 'apple'  // Ombre
   border?: boolean            // Bordure visible
   borderColor?: string        // Couleur bordure
+  borderWidth?: number        // Épaisseur bordure (1-8px)
+  borderStyle?: 'solid' | 'dashed' | 'dotted'
   opacity?: number            // Opacité (0-100)
+  glass?: boolean             // Activer le style glassmorphism
+  glassIntensity?: 'light' | 'medium' | 'strong'
+  glassColor?: string         // Couleur de teinte hex pour liquid glass (ex: "#9DC3A9")
+  glassSpecular?: boolean     // Reflet spéculaire top edge (défaut: true)
+  glassGlow?: boolean         // Lueur intérieure colorée (défaut: true)
+  // 2e couche de fond (contenu)
+  innerBgColor?: string
+  innerBorder?: boolean
+  innerBorderColor?: string
+  innerBorderWidth?: number
+  innerBorderRadius?: number
+  innerShadow?: 'none' | 'sm' | 'md' | 'lg' | 'apple'
 }
 
 // ============================================
 // Données spécifiques par type de bloc
 // ============================================
 
-// Bloc Titre - Données fixes depuis la ressource (v2.1 - options de style étendues)
+// Types pour le bloc titre v4
+export type TitleBorderAnimation = 'none' | 'pulse' | 'glow' | 'shimmer'
+export type TitleSocialVariant = 'classic' | 'compact'
+export type TitleSocialStyle = 'gem' | 'gem-outline' | 'classic'
+export type TitleSocialShape = 'square' | 'round'
+export type TitleTagsVariant = 'classic' | 'compact'
+export type TitleTagsStyle = 'gem' | 'gem-outline' | 'classic'
+export type TitleTagsShape = 'pill' | 'square'
+export type TitleTagsAlignment = 'left' | 'center' | 'right'
+export type BorderAnimationType = 'none' | 'traveling-light' | 'pulsating-shine' | 'gradient-spin'
+
+// Import GemColor type (sage, mauve, rose, sky, etc.)
+export type GemColor = 'sage' | 'mauve' | 'terracotta' | 'rose' | 'sky' | 'amber' | 'neutral' | 'destructive' | 'gold'
+
+// Style per-element (when widget is split)
+export interface TitleElementStyle {
+  backgroundColor?: string
+  borderColor?: string
+  borderRadius?: number
+  padding?: number
+}
+
+// Bloc Titre v4 - Widget composé de 3 éléments détachables
 export interface TitleBlockData {
-  // Options d'affichage (toujours true en v2.1, badges toujours visibles)
-  showBadges?: boolean        // DEPRECATED: toujours afficher
-  showThemes?: boolean        // DEPRECATED: toujours afficher
-  showCompetences?: boolean   // DEPRECATED: toujours afficher
   // Style du titre
   titleSize: number           // Taille en pixels (ex: 24, 32, 40)
+  fontFamily?: string         // ID de police Google Fonts ou système
   alignment: 'left' | 'center' | 'right'
   // Couleurs
   titleColor?: string         // Couleur du titre (hex)
@@ -71,6 +114,47 @@ export interface TitleBlockData {
   borderColor?: string        // Couleur de bordure (hex)
   // Bordure
   borderRadius?: 'rounded' | 'square'  // Type de coins
+
+  // === v4: Visibilité des 3 éléments ===
+  elements?: { showTitle: boolean; showSocial: boolean; showTags: boolean }
+
+  // === v4: Config bordure titre ===
+  titleBorder?: { enabled: boolean; color?: string; width?: number; animation?: TitleBorderAnimation }
+
+  // === v4: Config social (j'aime + notation) ===
+  social?: {
+    variant: TitleSocialVariant
+    style: TitleSocialStyle
+    shape?: TitleSocialShape    // square (défaut) ou round (rond/pillule)
+    classicColor?: string       // Couleur CSS si style=classic
+  }
+
+  // === v4: Config tags ===
+  tags?: {
+    variant: TitleTagsVariant     // compact = sans icônes
+    alignment: TitleTagsAlignment
+    style: TitleTagsStyle
+    shape: TitleTagsShape
+    themeColor: GemColor          // default 'sky' (bleu)
+    competenceColor: GemColor     // default 'rose'
+  }
+
+  // === v4: Animation bordure widget ===
+  borderAnimation?: {
+    type: BorderAnimationType
+    speed?: number                // 1-10
+    color?: string
+  }
+
+  // === v4: Style par élément (quand widget divisé) ===
+  titleElementStyle?: TitleElementStyle
+  socialElementStyle?: TitleElementStyle
+  tagsElementStyle?: TitleElementStyle
+
+  // DEPRECATED v2.1 fields (kept for backwards compat, ignored)
+  showBadges?: boolean
+  showThemes?: boolean
+  showCompetences?: boolean
 }
 
 // Bloc Image - URL saisie directement (MODIFIÉ v2.1)
@@ -110,15 +194,27 @@ export interface CarouselVideoBlockData {
   interval: number
 }
 
-// Bloc Créateur - Données fixes (MODIFIÉ v2.1)
+// Bloc Créateur - Données fixes (MODIFIÉ v3.0)
+export type SocialPlatform = 'instagram' | 'pinterest' | 'youtube' | 'facebook' | 'tiktok' | 'website'
+
+export interface SocialLink {
+  platform: SocialPlatform
+  url: string
+  enabled: boolean
+  followerCount?: number  // Affiché dans la variante "complet"
+}
+
 export interface CreatorBlockData {
   variant: 'full' | 'compact' | 'minimal' | 'collaborators'  // Style d'affichage
   showFollowButton: boolean
-  showStats: boolean         // Nombre de ressources, followers
+  showStats: boolean         // Badges ressources + abonnés
+  bio?: string               // Biographie courte (variantes compact + complet)
+  socialLinks?: SocialLink[] // Liens réseaux sociaux avec toggle individuel
   // Couleurs
   textColor?: string
   backgroundColor?: string
   borderColor?: string
+  buttonColor?: string       // Couleur du bouton Suivre
   borderRadius?: 'rounded' | 'square'
   // Données pour variante 'collaborators' - affiche créateur principal + collaborateurs
   collaborators?: Array<{
@@ -131,12 +227,13 @@ export interface CreatorBlockData {
   showRevenueShare?: boolean  // Afficher les % (optionnel, mode admin)
 }
 
-// Bloc Texte - Rich text avec formatage (MODIFIÉ v2.1)
+// Bloc Texte - Rich text Tiptap (v3)
 export interface TextBlockData {
-  content: string            // Contenu texte (supporte retours à la ligne)
+  content: string            // HTML rendu (pour affichage public)
+  contentJson?: unknown      // JSON Tiptap (pour édition lossless, optionnel)
   // Style du texte
   fontSize?: number          // Taille en pixels
-  fontFamily?: 'default' | 'serif' | 'mono' | 'quicksand'
+  fontFamily?: string        // ID de police Google Fonts ou système
   alignment?: 'left' | 'center' | 'right'
   // Couleurs
   textColor?: string         // Couleur du texte (hex)
@@ -155,7 +252,7 @@ export interface ListBlockData {
   isChecklist?: boolean      // Afficher comme liste à cocher interactive
   // Style
   fontSize?: number
-  fontFamily?: 'default' | 'serif' | 'mono' | 'quicksand'
+  fontFamily?: string        // ID de police Google Fonts ou système
   alignment?: 'left' | 'center' | 'right'
   textColor?: string
   backgroundColor?: string
@@ -169,12 +266,12 @@ export interface ListLinksBlockData {
   items: Array<{
     label: string
     url: string
-    icon?: string            // Emoji ou icône
   }>
+  bulletStyle?: 'dot' | 'check' | 'number' | 'dash' | 'none'  // Style des puces (comme ListBlock)
   showAffiliateNote: boolean // Note sur les liens affiliés
   // Style
   fontSize?: number
-  fontFamily?: 'default' | 'serif' | 'mono' | 'quicksand'
+  fontFamily?: string        // ID de police Google Fonts ou système
   alignment?: 'left' | 'center' | 'right'
   textColor?: string
   backgroundColor?: string
@@ -182,12 +279,15 @@ export interface ListLinksBlockData {
   borderRadius?: 'rounded' | 'square'
 }
 
-// Bloc Achat/Téléchargement - Avec upload fichier (MODIFIÉ v2.1)
+// Bloc Achat/Téléchargement - Avec upload fichier (MODIFIÉ v4)
 export interface PurchaseBlockData {
   variant: 'full' | 'compact' | 'minimal'
   showPrice: boolean
   buttonText?: string        // Texte personnalisé du bouton
-  buttonColor?: string       // Couleur du bouton (hex)
+  buttonStyle?: MonetizationButtonStyle   // gem / gem-outline / classic
+  buttonShape?: MonetizationButtonShape   // rounded / square
+  buttonColor?: string       // Couleur du bouton (hex, mode classic)
+  buttonGem?: GemColor       // Couleur gem (défaut: 'gold')
   // Couleurs du bloc
   backgroundColor?: string
   borderColor?: string
@@ -210,19 +310,182 @@ export interface VideoBlockData {
   aspectRatio: '16:9' | '9:16' | '1:1' | '4:5' | '4:3'
 }
 
-// Bloc Astuce
-export interface TipBlockData {
-  content: string            // Texte de l'astuce (HTML pour formatage)
-  icon: 'lightbulb' | 'star' | 'heart' | 'info' | 'warning' | 'chef'
-  accentColor: 'sage' | 'terracotta' | 'sky' | 'mauve'
+// Bloc Séparateur (MODIFIÉ v2.2 - Options étendues)
+export interface SeparatorBlockData {
+  // Style de base
+  style: 'line' | 'dashed' | 'dotted' | 'double' |
+         'wave' | 'zigzag' | 'scallop' |
+         'dots' | 'stars' | 'hearts' | 'diamonds' | 'arrows' |
+         'gradient' | 'fade' |
+         'space'
+  direction: 'horizontal' | 'vertical'
+
+  // Dimensions
+  thickness: number           // Épaisseur en pixels (1-20)
+  length?: number            // Longueur en % (10-100), défaut 100
+
+  // Couleurs
+  color?: string             // Couleur principale
+  colorEnd?: string          // Couleur de fin (pour gradient/fade)
+
+  // Style de ligne
+  lineCap?: 'butt' | 'round' | 'square'  // Extrémités
+  dashLength?: number        // Longueur des tirets (pour dashed)
+  dashGap?: number           // Espace entre tirets
+
+  // Effets
+  shadow?: boolean           // Ombre portée
+  shadowColor?: string       // Couleur de l'ombre
+  shadowBlur?: number        // Flou de l'ombre (0-20)
+  glow?: boolean             // Effet lumineux
+  glowColor?: string         // Couleur du glow
+  glowIntensity?: number     // Intensité du glow (1-10)
+  blur?: number              // Flou sur le séparateur (0-10)
+  opacity?: number           // Opacité (0-100)
+
+  // Distorsion/Animation
+  amplitude?: number         // Amplitude des vagues/zigzag (1-50)
+  frequency?: number         // Fréquence des vagues/zigzag (1-20)
+  animated?: boolean         // Animation (pour wave/gradient)
+  animationSpeed?: number    // Vitesse animation (1-10)
+
+  // Symboles (pour dots, stars, hearts, etc.)
+  symbolSize?: number        // Taille des symboles (8-40)
+  symbolSpacing?: number     // Espacement entre symboles (10-100)
+  symbolCount?: number       // Nombre de symboles (3-20)
+
+  // Alignement
+  align?: 'start' | 'center' | 'end'  // Alignement si length < 100
 }
 
-// Bloc Séparateur (MODIFIÉ v2)
-export interface SeparatorBlockData {
-  style: 'line' | 'dots' | 'wave' | 'space'
-  direction: 'horizontal' | 'vertical'  // NOUVEAU
-  thickness: number
-  color?: string
+// ============================================
+// Bloc Grille d'Images (NOUVEAU v3)
+// ============================================
+
+export interface ImageGridBlockData {
+  images: Array<{
+    url: string
+    alt?: string
+    caption?: string           // Légende sous l'image
+  }>
+  layout: 'grid-2' | 'grid-3' | 'grid-4' | 'grid-2x2' | 'grid-2x3' | 'masonry'
+  gap: number                  // Espacement en px (4-24)
+  borderRadius?: 'rounded' | 'square'
+  showCaptions?: boolean
+  captionFontSize?: number
+  captionColor?: string
+}
+
+// ============================================
+// Bloc FAQ / Accordéon (NOUVEAU v3)
+// ============================================
+
+export interface FAQBlockData {
+  items: Array<{
+    question: string
+    answer: string             // Texte ou HTML simple
+  }>
+  style: 'minimal' | 'card' | 'bordered'
+  expandMode: 'single' | 'multiple'
+  defaultOpen?: number[]       // Indices ouverts par défaut
+  questionFontSize?: number
+  questionFontFamily?: string
+  questionColor?: string
+  answerColor?: string
+  backgroundColor?: string
+  borderColor?: string
+  borderRadius?: 'rounded' | 'square'
+  iconStyle: 'chevron' | 'plus' | 'arrow'
+}
+
+// ============================================
+// Bloc Matériel (NOUVEAU v3) — affiche materiel_json du wizard
+// ============================================
+
+export interface MaterialBlockData {
+  showLinks: boolean           // Afficher colonne "Où acheter"
+  showRecupBadge: boolean      // Afficher badge ♻️ récup
+  showAffiliateNote: boolean   // Note liens affiliés
+  layout: 'list' | 'grid' | 'two-columns'  // list = liste simple, two-columns = matériel + liens côte à côte
+  // Style
+  titleText?: string           // Titre custom (défaut: "Matériel")
+  fontSize?: number
+  fontFamily?: string
+  textColor?: string
+  backgroundColor?: string
+  borderColor?: string
+  borderRadius?: 'rounded' | 'square'
+}
+
+// ============================================
+// Style bouton partagé (blocs monétisation)
+// ============================================
+
+export type MonetizationButtonStyle = 'gem' | 'gem-outline' | 'classic'
+export type MonetizationButtonShape = 'rounded' | 'square'
+
+// ============================================
+// Bloc Téléchargement gratuit (NOUVEAU v4)
+// ============================================
+
+export interface DownloadBlockData {
+  // Style bouton
+  buttonText?: string           // "Télécharger" par défaut
+  buttonStyle?: MonetizationButtonStyle
+  buttonShape?: MonetizationButtonShape
+  buttonColor?: string          // Couleur hex (mode classic)
+  buttonGem?: GemColor          // Couleur gem (défaut: 'gold')
+  // Style bloc
+  backgroundColor?: string
+  borderColor?: string
+  borderRadius?: 'rounded' | 'square'
+  // Fichier uploadé vers Supabase Storage
+  file?: {
+    path: string
+    name: string
+    size: number
+    mimeType: string
+    uploadedAt: string
+  }
+}
+
+// ============================================
+// Bloc Vidéo payante (NOUVEAU v4)
+// ============================================
+
+export interface PaidVideoBlockData {
+  videoUrl?: string             // URL Cloudinary après upload
+  videoPublicId?: string        // Public ID Cloudinary
+  thumbnailUrl?: string         // Thumbnail auto ou custom
+  // Style bouton
+  buttonText?: string           // "Débloquer la vidéo"
+  buttonStyle?: MonetizationButtonStyle
+  buttonShape?: MonetizationButtonShape
+  buttonColor?: string
+  buttonGem?: GemColor
+  // Style bloc
+  backgroundColor?: string
+  borderColor?: string
+  borderRadius?: 'rounded' | 'square'
+  aspectRatio?: '16:9' | '9:16' | '1:1' | '4:5'
+}
+
+// ============================================
+// Bloc Paywall / Rideau payant (NOUVEAU v4)
+// ============================================
+
+export interface PaywallBlockData {
+  // Style bouton
+  buttonText?: string           // "Débloquer le contenu"
+  buttonStyle?: MonetizationButtonStyle
+  buttonShape?: MonetizationButtonShape
+  buttonColor?: string
+  buttonGem?: GemColor
+  // Rideau
+  blurIntensity?: number        // 8-20px, défaut 12
+  overlayColor?: string         // Couleur overlay semi-transparent
+  overlayOpacity?: number       // 0-100, défaut 60
+  message?: string              // Message affiché ("Contenu premium")
 }
 
 // ============================================
@@ -240,8 +503,13 @@ export type BlockData =
   | { type: 'list-links'; data: ListLinksBlockData }
   | { type: 'purchase'; data: PurchaseBlockData }
   | { type: 'video'; data: VideoBlockData }
-  | { type: 'tip'; data: TipBlockData }  // @deprecated
   | { type: 'separator'; data: SeparatorBlockData }
+  | { type: 'image-grid'; data: ImageGridBlockData }
+  | { type: 'faq'; data: FAQBlockData }
+  | { type: 'material'; data: MaterialBlockData }
+  | { type: 'download'; data: DownloadBlockData }
+  | { type: 'paid-video'; data: PaidVideoBlockData }
+  | { type: 'paywall'; data: PaywallBlockData }
 
 // ============================================
 // Structure complète d'un bloc
@@ -271,6 +539,21 @@ export interface ResponsiveLayout {
 // Configuration du canvas
 // ============================================
 
+// Configuration du rideau payant (canvas-level overlay)
+export interface PaywallConfig {
+  enabled: boolean
+  cutY: number                // Position Y du haut du rideau
+  blurIntensity?: number      // 4-24px, défaut 12
+  overlayColor?: string       // Couleur overlay semi-transparent
+  overlayOpacity?: number     // 0-100, défaut 60
+  message?: string            // Message affiché ("Contenu premium")
+  buttonText?: string
+  buttonStyle?: MonetizationButtonStyle
+  buttonShape?: MonetizationButtonShape
+  buttonColor?: string        // Couleur hex (mode classic)
+  buttonGem?: GemColor        // Couleur gem (défaut: 'gold')
+}
+
 export interface CanvasConfig {
   width: number              // Largeur de référence en px (ex: 800)
   height: number | 'auto'    // Hauteur totale ou auto
@@ -278,6 +561,9 @@ export interface CanvasConfig {
   backgroundImage?: string
   gridSize: number           // Taille de la grille d'alignement (ex: 8)
   snapToGrid: boolean        // Snap magnétique à la grille
+  paddingHorizontal?: number // Marge gauche+droite en px (défaut: 0)
+  paddingTop?: number        // Marge haute en px (défaut: 0)
+  paywall?: PaywallConfig | null // Rideau payant canvas-level
 }
 
 // ============================================
@@ -370,7 +656,17 @@ export const BLOCK_PRESETS: Record<BlockType, Partial<ContentBlock>> = {
     data: {
       titleSize: 32,
       alignment: 'left',
-      borderRadius: 'rounded'
+      borderRadius: 'rounded',
+      elements: { showTitle: true, showSocial: true, showTags: true },
+      social: { variant: 'classic', style: 'gem' },
+      tags: {
+        variant: 'classic',
+        alignment: 'left',
+        style: 'gem',
+        shape: 'pill',
+        themeColor: 'sky',
+        competenceColor: 'rose',
+      },
     } as TitleBlockData
   },
   image: {
@@ -444,6 +740,7 @@ export const BLOCK_PRESETS: Record<BlockType, Partial<ContentBlock>> = {
     data: {
       title: 'Liens utiles',
       items: [],
+      bulletStyle: 'dot',
       showAffiliateNote: true,
       fontSize: 14,
       fontFamily: 'default',
@@ -467,22 +764,88 @@ export const BLOCK_PRESETS: Record<BlockType, Partial<ContentBlock>> = {
       aspectRatio: '16:9'
     } as VideoBlockData
   },
-  tip: {
-    position: { x: 20, y: 20, width: 400, height: 'auto', zIndex: 1 },
-    style: { backgroundPreset: 'sage', borderRadius: 12, padding: 20 },
-    data: {
-      content: '<p>Votre astuce ici...</p>',
-      icon: 'lightbulb',
-      accentColor: 'sage'
-    } as TipBlockData
-  },
   separator: {
     position: { x: 20, y: 20, width: 760, height: 32, zIndex: 1 },
     data: {
       style: 'line',
       direction: 'horizontal',
-      thickness: 1
+      thickness: 2,
+      length: 100,
+      color: '#E5E7EB',
+      lineCap: 'round',
+      opacity: 100,
+      align: 'center'
     } as SeparatorBlockData
+  },
+  'image-grid': {
+    position: { x: 20, y: 20, width: 600, height: 'auto', zIndex: 1 },
+    data: {
+      images: [],
+      layout: 'grid-2',
+      gap: 8,
+      borderRadius: 'rounded',
+      showCaptions: false,
+      captionFontSize: 12
+    } as ImageGridBlockData
+  },
+  faq: {
+    position: { x: 20, y: 20, width: 500, height: 'auto', zIndex: 1 },
+    style: { backgroundPreset: 'surface', borderRadius: 16, padding: 24, border: true },
+    data: {
+      items: [],
+      style: 'bordered',
+      expandMode: 'single',
+      questionFontSize: 16,
+      iconStyle: 'chevron',
+      borderRadius: 'rounded'
+    } as FAQBlockData
+  },
+  material: {
+    position: { x: 20, y: 20, width: 500, height: 'auto', zIndex: 1 },
+    style: { backgroundPreset: 'surface', borderRadius: 16, padding: 24, border: true },
+    data: {
+      showLinks: true,
+      showRecupBadge: true,
+      showAffiliateNote: true,
+      layout: 'two-columns',
+      titleText: 'Matériel',
+      fontSize: 14,
+      borderRadius: 'rounded'
+    } as MaterialBlockData
+  },
+  download: {
+    position: { x: 20, y: 20, width: 300, height: 'auto', zIndex: 20 },
+    data: {
+      buttonText: 'Télécharger',
+      buttonStyle: 'gem',
+      buttonShape: 'rounded',
+      buttonGem: 'gold',
+      borderRadius: 'rounded'
+    } as DownloadBlockData
+  },
+  'paid-video': {
+    position: { x: 20, y: 20, width: 560, height: 315, zIndex: 1 },
+    data: {
+      buttonText: 'Débloquer la vidéo',
+      buttonStyle: 'gem',
+      buttonShape: 'rounded',
+      buttonGem: 'gold',
+      borderRadius: 'rounded',
+      aspectRatio: '16:9'
+    } as PaidVideoBlockData
+  },
+  // paywall: supprimé — maintenant géré comme overlay canvas-level via CanvasConfig.paywall
+  paywall: {
+    position: { x: 0, y: 400, width: 800, height: 80, zIndex: 99 },
+    data: {
+      buttonText: 'Débloquer le contenu',
+      buttonStyle: 'gem',
+      buttonShape: 'rounded',
+      buttonGem: 'gold',
+      blurIntensity: 12,
+      overlayOpacity: 60,
+      message: 'Contenu premium'
+    } as PaywallBlockData
   }
 }
 

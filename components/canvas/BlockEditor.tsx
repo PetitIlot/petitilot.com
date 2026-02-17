@@ -2,251 +2,69 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import {
-  X, Upload, Link, Trash2, Plus, GripVertical,
-  AlignLeft, AlignCenter, AlignRight, Square, Circle, CheckSquare
+  X, Upload, Plus, Trash2, GripVertical,
+  AlignLeft, AlignCenter, AlignRight,
+  Type, Image as ImageIcon, Video, List, ShoppingCart,
+  Minus, User, Images, Film, Grid, HelpCircle, Package,
+  Sparkles, Sun, Waves, Circle, Square, Star, Heart, Diamond,
+  ChevronDown, ChevronRight, Palette,
+  Download, PlayCircle, KeyRound, Lock
 } from 'lucide-react'
 import type { Language } from '@/lib/types'
 import type {
-  ContentBlock, BlockType, TextBlockData, ImageBlockData,
+  ContentBlock, BlockType, BlockStyle, TextBlockData, ImageBlockData,
   CarouselBlockData, CarouselVideoBlockData, VideoBlockData, ListBlockData, ListLinksBlockData,
-  PurchaseBlockData, TipBlockData, TitleBlockData, CreatorBlockData
+  PurchaseBlockData, TitleBlockData, CreatorBlockData, SeparatorBlockData,
+  ImageGridBlockData, FAQBlockData, MaterialBlockData,
+  DownloadBlockData, PaidVideoBlockData, PaywallBlockData,
+  GemColor, PaywallConfig, SocialPlatform, SocialLink
 } from '@/lib/blocks/types'
 import { createClient } from '@/lib/supabase-client'
-
-const translations = {
-  fr: {
-    editText: 'Éditer le texte',
-    imageUrl: 'URL de l\'image',
-    imageUrlPlaceholder: 'https://...',
-    uploadImage: 'Uploader une image',
-    videoUrl: 'URL de la vidéo',
-    videoUrlPlaceholder: 'YouTube, Instagram ou TikTok',
-    addItem: 'Ajouter un élément',
-    itemLabel: 'Élément',
-    linkLabel: 'Lien (optionnel)',
-    uploadFile: 'Uploader le fichier',
-    uploadPdf: 'Glissez un PDF ou cliquez',
-    fileUploaded: 'Fichier uploadé',
-    buttonText: 'Texte du bouton',
-    buttonColor: 'Couleur du bouton',
-    tipContent: 'Contenu de l\'astuce',
-    close: 'Fermer',
-    delete: 'Supprimer',
-    uploading: 'Envoi...',
-    maxSize: 'Taille max: 10MB',
-    fontSize: 'Taille du texte',
-    fontFamily: 'Police',
-    alignment: 'Alignement',
-    colors: 'Couleurs',
-    textColor: 'Couleur du texte',
-    backgroundColor: 'Fond',
-    borderColor: 'Bordure',
-    borderType: 'Type de bordure',
-    rounded: 'Arrondi',
-    square: 'Carré',
-    carouselType: 'Type de carousel',
-    slide: 'Défilement',
-    fade: 'Fondu',
-    coverflow: 'Coverflow',
-    cards: 'Cartes',
-    checklist: 'Liste à cocher',
-    liveEdit: 'Modifications en direct'
-  },
-  en: {
-    editText: 'Edit text',
-    imageUrl: 'Image URL',
-    imageUrlPlaceholder: 'https://...',
-    uploadImage: 'Upload image',
-    videoUrl: 'Video URL',
-    videoUrlPlaceholder: 'YouTube, Instagram or TikTok',
-    addItem: 'Add item',
-    itemLabel: 'Item',
-    linkLabel: 'Link (optional)',
-    uploadFile: 'Upload file',
-    uploadPdf: 'Drag a PDF or click',
-    fileUploaded: 'File uploaded',
-    buttonText: 'Button text',
-    buttonColor: 'Button color',
-    tipContent: 'Tip content',
-    close: 'Close',
-    delete: 'Delete',
-    uploading: 'Uploading...',
-    maxSize: 'Max size: 10MB',
-    fontSize: 'Font size',
-    fontFamily: 'Font',
-    alignment: 'Alignment',
-    colors: 'Colors',
-    textColor: 'Text color',
-    backgroundColor: 'Background',
-    borderColor: 'Border',
-    borderType: 'Border type',
-    rounded: 'Rounded',
-    square: 'Square',
-    carouselType: 'Carousel type',
-    slide: 'Slide',
-    fade: 'Fade',
-    coverflow: 'Coverflow',
-    cards: 'Cards',
-    checklist: 'Checklist',
-    liveEdit: 'Live editing'
-  },
-  es: {
-    editText: 'Editar texto',
-    imageUrl: 'URL de la imagen',
-    imageUrlPlaceholder: 'https://...',
-    uploadImage: 'Subir imagen',
-    videoUrl: 'URL del video',
-    videoUrlPlaceholder: 'YouTube, Instagram o TikTok',
-    addItem: 'Agregar elemento',
-    itemLabel: 'Elemento',
-    linkLabel: 'Enlace (opcional)',
-    uploadFile: 'Subir archivo',
-    uploadPdf: 'Arrastra un PDF o haz clic',
-    fileUploaded: 'Archivo subido',
-    buttonText: 'Texto del botón',
-    buttonColor: 'Color del botón',
-    tipContent: 'Contenido del consejo',
-    close: 'Cerrar',
-    delete: 'Eliminar',
-    uploading: 'Subiendo...',
-    maxSize: 'Tamaño máx: 10MB',
-    fontSize: 'Tamaño de fuente',
-    fontFamily: 'Fuente',
-    alignment: 'Alineación',
-    colors: 'Colores',
-    textColor: 'Color de texto',
-    backgroundColor: 'Fondo',
-    borderColor: 'Borde',
-    borderType: 'Tipo de borde',
-    rounded: 'Redondeado',
-    square: 'Cuadrado',
-    carouselType: 'Tipo de carrusel',
-    slide: 'Deslizar',
-    fade: 'Desvanecer',
-    coverflow: 'Coverflow',
-    cards: 'Tarjetas',
-    checklist: 'Lista de verificación',
-    liveEdit: 'Edición en vivo'
-  }
-}
+import { EditorSection, ColorPicker, SliderControl, SelectControl, ToggleControl, FontPicker, TiptapEditor, CloudinaryUploader } from './editor'
+import { TitleEditor } from './title'
+import { GEMS } from '@/components/ui/button'
 
 // ============================================
-// COMMON UI COMPONENTS
+// BLOCK TYPE CONFIG
 // ============================================
-function ColorPicker({ label, value, onChange }: { label: string; value?: string; onChange: (v: string) => void }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-500 w-16">{label}</span>
-      <input
-        type="color"
-        value={value || '#ffffff'}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-8 h-8 rounded cursor-pointer border border-gray-200"
-      />
-      <input
-        type="text"
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="#000000"
-        className="flex-1 px-2 py-1 text-xs border border-gray-200 rounded focus:border-[#A8B5A0] outline-none font-mono"
-      />
-      {value && (
-        <button onClick={() => onChange('')} className="text-gray-400 hover:text-gray-600">
-          <X className="w-3 h-3" />
-        </button>
-      )}
-    </div>
-  )
+const BLOCK_TYPE_LABELS: Record<BlockType, Record<string, string>> = {
+  title: { fr: 'Titre', en: 'Title', es: 'Título' },
+  text: { fr: 'Texte', en: 'Text', es: 'Texto' },
+  image: { fr: 'Image', en: 'Image', es: 'Imagen' },
+  carousel: { fr: 'Galerie', en: 'Gallery', es: 'Galería' },
+  'carousel-video': { fr: 'Galerie vidéo', en: 'Video Gallery', es: 'Galería de video' },
+  video: { fr: 'Vidéo', en: 'Video', es: 'Video' },
+  list: { fr: 'Liste', en: 'List', es: 'Lista' },
+  'list-links': { fr: 'Liens', en: 'Links', es: 'Enlaces' },
+  purchase: { fr: 'Achat', en: 'Purchase', es: 'Compra' },
+  separator: { fr: 'Séparateur', en: 'Separator', es: 'Separador' },
+  creator: { fr: 'Créateur', en: 'Creator', es: 'Creador' },
+  'image-grid': { fr: 'Grille images', en: 'Image Grid', es: 'Cuadrícula' },
+  faq: { fr: 'FAQ', en: 'FAQ', es: 'FAQ' },
+  material: { fr: 'Matériel', en: 'Material', es: 'Material' },
+  download: { fr: 'Téléchargement', en: 'Download', es: 'Descarga' },
+  'paid-video': { fr: 'Vidéo payante', en: 'Paid Video', es: 'Video de pago' },
+  paywall: { fr: 'Rideau payant', en: 'Paywall', es: 'Paywall' },
 }
 
-function AlignmentPicker({ value, onChange }: { value: string; onChange: (v: 'left' | 'center' | 'right') => void }) {
-  return (
-    <div className="flex gap-1">
-      {(['left', 'center', 'right'] as const).map(a => (
-        <button
-          key={a}
-          onClick={() => onChange(a)}
-          className={`p-2 rounded-lg border-2 transition-colors ${
-            value === a ? 'border-[#A8B5A0] bg-[#A8B5A0]/10' : 'border-gray-200 hover:border-gray-300'
-          }`}
-        >
-          {a === 'left' && <AlignLeft className="w-4 h-4" />}
-          {a === 'center' && <AlignCenter className="w-4 h-4" />}
-          {a === 'right' && <AlignRight className="w-4 h-4" />}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function BorderTypePicker({ value, onChange, t }: {
-  value?: 'rounded' | 'square';
-  onChange: (v: 'rounded' | 'square') => void;
-  t: typeof translations['fr']
-}) {
-  return (
-    <div className="flex gap-2">
-      <button
-        onClick={() => onChange('rounded')}
-        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border-2 text-sm transition-colors ${
-          value === 'rounded' ? 'border-[#A8B5A0] bg-[#A8B5A0]/10' : 'border-gray-200 hover:border-gray-300'
-        }`}
-      >
-        <Circle className="w-4 h-4" />
-        {t.rounded}
-      </button>
-      <button
-        onClick={() => onChange('square')}
-        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border-2 text-sm transition-colors ${
-          value === 'square' ? 'border-[#A8B5A0] bg-[#A8B5A0]/10' : 'border-gray-200 hover:border-gray-300'
-        }`}
-      >
-        <Square className="w-4 h-4" />
-        {t.square}
-      </button>
-    </div>
-  )
-}
-
-function FontFamilyPicker({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
-  const fonts = [
-    { id: 'default', label: 'Par défaut' },
-    { id: 'quicksand', label: 'Quicksand' },
-    { id: 'serif', label: 'Serif' },
-    { id: 'mono', label: 'Mono' }
-  ]
-  return (
-    <select
-      value={value || 'default'}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none text-sm"
-    >
-      {fonts.map(f => (
-        <option key={f.id} value={f.id}>{f.label}</option>
-      ))}
-    </select>
-  )
-}
-
-// Editor header with live indicator and close button
-function EditorHeader({ title, onClose, t }: { title: string; onClose: () => void; t: typeof translations['fr'] }) {
-  return (
-    <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gray-50">
-      <div className="flex items-center gap-2">
-        <h3 className="font-medium text-[#5D5A4E] text-sm">{title}</h3>
-        <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
-          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-          {t.liveEdit}
-        </span>
-      </div>
-      <button
-        onClick={onClose}
-        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-  )
+const BLOCK_TYPE_ICONS: Record<BlockType, React.ReactNode> = {
+  title: <Type className="w-3.5 h-3.5" />,
+  text: <Type className="w-3.5 h-3.5" />,
+  image: <ImageIcon className="w-3.5 h-3.5" />,
+  carousel: <Images className="w-3.5 h-3.5" />,
+  'carousel-video': <Film className="w-3.5 h-3.5" />,
+  video: <Video className="w-3.5 h-3.5" />,
+  list: <List className="w-3.5 h-3.5" />,
+  'list-links': <List className="w-3.5 h-3.5" />,
+  purchase: <ShoppingCart className="w-3.5 h-3.5" />,
+  separator: <Minus className="w-3.5 h-3.5" />,
+  creator: <User className="w-3.5 h-3.5" />,
+  'image-grid': <Grid className="w-3.5 h-3.5" />,
+  faq: <HelpCircle className="w-3.5 h-3.5" />,
+  material: <Package className="w-3.5 h-3.5" />,
+  download: <Download className="w-3.5 h-3.5" />,
+  'paid-video': <PlayCircle className="w-3.5 h-3.5" />,
+  paywall: <KeyRound className="w-3.5 h-3.5" />,
 }
 
 // ============================================
@@ -255,438 +73,553 @@ function EditorHeader({ title, onClose, t }: { title: string; onClose: () => voi
 interface BlockEditorProps {
   block: ContentBlock
   onUpdate: (data: Record<string, unknown>) => void
+  onUpdateStyle: (style: Partial<BlockStyle>) => void
   onClose: () => void
   lang: Language
+  onDetachElement?: (elementName: string) => void
 }
 
-export function BlockEditor({ block, onUpdate, onClose, lang }: BlockEditorProps) {
-  const t = translations[lang]
+export function BlockEditor({ block, onUpdate, onUpdateStyle, onClose, lang, onDetachElement }: BlockEditorProps) {
+  const typeName = BLOCK_TYPE_LABELS[block.type]?.[lang] || block.type
+  const typeIcon = BLOCK_TYPE_ICONS[block.type]
+
+  // Check if this block type has typography controls
+  const hasTypography = ['title', 'text', 'list', 'list-links', 'faq', 'material'].includes(block.type)
+  const isNotSeparator = block.type !== 'separator'
+
+  return (
+    <div className="flex flex-col h-full rounded-2xl overflow-hidden" style={{
+      backgroundColor: 'var(--glass-bg)',
+      backdropFilter: 'blur(20px) saturate(160%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+      border: '1px solid var(--glass-border)',
+      boxShadow: 'var(--elevation-3)',
+    }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+        <div className="flex items-center gap-2">
+          <span className="text-[var(--sage)]">{typeIcon}</span>
+          <span className="text-sm font-semibold text-[var(--foreground)]">{typeName}</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-md hover:bg-[var(--surface-secondary)] transition-colors"
+        >
+          <X className="w-4 h-4 text-[var(--foreground-secondary)]" />
+        </button>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Style Section — common to all blocks (except separator which has its own) */}
+        {isNotSeparator && (
+          <EditorSection title="Style" icon={<Palette className="w-3 h-3" />} defaultOpen={true}>
+            <CommonStyleEditor style={block.style} onUpdateStyle={onUpdateStyle} lang={lang} />
+          </EditorSection>
+        )}
+
+        {/* Content Section — block-specific */}
+        <EditorSection title="Contenu" icon={<Type className="w-3 h-3" />} defaultOpen={false}>
+          {/* Inner background layer */}
+          {isNotSeparator && (
+            <InnerStyleEditor style={block.style} onUpdateStyle={onUpdateStyle} />
+          )}
+          {block.type === 'title' ? (
+            <TitleEditor
+              data={block.data as TitleBlockData}
+              update={(field, value) => onUpdate({ [field]: value })}
+              onDetachElement={onDetachElement}
+            />
+          ) : (
+            <BlockContentEditor block={block} onUpdate={onUpdate} lang={lang} />
+          )}
+        </EditorSection>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// COMMON STYLE EDITOR (background, border, shadow, opacity, glass, themes)
+// ============================================
+function CommonStyleEditor({ style, onUpdateStyle, lang }: {
+  style: BlockStyle
+  onUpdateStyle: (style: Partial<BlockStyle>) => void
+  lang: Language
+}) {
+  const [bgMode, setBgMode] = useState<'color' | 'gradient' | 'glass'>(
+    style.glass ? 'glass' : style.backgroundGradient ? 'gradient' : 'color'
+  )
+
+  return (
+    <div className="space-y-4">
+      {/* Background mode */}
+      <SelectControl
+        label="Fond"
+        value={bgMode}
+        variant="buttons"
+        options={[
+          { value: 'color', label: 'Couleur' },
+          { value: 'gradient', label: 'Dégradé' },
+          { value: 'glass', label: 'Verre' },
+        ]}
+        onChange={v => {
+          setBgMode(v as typeof bgMode)
+          if (v === 'glass') {
+            onUpdateStyle({ glass: true, glassIntensity: 'medium', backgroundColor: undefined, backgroundGradient: undefined })
+          } else if (v === 'gradient') {
+            onUpdateStyle({
+              glass: false,
+              backgroundGradient: {
+                type: 'linear',
+                angle: 135,
+                colors: [
+                  { color: '#F0F4ED', position: 0 },
+                  { color: '#FFFFFF', position: 100 }
+                ]
+              }
+            })
+          } else {
+            onUpdateStyle({ glass: false, backgroundGradient: undefined })
+          }
+        }}
+      />
+
+      {bgMode === 'color' && (
+        <ColorPicker
+          label="Couleur de fond"
+          value={style.backgroundColor}
+          onChange={v => onUpdateStyle({ backgroundColor: v })}
+        />
+      )}
+
+      {bgMode === 'gradient' && style.backgroundGradient && (
+        <div className="space-y-3">
+          <SliderControl
+            label="Angle"
+            value={style.backgroundGradient.angle ?? 135}
+            min={0} max={360} step={15} unit="°"
+            onChange={v => onUpdateStyle({
+              backgroundGradient: { ...style.backgroundGradient!, angle: v }
+            })}
+          />
+          <ColorPicker
+            label="Couleur début"
+            value={style.backgroundGradient.colors[0]?.color}
+            onChange={v => {
+              const colors = [...(style.backgroundGradient?.colors || [])]
+              colors[0] = { color: v, position: 0 }
+              onUpdateStyle({ backgroundGradient: { ...style.backgroundGradient!, colors } })
+            }}
+          />
+          <ColorPicker
+            label="Couleur fin"
+            value={style.backgroundGradient.colors[1]?.color}
+            onChange={v => {
+              const colors = [...(style.backgroundGradient?.colors || [])]
+              colors[1] = { color: v, position: 100 }
+              onUpdateStyle({ backgroundGradient: { ...style.backgroundGradient!, colors } })
+            }}
+          />
+        </div>
+      )}
+
+      {bgMode === 'glass' && (
+        <div className="space-y-3">
+          <SelectControl
+            label="Intensité"
+            value={style.glassIntensity || 'medium'}
+            variant="buttons"
+            options={[
+              { value: 'light', label: 'Léger' },
+              { value: 'medium', label: 'Moyen' },
+              { value: 'strong', label: 'Fort' },
+            ]}
+            onChange={v => onUpdateStyle({ glassIntensity: v as BlockStyle['glassIntensity'] })}
+          />
+
+          {/* Gem color swatches for liquid glass */}
+          <div className="space-y-1.5">
+            <label className="text-xs text-[var(--foreground-secondary)]">Teinte</label>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Transparent / reset swatch */}
+              <button
+                onClick={() => onUpdateStyle({ glassColor: undefined })}
+                className="w-7 h-7 rounded-full border-2 transition-transform flex items-center justify-center"
+                style={{
+                  borderColor: !style.glassColor ? 'var(--sage)' : 'var(--border)',
+                  transform: !style.glassColor ? 'scale(1.15)' : 'scale(1)',
+                  background: 'linear-gradient(135deg, #fff 45%, #ddd 45%, #ddd 55%, #fff 55%)',
+                }}
+                title="Neutre"
+              />
+              {/* Gem swatches */}
+              {(['sage', 'mauve', 'terracotta', 'rose', 'sky', 'amber', 'neutral'] as const).map(gem => {
+                const g = GEMS[gem]
+                const isActive = style.glassColor === g.light
+                return (
+                  <button
+                    key={gem}
+                    onClick={() => onUpdateStyle({ glassColor: g.light })}
+                    className="w-7 h-7 rounded-full border-2 transition-transform"
+                    style={{
+                      backgroundColor: g.light,
+                      borderColor: isActive ? g.deep : 'transparent',
+                      transform: isActive ? 'scale(1.15)' : 'scale(1)',
+                      boxShadow: isActive ? `0 0 8px ${g.light}60` : 'none',
+                    }}
+                    title={gem}
+                  />
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Custom color picker */}
+          <ColorPicker
+            label="Couleur custom"
+            value={style.glassColor}
+            onChange={v => onUpdateStyle({ glassColor: v })}
+          />
+
+          {/* Specular toggle */}
+          <ToggleControl
+            label="Reflet"
+            checked={style.glassSpecular !== false}
+            onChange={v => onUpdateStyle({ glassSpecular: v })}
+          />
+
+          {/* Inner glow toggle */}
+          <ToggleControl
+            label="Lueur"
+            checked={style.glassGlow !== false}
+            onChange={v => onUpdateStyle({ glassGlow: v })}
+          />
+        </div>
+      )}
+
+      {/* Border */}
+      <ToggleControl
+        label="Bordure"
+        checked={style.border ?? false}
+        onChange={v => onUpdateStyle({ border: v })}
+      />
+      {style.border && (
+        <div className="space-y-3 ml-2">
+          <ColorPicker
+            label="Couleur"
+            value={style.borderColor}
+            onChange={v => onUpdateStyle({ borderColor: v })}
+            allowTransparent={false}
+          />
+          <SliderControl
+            label="Épaisseur"
+            value={style.borderWidth ?? 1}
+            min={1} max={8} unit="px"
+            onChange={v => onUpdateStyle({ borderWidth: v })}
+          />
+          <SelectControl
+            label="Style"
+            value={style.borderStyle || 'solid'}
+            variant="buttons"
+            options={[
+              { value: 'solid', label: 'Plein' },
+              { value: 'dashed', label: 'Tirets' },
+              { value: 'dotted', label: 'Points' },
+            ]}
+            onChange={v => onUpdateStyle({ borderStyle: v as BlockStyle['borderStyle'] })}
+          />
+        </div>
+      )}
+
+      {/* Border radius */}
+      <SliderControl
+        label="Arrondi"
+        value={style.borderRadius ?? 12}
+        min={0} max={32} unit="px"
+        onChange={v => onUpdateStyle({ borderRadius: v })}
+      />
+
+      {/* Shadow */}
+      <SelectControl
+        label="Ombre"
+        value={style.shadow || 'none'}
+        options={[
+          { value: 'none', label: 'Aucune' },
+          { value: 'sm', label: 'Douce' },
+          { value: 'md', label: 'Moyenne' },
+          { value: 'lg', label: 'Marquée' },
+          { value: 'apple', label: 'Apple' },
+        ]}
+        onChange={v => onUpdateStyle({ shadow: v as BlockStyle['shadow'] })}
+      />
+
+      {/* Padding */}
+      <SliderControl
+        label="Padding"
+        value={style.padding ?? 16}
+        min={0} max={48} unit="px"
+        onChange={v => onUpdateStyle({ padding: v })}
+      />
+
+      {/* Opacity */}
+      <SliderControl
+        label="Opacité"
+        value={style.opacity ?? 100}
+        min={10} max={100} step={5} unit="%"
+        onChange={v => onUpdateStyle({ opacity: v })}
+      />
+    </div>
+  )
+}
+
+// ============================================
+// INNER STYLE EDITOR (2nd background layer for content)
+// ============================================
+function InnerStyleEditor({ style, onUpdateStyle }: {
+  style: BlockStyle
+  onUpdateStyle: (style: Partial<BlockStyle>) => void
+}) {
+  const hasInner = !!(style.innerBgColor || style.innerBorder || (style.innerShadow && style.innerShadow !== 'none'))
+
+  return (
+    <div className="space-y-3 pb-3 mb-3 border-b border-[var(--border)]">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--foreground-secondary)]">Fond du contenu</span>
+      </div>
+      <ColorPicker
+        label="Couleur"
+        value={style.innerBgColor}
+        onChange={v => onUpdateStyle({ innerBgColor: v })}
+      />
+      {hasInner && (
+        <>
+          <SliderControl
+            label="Arrondi"
+            value={style.innerBorderRadius ?? 8}
+            min={0} max={24} unit="px"
+            onChange={v => onUpdateStyle({ innerBorderRadius: v })}
+          />
+          <ToggleControl
+            label="Bordure"
+            checked={style.innerBorder ?? false}
+            onChange={v => onUpdateStyle({ innerBorder: v })}
+          />
+          {style.innerBorder && (
+            <div className="space-y-3 ml-2">
+              <ColorPicker
+                label="Couleur"
+                value={style.innerBorderColor}
+                onChange={v => onUpdateStyle({ innerBorderColor: v })}
+                allowTransparent={false}
+              />
+              <SliderControl
+                label="Épaisseur"
+                value={style.innerBorderWidth ?? 1}
+                min={1} max={6} unit="px"
+                onChange={v => onUpdateStyle({ innerBorderWidth: v })}
+              />
+            </div>
+          )}
+          <SelectControl
+            label="Ombre"
+            value={style.innerShadow || 'none'}
+            options={[
+              { value: 'none', label: 'Aucune' },
+              { value: 'sm', label: 'Douce' },
+              { value: 'md', label: 'Moyenne' },
+              { value: 'lg', label: 'Marquée' },
+              { value: 'apple', label: 'Apple' },
+            ]}
+            onChange={v => onUpdateStyle({ innerShadow: v as BlockStyle['innerShadow'] })}
+          />
+        </>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// BLOCK CONTENT EDITOR (dispatches to type-specific editors)
+// ============================================
+function BlockContentEditor({ block, onUpdate, lang }: {
+  block: ContentBlock
+  onUpdate: (data: Record<string, unknown>) => void
+  lang: Language
+}) {
+  const update = useCallback((field: string, value: unknown) => {
+    onUpdate({ [field]: value })
+  }, [onUpdate])
 
   switch (block.type) {
-    case 'title':
-      return <TitleEditor data={block.data as TitleBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
     case 'text':
-      return <TextEditor data={block.data as TextBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
+      return <TextContentEditor data={block.data as TextBlockData} update={update} batchUpdate={onUpdate} />
     case 'image':
-      return <ImageEditor data={block.data as ImageBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
+      return <ImageContentEditor data={block.data as ImageBlockData} update={update} />
     case 'carousel':
-      return <CarouselEditor data={block.data as CarouselBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
+      return <CarouselContentEditor data={block.data as CarouselBlockData} update={update} />
     case 'carousel-video':
-      return <CarouselVideoEditor data={block.data as CarouselVideoBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
+      return <CarouselVideoContentEditor data={block.data as CarouselVideoBlockData} update={update} />
     case 'video':
-      return <VideoEditor data={block.data as VideoBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
+      return <VideoContentEditor data={block.data as VideoBlockData} update={update} />
     case 'list':
-      return <ListEditor data={block.data as ListBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
+      return <ListContentEditor data={block.data as ListBlockData} update={update} />
     case 'list-links':
-      return <ListLinksEditor data={block.data as ListLinksBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
+      return <ListLinksContentEditor data={block.data as ListLinksBlockData} update={update} />
     case 'purchase':
-      return <PurchaseEditor data={block.data as PurchaseBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
-    case 'tip':
-      return <TipEditor data={block.data as TipBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
+      return <PurchaseContentEditor data={block.data as PurchaseBlockData} update={update} />
     case 'creator':
-      return <CreatorEditor data={block.data as CreatorBlockData} onUpdate={onUpdate} onClose={onClose} t={t} />
+      return <CreatorContentEditor data={block.data as CreatorBlockData} update={update} />
+    case 'separator':
+      return <SeparatorContentEditor data={block.data as SeparatorBlockData} update={update} />
+    case 'image-grid':
+      return <ImageGridContentEditor data={block.data as ImageGridBlockData} update={update} />
+    case 'faq':
+      return <FAQContentEditor data={block.data as FAQBlockData} update={update} />
+    case 'material':
+      return <MaterialContentEditor data={block.data as MaterialBlockData} update={update} />
+    case 'download':
+      return <DownloadContentEditor data={block.data as DownloadBlockData} update={update} />
+    case 'paid-video':
+      return <PaidVideoContentEditor data={block.data as PaidVideoBlockData} update={update} />
+    case 'paywall':
+      return <PaywallContentEditor data={block.data as PaywallBlockData} update={update} />
     default:
-      return (
-        <div className="p-4 text-center text-gray-500">
-          Ce bloc ne peut pas être édité directement
-          <button onClick={onClose} className="block mx-auto mt-2 text-sm text-[#A8B5A0]">
-            Fermer
-          </button>
-        </div>
-      )
+      return <p className="text-xs text-[var(--foreground-secondary)]">Pas d'options pour ce bloc</p>
   }
 }
 
 // ============================================
-// TITLE EDITOR - v2.1 LIVE EDITING
+// TEXT CONTENT EDITOR — Tiptap Rich Text
 // ============================================
-function TitleEditor({ data, onUpdate, onClose, t }: {
-  data: TitleBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
-}) {
-  // Update function that immediately applies changes
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
-
+function TextContentEditor({ data, update, batchUpdate }: { data: TextBlockData; update: (f: string, v: unknown) => void; batchUpdate: (updates: Record<string, unknown>) => void }) {
   return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Titre" onClose={onClose} t={t} />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Title Size */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.fontSize} (px)</label>
-          <div className="flex items-center gap-3">
-            <input
-              type="range"
-              min="16"
-              max="72"
-              value={typeof data.titleSize === 'number' ? data.titleSize : 32}
-              onChange={(e) => update('titleSize', parseInt(e.target.value))}
-              className="flex-1"
-            />
-            <input
-              type="number"
-              min="12"
-              max="100"
-              value={typeof data.titleSize === 'number' ? data.titleSize : 32}
-              onChange={(e) => update('titleSize', parseInt(e.target.value) || 32)}
-              className="w-16 px-2 py-1 text-sm border border-gray-200 rounded text-center"
-            />
-          </div>
-        </div>
-
-        {/* Alignment */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.alignment}</label>
-          <AlignmentPicker
-            value={data.alignment || 'left'}
-            onChange={(v) => update('alignment', v)}
-          />
-        </div>
-
-        {/* Colors */}
-        <div className="space-y-3 pt-2 border-t">
-          <label className="block text-sm text-gray-600">{t.colors}</label>
-          <ColorPicker label={t.textColor} value={data.titleColor} onChange={(v) => update('titleColor', v || undefined)} />
-          <ColorPicker label={t.backgroundColor} value={data.backgroundColor} onChange={(v) => update('backgroundColor', v || undefined)} />
-          <ColorPicker label={t.borderColor} value={data.borderColor} onChange={(v) => update('borderColor', v || undefined)} />
-        </div>
-
-        {/* Border type */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.borderType}</label>
-          <BorderTypePicker value={data.borderRadius} onChange={(v) => update('borderRadius', v)} t={t} />
-        </div>
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label className="text-xs text-[var(--foreground-secondary)]">Contenu</label>
+        <TiptapEditor
+          content={data.content || ''}
+          contentJson={data.contentJson}
+          onChange={(html, json) => {
+            batchUpdate({ content: html, contentJson: json })
+          }}
+          placeholder="Votre texte ici..."
+        />
       </div>
+      <SliderControl label="Taille" value={data.fontSize || 16} min={10} max={36} unit="px" onChange={v => update('fontSize', v)} />
+      <FontPicker label="Police" value={data.fontFamily || 'default'} onChange={v => update('fontFamily', v)} />
+      <ColorPicker label="Couleur texte" value={data.textColor} onChange={v => update('textColor', v)} />
     </div>
   )
 }
 
 // ============================================
-// TEXT EDITOR - v2.1 LIVE EDITING
+// IMAGE CONTENT EDITOR (with Cloudinary upload)
 // ============================================
-function TextEditor({ data, onUpdate, onClose, t }: {
-  data: TextBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
-}) {
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
-
+function ImageContentEditor({ data, update }: { data: ImageBlockData; update: (f: string, v: unknown) => void }) {
   return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Texte" onClose={onClose} t={t} />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Text content */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.editText}</label>
-          <textarea
-            value={data.content || ''}
-            onChange={(e) => update('content', e.target.value)}
-            placeholder="Votre texte ici..."
-            rows={6}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none resize-none"
-          />
-        </div>
-
-        {/* Font size */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.fontSize} (px)</label>
-          <div className="flex items-center gap-3">
-            <input
-              type="range"
-              min="10"
-              max="36"
-              value={data.fontSize || 16}
-              onChange={(e) => update('fontSize', parseInt(e.target.value))}
-              className="flex-1"
-            />
-            <input
-              type="number"
-              min="8"
-              max="72"
-              value={data.fontSize || 16}
-              onChange={(e) => update('fontSize', parseInt(e.target.value) || 16)}
-              className="w-16 px-2 py-1 text-sm border border-gray-200 rounded text-center"
-            />
-          </div>
-        </div>
-
-        {/* Font family */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.fontFamily}</label>
-          <FontFamilyPicker value={data.fontFamily} onChange={(v) => update('fontFamily', v)} />
-        </div>
-
-        {/* Alignment */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.alignment}</label>
-          <AlignmentPicker
-            value={data.alignment || 'left'}
-            onChange={(v) => update('alignment', v)}
-          />
-        </div>
-
-        {/* Colors */}
-        <div className="space-y-3 pt-2 border-t">
-          <label className="block text-sm text-gray-600">{t.colors}</label>
-          <ColorPicker label={t.textColor} value={data.textColor} onChange={(v) => update('textColor', v || undefined)} />
-          <ColorPicker label={t.backgroundColor} value={data.backgroundColor} onChange={(v) => update('backgroundColor', v || undefined)} />
-          <ColorPicker label={t.borderColor} value={data.borderColor} onChange={(v) => update('borderColor', v || undefined)} />
-        </div>
-
-        {/* Border type */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.borderType}</label>
-          <BorderTypePicker value={data.borderRadius} onChange={(v) => update('borderRadius', v)} t={t} />
-        </div>
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label className="text-xs text-[var(--foreground-secondary)]">URL de l'image</label>
+        <input
+          type="text" value={data.url || ''} onChange={e => update('url', e.target.value)}
+          placeholder="https://..."
+          className="w-full h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
       </div>
+      <CloudinaryUploader
+        onUpload={(url) => update('url', url)}
+        folder="petit-ilot/resources/blocks"
+      />
+      {data.url && (
+        <div className="rounded-lg overflow-hidden border border-[var(--border)]">
+          <img src={data.url} alt={data.alt || ''} className="w-full h-24 object-cover" />
+        </div>
+      )}
+      <div className="space-y-1.5">
+        <label className="text-xs text-[var(--foreground-secondary)]">Texte alternatif</label>
+        <input
+          type="text" value={data.alt || ''} onChange={e => update('alt', e.target.value)}
+          placeholder="Description de l'image"
+          className="w-full h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+      </div>
+      <SelectControl
+        label="Ajustement" value={data.objectFit || 'cover'}
+        options={[
+          { value: 'cover', label: 'Couvrir' },
+          { value: 'contain', label: 'Contenir' },
+          { value: 'fill', label: 'Remplir' },
+        ]}
+        onChange={v => update('objectFit', v)}
+      />
     </div>
   )
 }
 
 // ============================================
-// IMAGE EDITOR - v2.1 LIVE EDITING
+// CAROUSEL CONTENT EDITOR
 // ============================================
-function ImageEditor({ data, onUpdate, onClose, t }: {
-  data: ImageBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
-}) {
-  const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
-
-  const handleUpload = async (file: File) => {
-    setUploading(true)
-    try {
-      const supabase = createClient()
-      const ext = file.name.split('.').pop()
-      const fileName = `block-${Date.now()}.${ext}`
-
-      const { data: uploadData, error } = await supabase.storage
-        .from('resources')
-        .upload(fileName, file)
-
-      if (error) throw error
-
-      const { data: urlData } = supabase.storage
-        .from('resources')
-        .getPublicUrl(fileName)
-
-      if (urlData) {
-        update('url', urlData.publicUrl)
-      }
-    } catch (err) {
-      console.error('Upload error:', err)
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Image" onClose={onClose} t={t} />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* URL input */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.imageUrl}</label>
-          <input
-            type="text"
-            value={data.url || ''}
-            onChange={(e) => update('url', e.target.value)}
-            placeholder={t.imageUrlPlaceholder}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none"
-          />
-        </div>
-
-        {/* Upload button */}
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#A8B5A0] transition-colors flex items-center justify-center gap-2 text-sm text-gray-600"
-          >
-            {uploading ? (
-              <span className="animate-pulse">{t.uploading}</span>
-            ) : (
-              <>
-                <Upload className="w-4 h-4" />
-                {t.uploadImage}
-              </>
-            )}
-          </button>
-          <p className="text-xs text-gray-400 mt-1">{t.maxSize}</p>
-        </div>
-
-        {/* Preview */}
-        {data.url && (
-          <div className="rounded-lg overflow-hidden border border-gray-200">
-            <img src={data.url} alt={data.alt || ''} className="w-full h-32 object-cover" />
-          </div>
-        )}
-
-        {/* Alt text */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">Texte alternatif</label>
-          <input
-            type="text"
-            value={data.alt || ''}
-            onChange={(e) => update('alt', e.target.value)}
-            placeholder="Description de l'image"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none"
-          />
-        </div>
-
-        {/* Border type */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.borderType}</label>
-          <BorderTypePicker value={data.borderRadius} onChange={(v) => update('borderRadius', v)} t={t} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ============================================
-// CAROUSEL EDITOR - v2.1 LIVE EDITING
-// ============================================
-function CarouselEditor({ data, onUpdate, onClose, t }: {
-  data: CarouselBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
-}) {
-  const [newImageUrl, setNewImageUrl] = useState('')
-
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
+function CarouselContentEditor({ data, update }: { data: CarouselBlockData; update: (f: string, v: unknown) => void }) {
+  const [newUrl, setNewUrl] = useState('')
 
   const addImage = () => {
-    if (newImageUrl.trim()) {
-      const images = [...(data.images || []), { url: newImageUrl, alt: '' }]
-      update('images', images)
-      setNewImageUrl('')
+    if (newUrl.trim()) {
+      update('images', [...(data.images || []), { url: newUrl, alt: '' }])
+      setNewUrl('')
     }
   }
 
-  const removeImage = (index: number) => {
-    const images = (data.images || []).filter((_, i) => i !== index)
-    update('images', images)
-  }
-
-  const carouselTypes = [
-    { id: 'slide', label: t.slide, icon: '↔️' },
-    { id: 'fade', label: t.fade, icon: '✨' },
-    { id: 'coverflow', label: t.coverflow, icon: '🎠' },
-    { id: 'cards', label: t.cards, icon: '🃏' }
-  ]
-
   return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Galerie" onClose={onClose} t={t} />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Carousel Type */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.carouselType}</label>
-          <div className="grid grid-cols-2 gap-2">
-            {carouselTypes.map(type => (
-              <button
-                key={type.id}
-                onClick={() => update('carouselType', type.id)}
-                className={`flex items-center justify-center gap-2 py-2 rounded-lg border-2 text-sm transition-colors ${
-                  data.carouselType === type.id ? 'border-[#A8B5A0] bg-[#A8B5A0]/10' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <span>{type.icon}</span>
-                <span>{type.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Add image */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newImageUrl}
-            onChange={(e) => setNewImageUrl(e.target.value)}
-            placeholder={t.imageUrlPlaceholder}
-            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none"
-            onKeyDown={(e) => e.key === 'Enter' && addImage()}
-          />
-          <button
-            onClick={addImage}
-            disabled={!newImageUrl.trim()}
-            className="px-3 py-2 bg-[#A8B5A0] text-white rounded-lg hover:bg-[#95a28f] disabled:opacity-50"
-          >
-            <Plus className="w-4 h-4" />
+    <div className="space-y-3">
+      <SelectControl
+        label="Type de carousel" value={data.carouselType || 'slide'} variant="buttons"
+        options={[
+          { value: 'slide', label: 'Slide' },
+          { value: 'fade', label: 'Fondu' },
+          { value: 'coverflow', label: 'Cover' },
+          { value: 'cards', label: 'Cartes' },
+        ]}
+        onChange={v => update('carouselType', v)}
+      />
+      <div className="flex gap-1.5">
+        <input
+          type="text" value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="URL image..."
+          onKeyDown={e => e.key === 'Enter' && addImage()}
+          className="flex-1 h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+        <button onClick={addImage} disabled={!newUrl.trim()} className="h-8 w-8 flex items-center justify-center rounded-lg bg-[var(--sage)] text-white disabled:opacity-40">
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      {data.images?.map((img, i) => (
+        <div key={i} className="flex items-center gap-2 p-1.5 rounded-lg bg-[var(--surface-secondary)]">
+          <img src={img.url} alt="" className="w-10 h-10 rounded object-cover" />
+          <span className="flex-1 text-[10px] text-[var(--foreground-secondary)] truncate">{img.url}</span>
+          <button onClick={() => update('images', data.images.filter((_, j) => j !== i))} className="p-1 text-red-400 hover:text-red-600">
+            <Trash2 className="w-3 h-3" />
           </button>
         </div>
-
-        {/* Image list */}
-        {data.images && data.images.length > 0 && (
-          <div className="space-y-2">
-            {data.images.map((img, i) => (
-              <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                <img src={img.url} alt={img.alt || ''} className="w-12 h-12 object-cover rounded" />
-                <span className="flex-1 text-xs text-gray-500 truncate">{img.url}</span>
-                <button
-                  onClick={() => removeImage(i)}
-                  className="p-1 text-red-400 hover:text-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Border type */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.borderType}</label>
-          <BorderTypePicker value={data.borderRadius} onChange={(v) => update('borderRadius', v)} t={t} />
-        </div>
-      </div>
+      ))}
+      <CloudinaryUploader
+        compact
+        multiple
+        onUpload={(url) => update('images', [...(data.images || []), { url, alt: '' }])}
+        onUploadMultiple={(results) => update('images', [...(data.images || []), ...results.map(r => ({ url: r.url, alt: '' }))])}
+        folder="petit-ilot/resources/carousel"
+      />
+      <ToggleControl label="Points" checked={data.showDots} onChange={v => update('showDots', v)} />
+      <ToggleControl label="Flèches" checked={data.showArrows} onChange={v => update('showArrows', v)} />
+      <ToggleControl label="Lecture auto" checked={data.autoPlay} onChange={v => update('autoPlay', v)} />
     </div>
   )
 }
 
 // ============================================
-// CAROUSEL VIDEO EDITOR - v2.1 LIVE EDITING
+// CAROUSEL VIDEO CONTENT EDITOR
 // ============================================
-function CarouselVideoEditor({ data, onUpdate, onClose, t }: {
-  data: CarouselVideoBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
-}) {
-  const [newVideoUrl, setNewVideoUrl] = useState('')
-
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
+function CarouselVideoContentEditor({ data, update }: { data: CarouselVideoBlockData; update: (f: string, v: unknown) => void }) {
+  const [newUrl, setNewUrl] = useState('')
 
   const detectPlatform = (url: string): 'youtube' | 'instagram' | 'tiktok' | 'auto' => {
     if (url.includes('youtube') || url.includes('youtu.be')) return 'youtube'
@@ -696,723 +629,1015 @@ function CarouselVideoEditor({ data, onUpdate, onClose, t }: {
   }
 
   const addVideo = () => {
-    if (newVideoUrl.trim()) {
-      const videos = [...(data.videos || []), { url: newVideoUrl, platform: detectPlatform(newVideoUrl) }]
-      update('videos', videos)
-      setNewVideoUrl('')
+    if (newUrl.trim()) {
+      update('videos', [...(data.videos || []), { url: newUrl, platform: detectPlatform(newUrl) }])
+      setNewUrl('')
     }
   }
 
-  const removeVideo = (index: number) => {
-    const videos = (data.videos || []).filter((_, i) => i !== index)
-    update('videos', videos)
-  }
-
-  const carouselTypes = [
-    { id: 'slide', label: t.slide, icon: '↔️' },
-    { id: 'fade', label: t.fade, icon: '✨' },
-    { id: 'coverflow', label: t.coverflow, icon: '🎠' },
-    { id: 'cards', label: t.cards, icon: '🃏' }
-  ]
-
-  const platformIcons: Record<string, string> = {
-    youtube: '📺',
-    instagram: '📸',
-    tiktok: '🎵',
-    auto: '🎬'
-  }
-
   return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Galerie Vidéo" onClose={onClose} t={t} />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Carousel Type */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.carouselType}</label>
-          <div className="grid grid-cols-2 gap-2">
-            {carouselTypes.map(type => (
-              <button
-                key={type.id}
-                onClick={() => update('carouselType', type.id)}
-                className={`flex items-center justify-center gap-2 py-2 rounded-lg border-2 text-sm transition-colors ${
-                  data.carouselType === type.id ? 'border-[#A8B5A0] bg-[#A8B5A0]/10' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <span>{type.icon}</span>
-                <span>{type.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Add video */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newVideoUrl}
-            onChange={(e) => setNewVideoUrl(e.target.value)}
-            placeholder={t.videoUrlPlaceholder}
-            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none"
-            onKeyDown={(e) => e.key === 'Enter' && addVideo()}
-          />
-          <button
-            onClick={addVideo}
-            disabled={!newVideoUrl.trim()}
-            className="px-3 py-2 bg-[#A8B5A0] text-white rounded-lg hover:bg-[#95a28f] disabled:opacity-50"
-          >
-            <Plus className="w-4 h-4" />
+    <div className="space-y-3">
+      <SelectControl
+        label="Type" value={data.carouselType || 'slide'} variant="buttons"
+        options={[
+          { value: 'slide', label: 'Slide' },
+          { value: 'fade', label: 'Fondu' },
+          { value: 'coverflow', label: 'Cover' },
+          { value: 'cards', label: 'Cartes' },
+        ]}
+        onChange={v => update('carouselType', v)}
+      />
+      <div className="flex gap-1.5">
+        <input
+          type="text" value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="URL vidéo..."
+          onKeyDown={e => e.key === 'Enter' && addVideo()}
+          className="flex-1 h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+        <button onClick={addVideo} disabled={!newUrl.trim()} className="h-8 w-8 flex items-center justify-center rounded-lg bg-[var(--sage)] text-white disabled:opacity-40">
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      {data.videos?.map((video, i) => (
+        <div key={i} className="flex items-center gap-2 p-1.5 rounded-lg bg-[var(--surface-secondary)]">
+          <span className="text-xs font-medium text-[var(--foreground-secondary)] w-16">{video.platform}</span>
+          <span className="flex-1 text-[10px] text-[var(--foreground-secondary)] truncate">{video.url}</span>
+          <button onClick={() => update('videos', data.videos.filter((_, j) => j !== i))} className="p-1 text-red-400 hover:text-red-600">
+            <Trash2 className="w-3 h-3" />
           </button>
         </div>
-
-        {/* Video list */}
-        {data.videos && data.videos.length > 0 && (
-          <div className="space-y-2">
-            {data.videos.map((video, i) => (
-              <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                <span className="text-xl">{platformIcons[video.platform]}</span>
-                <span className="flex-1 text-xs text-gray-500 truncate">{video.url}</span>
-                <button
-                  onClick={() => removeVideo(i)}
-                  className="p-1 text-red-400 hover:text-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      ))}
     </div>
   )
 }
 
 // ============================================
-// VIDEO EDITOR - v2.1 LIVE EDITING
+// VIDEO CONTENT EDITOR
 // ============================================
-function VideoEditor({ data, onUpdate, onClose, t }: {
-  data: VideoBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
-}) {
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
-
-  // Detect platform
+function VideoContentEditor({ data, update }: { data: VideoBlockData; update: (f: string, v: unknown) => void }) {
   const url = data.url || ''
-  const isYouTube = url.includes('youtube') || url.includes('youtu.be')
-  const isInstagram = url.includes('instagram')
-  const isTikTok = url.includes('tiktok')
+  const platform = url.includes('youtube') || url.includes('youtu.be') ? 'YouTube' : url.includes('instagram') ? 'Instagram' : url.includes('tiktok') ? 'TikTok' : ''
 
   return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Vidéo" onClose={onClose} t={t} />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* URL */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.videoUrl}</label>
-          <input
-            type="text"
-            value={data.url || ''}
-            onChange={(e) => update('url', e.target.value)}
-            placeholder={t.videoUrlPlaceholder}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none"
-          />
-        </div>
-
-        {/* Platform indicator */}
-        {url && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg text-sm">
-            <span className="text-lg">
-              {isYouTube ? '📺' : isInstagram ? '📸' : isTikTok ? '🎵' : '🎬'}
-            </span>
-            <span className="text-gray-600">
-              {isYouTube ? 'YouTube' : isInstagram ? 'Instagram' : isTikTok ? 'TikTok' : 'Vidéo'}
-            </span>
-          </div>
-        )}
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label className="text-xs text-[var(--foreground-secondary)]">URL de la vidéo</label>
+        <input
+          type="text" value={url} onChange={e => update('url', e.target.value)}
+          placeholder="YouTube, Instagram ou TikTok"
+          className="w-full h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
       </div>
+      {platform && (
+        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[var(--surface-secondary)] text-xs text-[var(--foreground-secondary)]">
+          <Video className="w-3.5 h-3.5" /> {platform}
+        </div>
+      )}
+      <SelectControl
+        label="Format" value={data.aspectRatio || '16:9'}
+        options={[
+          { value: '16:9', label: '16:9' },
+          { value: '9:16', label: '9:16' },
+          { value: '1:1', label: '1:1' },
+          { value: '4:5', label: '4:5' },
+          { value: '4:3', label: '4:3' },
+        ]}
+        onChange={v => update('aspectRatio', v)}
+      />
     </div>
   )
 }
 
 // ============================================
-// LIST EDITOR - v2.1 LIVE EDITING
+// LIST CONTENT EDITOR
 // ============================================
-function ListEditor({ data, onUpdate, onClose, t }: {
-  data: ListBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
-}) {
+function ListContentEditor({ data, update }: { data: ListBlockData; update: (f: string, v: unknown) => void }) {
   const [newItem, setNewItem] = useState('')
-
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
 
   const addItem = () => {
     if (newItem.trim()) {
-      const items = [...(data.items || []), newItem.trim()]
-      update('items', items)
+      update('items', [...(data.items || []), newItem.trim()])
       setNewItem('')
     }
   }
 
-  const removeItem = (index: number) => {
-    const items = (data.items || []).filter((_, i) => i !== index)
-    update('items', items)
-  }
-
-  const updateItem = (index: number, value: string) => {
-    const items = [...(data.items || [])]
-    items[index] = value
-    update('items', items)
-  }
-
   return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Liste" onClose={onClose} t={t} />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Checklist toggle */}
-        <label className="flex items-center gap-2 cursor-pointer">
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label className="text-xs text-[var(--foreground-secondary)]">Titre</label>
+        <input
+          type="text" value={data.title || ''} onChange={e => update('title', e.target.value)}
+          placeholder="Ex: Ingrédients, Matériel..."
+          className="w-full h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+      </div>
+      <SelectControl
+        label="Style des puces" value={data.bulletStyle || 'dot'} variant="buttons"
+        options={[
+          { value: 'dot', label: '•' },
+          { value: 'check', label: '✓' },
+          { value: 'number', label: '1.' },
+          { value: 'dash', label: '—' },
+        ]}
+        onChange={v => update('bulletStyle', v)}
+      />
+      <ToggleControl label="Liste à cocher" checked={data.isChecklist ?? false} onChange={v => update('isChecklist', v)} />
+      {/* Items list */}
+      {(data.items || []).map((item, i) => (
+        <div key={i} className="flex items-center gap-1.5">
+          <GripVertical className="w-3 h-3 text-[var(--foreground-secondary)]/30 flex-shrink-0" />
           <input
-            type="checkbox"
-            checked={data.isChecklist ?? false}
-            onChange={(e) => update('isChecklist', e.target.checked)}
-            className="w-4 h-4 rounded border-gray-300 text-[#A8B5A0] focus:ring-[#A8B5A0]"
+            type="text" value={item}
+            onChange={e => {
+              const items = [...(data.items || [])]
+              items[i] = e.target.value
+              update('items', items)
+            }}
+            className="flex-1 h-7 px-2 text-xs rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
           />
-          <span className="text-sm text-[#5D5A4E]">{t.checklist}</span>
-        </label>
-
-        {/* Items */}
-        <div className="space-y-2">
-          {(data.items || []).map((item, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <GripVertical className="w-4 h-4 text-gray-300" />
-              <input
-                type="text"
-                value={item}
-                onChange={(e) => updateItem(i, e.target.value)}
-                className="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:border-[#A8B5A0] outline-none"
-              />
-              <button
-                onClick={() => removeItem(i)}
-                className="p-1 text-red-400 hover:text-red-600"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* Add item */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            placeholder={t.addItem}
-            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none"
-            onKeyDown={(e) => e.key === 'Enter' && addItem()}
-          />
-          <button
-            onClick={addItem}
-            disabled={!newItem.trim()}
-            className="px-3 py-2 bg-[#A8B5A0] text-white rounded-lg hover:bg-[#95a28f] disabled:opacity-50"
-          >
-            <Plus className="w-4 h-4" />
+          <button onClick={() => update('items', data.items.filter((_, j) => j !== i))} className="p-0.5 text-red-400 hover:text-red-600">
+            <Trash2 className="w-3 h-3" />
           </button>
         </div>
-
-        {/* Font size */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.fontSize} (px)</label>
-          <div className="flex items-center gap-3">
-            <input
-              type="range"
-              min="10"
-              max="24"
-              value={data.fontSize || 14}
-              onChange={(e) => update('fontSize', parseInt(e.target.value))}
-              className="flex-1"
-            />
-            <input
-              type="number"
-              value={data.fontSize || 14}
-              onChange={(e) => update('fontSize', parseInt(e.target.value) || 14)}
-              className="w-16 px-2 py-1 text-sm border border-gray-200 rounded text-center"
-            />
-          </div>
-        </div>
-
-        {/* Alignment */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.alignment}</label>
-          <AlignmentPicker value={data.alignment || 'left'} onChange={(v) => update('alignment', v)} />
-        </div>
-
-        {/* Colors */}
-        <div className="space-y-3 pt-2 border-t">
-          <label className="block text-sm text-gray-600">{t.colors}</label>
-          <ColorPicker label={t.textColor} value={data.textColor} onChange={(v) => update('textColor', v || undefined)} />
-          <ColorPicker label={t.backgroundColor} value={data.backgroundColor} onChange={(v) => update('backgroundColor', v || undefined)} />
-          <ColorPicker label={t.borderColor} value={data.borderColor} onChange={(v) => update('borderColor', v || undefined)} />
-        </div>
+      ))}
+      <div className="flex gap-1.5">
+        <input
+          type="text" value={newItem} onChange={e => setNewItem(e.target.value)} placeholder="Ajouter..."
+          onKeyDown={e => e.key === 'Enter' && addItem()}
+          className="flex-1 h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+        <button onClick={addItem} disabled={!newItem.trim()} className="h-8 w-8 flex items-center justify-center rounded-lg bg-[var(--sage)] text-white disabled:opacity-40">
+          <Plus className="w-3.5 h-3.5" />
+        </button>
       </div>
+      <SliderControl label="Taille texte" value={data.fontSize || 14} min={10} max={24} unit="px" onChange={v => update('fontSize', v)} />
+      <FontPicker label="Police" value={data.fontFamily || 'default'} onChange={v => update('fontFamily', v)} />
+      <ColorPicker label="Couleur texte" value={data.textColor} onChange={v => update('textColor', v)} />
     </div>
   )
 }
 
 // ============================================
-// LIST LINKS EDITOR - v2.1 LIVE EDITING
+// LIST LINKS CONTENT EDITOR
 // ============================================
-function ListLinksEditor({ data, onUpdate, onClose, t }: {
-  data: ListLinksBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
-}) {
+function ListLinksContentEditor({ data, update }: { data: ListLinksBlockData; update: (f: string, v: unknown) => void }) {
   const [newLabel, setNewLabel] = useState('')
   const [newUrl, setNewUrl] = useState('')
 
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
-
   const addItem = () => {
     if (newLabel.trim() && newUrl.trim()) {
-      const items = [...(data.items || []), { label: newLabel.trim(), url: newUrl.trim(), icon: '🔗' }]
-      update('items', items)
+      update('items', [...(data.items || []), { label: newLabel.trim(), url: newUrl.trim() }])
       setNewLabel('')
       setNewUrl('')
     }
   }
 
-  const removeItem = (index: number) => {
-    const items = (data.items || []).filter((_, i) => i !== index)
-    update('items', items)
-  }
-
   return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Liens" onClose={onClose} t={t} />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Items */}
-        <div className="space-y-2">
-          {(data.items || []).map((item, i) => (
-            <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-              <span>{item.icon || '🔗'}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{item.label}</p>
-                <p className="text-xs text-gray-400 truncate">{item.url}</p>
-              </div>
-              <button
-                onClick={() => removeItem(i)}
-                className="p-1 text-red-400 hover:text-red-600"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label className="text-xs text-[var(--foreground-secondary)]">Titre</label>
+        <input
+          type="text" value={data.title || ''} onChange={e => update('title', e.target.value)}
+          placeholder="Ex: Où acheter, Ressources..."
+          className="w-full h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+      </div>
+      <SelectControl
+        label="Style des puces" value={data.bulletStyle || 'dot'} variant="buttons"
+        options={[
+          { value: 'dot', label: '•' },
+          { value: 'check', label: '✓' },
+          { value: 'number', label: '1.' },
+          { value: 'dash', label: '—' },
+        ]}
+        onChange={v => update('bulletStyle', v)}
+      />
+      {(data.items || []).map((item, i) => (
+        <div key={i} className="flex items-center gap-2 p-1.5 rounded-lg bg-[var(--surface-secondary)]">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-[var(--foreground)] truncate">{item.label}</p>
+            <p className="text-[10px] text-[var(--foreground-secondary)] truncate">{item.url}</p>
+          </div>
+          <button onClick={() => update('items', data.items.filter((_, j) => j !== i))} className="p-1 text-red-400 hover:text-red-600">
+            <Trash2 className="w-3 h-3" />
+          </button>
         </div>
-
-        {/* Add link */}
-        <div className="space-y-2">
+      ))}
+      <div className="space-y-1.5">
+        <input
+          type="text" value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Libellé"
+          className="w-full h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+        <div className="flex gap-1.5">
           <input
-            type="text"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            placeholder={t.itemLabel}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none"
+            type="text" value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://..."
+            onKeyDown={e => e.key === 'Enter' && addItem()}
+            className="flex-1 h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
           />
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              placeholder="https://..."
-              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none"
-              onKeyDown={(e) => e.key === 'Enter' && addItem()}
-            />
-            <button
-              onClick={addItem}
-              disabled={!newLabel.trim() || !newUrl.trim()}
-              className="px-3 py-2 bg-[#A8B5A0] text-white rounded-lg hover:bg-[#95a28f] disabled:opacity-50"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Font size */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.fontSize} (px)</label>
-          <div className="flex items-center gap-3">
-            <input
-              type="range"
-              min="10"
-              max="24"
-              value={data.fontSize || 14}
-              onChange={(e) => update('fontSize', parseInt(e.target.value))}
-              className="flex-1"
-            />
-            <input
-              type="number"
-              value={data.fontSize || 14}
-              onChange={(e) => update('fontSize', parseInt(e.target.value) || 14)}
-              className="w-16 px-2 py-1 text-sm border border-gray-200 rounded text-center"
-            />
-          </div>
-        </div>
-
-        {/* Colors */}
-        <div className="space-y-3 pt-2 border-t">
-          <label className="block text-sm text-gray-600">{t.colors}</label>
-          <ColorPicker label={t.textColor} value={data.textColor} onChange={(v) => update('textColor', v || undefined)} />
-          <ColorPicker label={t.backgroundColor} value={data.backgroundColor} onChange={(v) => update('backgroundColor', v || undefined)} />
+          <button onClick={addItem} disabled={!newLabel.trim() || !newUrl.trim()} className="h-8 w-8 flex items-center justify-center rounded-lg bg-[var(--sage)] text-white disabled:opacity-40">
+            <Plus className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
+      <ToggleControl label="Note affiliés" checked={data.showAffiliateNote} onChange={v => update('showAffiliateNote', v)} />
+      <SliderControl label="Taille texte" value={data.fontSize || 14} min={10} max={24} unit="px" onChange={v => update('fontSize', v)} />
+      <FontPicker label="Police" value={data.fontFamily || 'default'} onChange={v => update('fontFamily', v)} />
+      <ColorPicker label="Couleur texte" value={data.textColor} onChange={v => update('textColor', v)} />
     </div>
   )
 }
 
 // ============================================
-// PURCHASE EDITOR - v2.1 LIVE EDITING
+// MONETIZATION BUTTON EDITOR (shared by purchase, download, paid-video, paywall)
 // ============================================
-function PurchaseEditor({ data, onUpdate, onClose, t }: {
-  data: PurchaseBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
+const GEM_OPTIONS: { value: GemColor; label: string }[] = [
+  { value: 'gold', label: '🥇 Or' },
+  { value: 'sage', label: '🌿 Sauge' },
+  { value: 'amber', label: '🍯 Ambre' },
+  { value: 'rose', label: '🌸 Rose' },
+  { value: 'sky', label: '💎 Ciel' },
+  { value: 'mauve', label: '💜 Mauve' },
+  { value: 'terracotta', label: '🧱 Terracotta' },
+  { value: 'neutral', label: '⚪ Neutre' },
+]
+
+function MonetizationButtonEditor({ data, update }: {
+  data: { buttonText?: string; buttonStyle?: string; buttonShape?: string; buttonColor?: string; buttonGem?: string }
+  update: (field: string, value: unknown) => void
+}) {
+  const style = (data.buttonStyle || 'gem') as string
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label className="text-xs text-[var(--foreground-secondary)]">Texte du bouton</label>
+        <input
+          type="text" value={data.buttonText || ''} onChange={e => update('buttonText', e.target.value)}
+          placeholder="Obtenir"
+          className="w-full h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+      </div>
+      <SelectControl
+        label="Style bouton" value={style} variant="buttons"
+        options={[
+          { value: 'gem', label: 'Gem' },
+          { value: 'gem-outline', label: 'Outline' },
+          { value: 'classic', label: 'Classique' },
+        ]}
+        onChange={v => update('buttonStyle', v)}
+      />
+      <SelectControl
+        label="Forme" value={data.buttonShape || 'rounded'} variant="buttons"
+        options={[
+          { value: 'rounded', label: 'Rond' },
+          { value: 'square', label: 'Carré' },
+        ]}
+        onChange={v => update('buttonShape', v)}
+      />
+      {style === 'classic' ? (
+        <ColorPicker label="Couleur bouton" value={data.buttonColor || '#A8B5A0'} onChange={v => update('buttonColor', v)} allowTransparent={false} />
+      ) : (
+        <SelectControl
+          label="Couleur gem" value={data.buttonGem || 'gold'}
+          options={GEM_OPTIONS}
+          onChange={v => update('buttonGem', v)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// FILE UPLOAD DROPZONE (shared by purchase & download)
+// ============================================
+function FileUploadDropzone({ file, onUpload, accept = '.pdf,.zip,.doc,.docx', label = 'Glissez un fichier ou cliquez' }: {
+  file?: { name: string; size?: number } | null
+  onUpload: (file: File) => void
+  accept?: string
+  label?: string
 }) {
   const [uploading, setUploading] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
-
-  const handleUpload = async (file: File) => {
+  const handleUpload = async (f: File) => {
     setUploading(true)
     try {
-      const supabase = createClient()
-      const ext = file.name.split('.').pop()
-      const fileName = `purchase-${Date.now()}.${ext}`
-
-      const { error } = await supabase.storage
-        .from('resources')
-        .upload(fileName, file)
-
-      if (error) throw error
-
-      const { data: urlData } = supabase.storage
-        .from('resources')
-        .getPublicUrl(fileName)
-
-      if (urlData) {
-        update('file', { name: file.name, url: urlData.publicUrl, size: file.size })
-      }
-    } catch (err) {
-      console.error('Upload error:', err)
+      await new Promise<void>(resolve => {
+        onUpload(f)
+        resolve()
+      })
     } finally {
       setUploading(false)
     }
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Achat" onClose={onClose} t={t} />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* File upload */}
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.zip,.doc,.docx"
-            onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#A8B5A0] transition-colors"
-          >
-            {uploading ? (
-              <span className="animate-pulse">{t.uploading}</span>
-            ) : data.file ? (
-              <div className="text-center">
-                <p className="text-sm text-[#5D5A4E]">{t.fileUploaded}</p>
-                <p className="text-xs text-gray-500">{data.file.name}</p>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500">
-                <Upload className="w-6 h-6 mx-auto mb-1" />
-                <p className="text-sm">{t.uploadPdf}</p>
-              </div>
-            )}
-          </button>
-        </div>
-
-        {/* Button text */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.buttonText}</label>
-          <input
-            type="text"
-            value={data.buttonText || ''}
-            onChange={(e) => update('buttonText', e.target.value)}
-            placeholder="Obtenir"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none"
-          />
-        </div>
-
-        {/* Button color */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.buttonColor}</label>
-          <input
-            type="color"
-            value={data.buttonColor || '#A8B5A0'}
-            onChange={(e) => update('buttonColor', e.target.value)}
-            className="w-full h-10 rounded cursor-pointer border border-gray-200"
-          />
-        </div>
-
-        {/* Background & border colors */}
-        <div className="space-y-3 pt-2 border-t">
-          <label className="block text-sm text-gray-600">{t.colors}</label>
-          <ColorPicker label={t.backgroundColor} value={data.backgroundColor} onChange={(v) => update('backgroundColor', v || undefined)} />
-          <ColorPicker label={t.borderColor} value={data.borderColor} onChange={(v) => update('borderColor', v || undefined)} />
-        </div>
-
-        {/* Border type */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.borderType}</label>
-          <BorderTypePicker value={data.borderRadius} onChange={(v) => update('borderRadius', v)} t={t} />
-        </div>
-      </div>
+    <div>
+      <input ref={fileInputRef} type="file" accept={accept} onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} className="hidden" />
+      <button
+        onClick={() => fileInputRef.current?.click()} disabled={uploading}
+        onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={e => { e.preventDefault(); setDragOver(false); e.dataTransfer.files?.[0] && handleUpload(e.dataTransfer.files[0]) }}
+        className={`w-full py-3 border border-dashed rounded-lg transition-colors text-center ${dragOver ? 'border-[var(--sage)] bg-[var(--sage)]/5' : 'border-[var(--border-strong)] hover:border-[var(--sage)]'}`}
+      >
+        {uploading ? (
+          <span className="text-xs animate-pulse text-[var(--foreground-secondary)]">Envoi...</span>
+        ) : file ? (
+          <div><p className="text-xs text-[var(--foreground)]">Fichier uploadé</p><p className="text-[10px] text-[var(--foreground-secondary)]">{file.name}</p></div>
+        ) : (
+          <div className="text-[var(--foreground-secondary)]"><Upload className="w-5 h-5 mx-auto mb-1" /><p className="text-xs">{label}</p></div>
+        )}
+      </button>
     </div>
   )
 }
 
 // ============================================
-// TIP EDITOR - DEPRECATED
+// PURCHASE CONTENT EDITOR (refonte v4 — Gem Or)
 // ============================================
-function TipEditor({ data, onUpdate, onClose, t }: {
-  data: TipBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
-}) {
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
-
-  return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Astuce (obsolète)" onClose={onClose} t={t} />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
-          ⚠️ Ce bloc est obsolète. Utilisez plutôt le bloc "Texte" pour créer des astuces personnalisées.
-        </div>
-
-        {/* Content */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.tipContent}</label>
-          <textarea
-            value={data.content || ''}
-            onChange={(e) => update('content', e.target.value)}
-            placeholder="Votre astuce..."
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-[#A8B5A0] outline-none resize-none"
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ============================================
-// CREATOR EDITOR - v2.1 LIVE EDITING
-// ============================================
-function CreatorEditor({ data, onUpdate, onClose, t }: {
-  data: CreatorBlockData
-  onUpdate: (data: Record<string, unknown>) => void
-  onClose: () => void
-  t: typeof translations['fr']
-}) {
-  const [newCollabName, setNewCollabName] = useState('')
-
-  const update = useCallback((field: string, value: unknown) => {
-    onUpdate({ [field]: value })
-  }, [onUpdate])
-
-  const variants = [
-    { id: 'minimal', label: 'Mini', icon: '👤' },
-    { id: 'compact', label: 'Compact', icon: '📇' },
-    { id: 'full', label: 'Complet', icon: '📋' },
-    { id: 'collaborators', label: 'Équipe', icon: '👥' }
-  ] as const
-
-  const addCollaborator = () => {
-    if (newCollabName.trim()) {
-      const collaborators = [
-        ...(data.collaborators || []),
-        { id: crypto.randomUUID(), name: newCollabName.trim(), role: '' }
-      ]
-      update('collaborators', collaborators)
-      setNewCollabName('')
+function PurchaseContentEditor({ data, update }: { data: PurchaseBlockData; update: (f: string, v: unknown) => void }) {
+  const handleFileUpload = async (file: File) => {
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop()
+      const fileName = `purchase-${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('resources').upload(fileName, file)
+      if (error) throw error
+      const { data: urlData } = supabase.storage.from('resources').getPublicUrl(fileName)
+      if (urlData) update('file', { name: file.name, url: urlData.publicUrl, size: file.size })
+    } catch (err) {
+      console.error('Upload error:', err)
     }
   }
 
-  const removeCollaborator = (id: string) => {
-    const collaborators = (data.collaborators || []).filter(c => c.id !== id)
-    update('collaborators', collaborators)
+  return (
+    <div className="space-y-3">
+      <FileUploadDropzone file={data.file} onUpload={handleFileUpload} label="Glissez un PDF ou cliquez" />
+      <MonetizationButtonEditor data={data} update={update} />
+      <ColorPicker label="Fond" value={data.backgroundColor} onChange={v => update('backgroundColor', v)} />
+      <ColorPicker label="Bordure" value={data.borderColor} onChange={v => update('borderColor', v)} />
+    </div>
+  )
+}
+
+// ============================================
+// CREATOR CONTENT EDITOR
+// ============================================
+// Labels et ordre des plateformes
+const SOCIAL_PLATFORMS: { value: SocialPlatform; label: string }[] = [
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'pinterest', label: 'Pinterest' },
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'website', label: 'Site web' },
+]
+
+// Retourne la liste initiale avec toutes les plateformes (désactivées par défaut)
+function getDefaultSocialLinks(existing: SocialLink[] = []): SocialLink[] {
+  return SOCIAL_PLATFORMS.map(p => {
+    const found = existing.find(s => s.platform === p.value)
+    return found ?? { platform: p.value, url: '', enabled: false }
+  })
+}
+
+function CreatorContentEditor({ data, update }: { data: CreatorBlockData; update: (f: string, v: unknown) => void }) {
+  const [newCollabName, setNewCollabName] = useState('')
+
+  const socialLinks = getDefaultSocialLinks(data.socialLinks)
+
+  const updateSocialLink = (platform: SocialPlatform, field: keyof SocialLink, value: unknown) => {
+    const updated = socialLinks.map(s =>
+      s.platform === platform ? { ...s, [field]: value } : s
+    )
+    update('socialLinks', updated)
   }
 
-  const updateCollaboratorRole = (id: string, role: string) => {
-    const collaborators = (data.collaborators || []).map(c =>
-      c.id === id ? { ...c, role } : c
-    )
-    update('collaborators', collaborators)
+  const showSocials = data.variant === 'compact' || data.variant === 'full'
+  const showBio = data.variant === 'compact' || data.variant === 'full'
+
+  return (
+    <div className="space-y-3">
+      {/* Sélecteur de variante */}
+      <SelectControl
+        label="Variante" value={data.variant || 'full'} variant="buttons"
+        options={[
+          { value: 'minimal', label: 'Mini' },
+          { value: 'compact', label: 'Compact' },
+          { value: 'full', label: 'Complet' },
+          { value: 'collaborators', label: 'Équipe' },
+        ]}
+        onChange={v => update('variant', v)}
+      />
+
+      {/* Bio — compact + complet */}
+      {showBio && (
+        <EditorSection title="Bio" defaultOpen={true}>
+          <textarea
+            value={data.bio || ''}
+            onChange={e => update('bio', e.target.value)}
+            placeholder="Courte description du créateur..."
+            rows={2}
+            maxLength={160}
+            className="w-full text-xs rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] px-2.5 py-2 focus:outline-none focus:border-[var(--sage)] resize-none placeholder:text-[var(--foreground-secondary)]/40"
+          />
+          <p className="text-[10px] text-[var(--foreground-secondary)]/50 text-right mt-0.5">{(data.bio || '').length}/160</p>
+        </EditorSection>
+      )}
+
+      {/* Réseaux sociaux — compact + complet */}
+      {showSocials && (
+        <EditorSection title="Réseaux sociaux" defaultOpen={true}>
+          <div className="space-y-1.5">
+            {socialLinks.map(social => (
+              <div key={social.platform} className="rounded-md overflow-hidden border border-[var(--border)]">
+                {/* Ligne toggle + label */}
+                <div className="flex items-center gap-2 px-2.5 py-1.5 bg-[var(--surface-secondary)]">
+                  <button
+                    onClick={() => updateSocialLink(social.platform, 'enabled', !social.enabled)}
+                    className={`w-7 h-4 rounded-full transition-colors flex-shrink-0 relative ${social.enabled ? 'bg-[var(--sage)]' : 'bg-[var(--border)]'}`}
+                  >
+                    <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${social.enabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+                  </button>
+                  <span className="text-xs font-medium flex-1">
+                    {SOCIAL_PLATFORMS.find(p => p.value === social.platform)?.label}
+                  </span>
+                </div>
+                {/* Champs URL + compteur si activé */}
+                {social.enabled && (
+                  <div className="px-2.5 py-2 space-y-1.5 bg-[var(--surface)]">
+                    <input
+                      type="url"
+                      value={social.url}
+                      onChange={e => updateSocialLink(social.platform, 'url', e.target.value)}
+                      placeholder="https://..."
+                      className="w-full h-7 px-2 text-xs rounded border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)] placeholder:text-[var(--foreground-secondary)]/40"
+                    />
+                    {/* Compteur abonnés — variante complet uniquement */}
+                    {data.variant === 'full' && (
+                      <input
+                        type="number"
+                        value={social.followerCount ?? ''}
+                        onChange={e => updateSocialLink(social.platform, 'followerCount', e.target.value ? Number(e.target.value) : undefined)}
+                        placeholder="Nombre d'abonnés (optionnel)"
+                        min={0}
+                        className="w-full h-7 px-2 text-xs rounded border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)] placeholder:text-[var(--foreground-secondary)]/40"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </EditorSection>
+      )}
+
+      {/* Collaborateurs — variante équipe */}
+      {data.variant === 'collaborators' && (
+        <EditorSection title="Collaborateurs" defaultOpen={true}>
+          <div className="space-y-1.5">
+            {data.collaborators?.map(collab => (
+              <div key={collab.id} className="flex items-center gap-2 p-1.5 rounded-md bg-[var(--surface-secondary)]">
+                <div className="w-6 h-6 rounded-full bg-[var(--sage)]/20 flex items-center justify-center text-[10px] font-semibold flex-shrink-0">
+                  {collab.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{collab.name}</p>
+                  <input
+                    type="text" value={collab.role || ''} placeholder="Rôle..."
+                    onChange={e => update('collaborators', data.collaborators?.map(c => c.id === collab.id ? { ...c, role: e.target.value } : c))}
+                    className="w-full text-[10px] bg-transparent border-0 outline-none text-[var(--foreground-secondary)] placeholder:text-[var(--foreground-secondary)]/30"
+                  />
+                </div>
+                <button onClick={() => update('collaborators', data.collaborators?.filter(c => c.id !== collab.id))} className="p-0.5 text-red-400 hover:text-red-600">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+            <div className="flex gap-1.5">
+              <input
+                type="text" value={newCollabName} onChange={e => setNewCollabName(e.target.value)} placeholder="Nom du collaborateur..."
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && newCollabName.trim()) {
+                    update('collaborators', [...(data.collaborators || []), { id: crypto.randomUUID(), name: newCollabName.trim(), role: '' }])
+                    setNewCollabName('')
+                  }
+                }}
+                className="flex-1 h-7 px-2 text-xs rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+              />
+              <button
+                onClick={() => {
+                  if (newCollabName.trim()) {
+                    update('collaborators', [...(data.collaborators || []), { id: crypto.randomUUID(), name: newCollabName.trim(), role: '' }])
+                    setNewCollabName('')
+                  }
+                }}
+                disabled={!newCollabName.trim()}
+                className="h-7 w-7 flex items-center justify-center rounded bg-[var(--sage)] text-white disabled:opacity-40"
+              >
+                <Plus className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        </EditorSection>
+      )}
+
+      {/* Options communes */}
+      <ToggleControl label="Badges statistiques" checked={data.showStats ?? true} onChange={v => update('showStats', v)} />
+      <ToggleControl label="Bouton Suivre" checked={data.showFollowButton ?? false} onChange={v => update('showFollowButton', v)} />
+      {data.variant === 'collaborators' && (
+        <ToggleControl label="Parts revenus (admin)" checked={data.showRevenueShare ?? false} onChange={v => update('showRevenueShare', v)} />
+      )}
+
+      {/* Couleurs */}
+      <ColorPicker label="Couleur texte" value={data.textColor} onChange={v => update('textColor', v)} />
+      <ColorPicker label="Fond" value={data.backgroundColor} onChange={v => update('backgroundColor', v)} />
+      {data.showFollowButton && (
+        <ColorPicker label="Couleur bouton" value={data.buttonColor || '#A8B5A0'} onChange={v => update('buttonColor', v)} allowTransparent={false} />
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// SEPARATOR CONTENT EDITOR
+// ============================================
+function SeparatorContentEditor({ data, update }: { data: SeparatorBlockData; update: (f: string, v: unknown) => void }) {
+  const allStyles = [
+    { value: 'line', label: 'Ligne' }, { value: 'dashed', label: 'Tirets' },
+    { value: 'dotted', label: 'Pointillé' }, { value: 'double', label: 'Double' },
+    { value: 'wave', label: 'Vague' }, { value: 'zigzag', label: 'Zigzag' },
+    { value: 'scallop', label: 'Festons' },
+    { value: 'dots', label: '● Points' }, { value: 'stars', label: '★ Étoiles' },
+    { value: 'hearts', label: '♥ Cœurs' }, { value: 'diamonds', label: '◆ Losanges' },
+    { value: 'gradient', label: 'Dégradé' }, { value: 'fade', label: 'Fondu' },
+    { value: 'space', label: 'Espace' },
+  ]
+
+  const isWave = ['wave', 'zigzag', 'scallop'].includes(data.style)
+  const isSymbol = ['dots', 'stars', 'hearts', 'diamonds', 'arrows'].includes(data.style)
+  const isGradient = ['gradient', 'fade'].includes(data.style)
+
+  return (
+    <div className="space-y-3">
+      <SelectControl
+        label="Style" value={data.style || 'line'}
+        options={allStyles}
+        onChange={v => update('style', v)}
+      />
+      <SelectControl
+        label="Direction" value={data.direction || 'horizontal'} variant="buttons"
+        options={[
+          { value: 'horizontal', label: '↔ Horiz.' },
+          { value: 'vertical', label: '↕ Vert.' },
+        ]}
+        onChange={v => update('direction', v)}
+      />
+      <SliderControl label="Épaisseur" value={data.thickness || 2} min={1} max={20} unit="px" onChange={v => update('thickness', v)} />
+      <SliderControl label="Longueur" value={data.length || 100} min={10} max={100} step={5} unit="%" onChange={v => update('length', v)} />
+      <ColorPicker label="Couleur" value={data.color || '#E5E7EB'} onChange={v => update('color', v)} allowTransparent={false} />
+      {isGradient && <ColorPicker label="Couleur fin" value={data.colorEnd} onChange={v => update('colorEnd', v)} />}
+
+      {isWave && (
+        <>
+          <SliderControl label="Amplitude" value={data.amplitude || 10} min={2} max={50} onChange={v => update('amplitude', v)} />
+          <SliderControl label="Fréquence" value={data.frequency || 5} min={1} max={20} onChange={v => update('frequency', v)} />
+        </>
+      )}
+      {isSymbol && (
+        <>
+          <SliderControl label="Taille symbole" value={data.symbolSize || 16} min={8} max={40} unit="px" onChange={v => update('symbolSize', v)} />
+          <SliderControl label="Nombre" value={data.symbolCount || 5} min={1} max={20} onChange={v => update('symbolCount', v)} />
+        </>
+      )}
+      <SliderControl label="Opacité" value={data.opacity || 100} min={10} max={100} step={5} unit="%" onChange={v => update('opacity', v)} />
+      <ToggleControl label="Ombre" checked={data.shadow ?? false} onChange={v => update('shadow', v)} />
+      <ToggleControl label="Lueur" checked={data.glow ?? false} onChange={v => update('glow', v)} />
+      {(isWave || isGradient) && <ToggleControl label="Animation" checked={data.animated ?? false} onChange={v => update('animated', v)} />}
+    </div>
+  )
+}
+
+// ============================================
+// IMAGE GRID CONTENT EDITOR (NEW)
+// ============================================
+function ImageGridContentEditor({ data, update }: { data: ImageGridBlockData; update: (f: string, v: unknown) => void }) {
+  const [newUrl, setNewUrl] = useState('')
+
+  const addImage = () => {
+    if (newUrl.trim()) {
+      update('images', [...(data.images || []), { url: newUrl, alt: '' }])
+      setNewUrl('')
+    }
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <EditorHeader title="Créateur" onClose={onClose} t={t} />
+    <div className="space-y-3">
+      <SelectControl
+        label="Disposition" value={data.layout || 'grid-2'}
+        options={[
+          { value: 'grid-2', label: '2 colonnes' },
+          { value: 'grid-3', label: '3 colonnes' },
+          { value: 'grid-4', label: '4 colonnes' },
+          { value: 'grid-2x2', label: '2×2' },
+          { value: 'grid-2x3', label: '2×3' },
+          { value: 'masonry', label: 'Masonry' },
+        ]}
+        onChange={v => update('layout', v)}
+      />
+      <SliderControl label="Espacement" value={data.gap || 8} min={0} max={24} unit="px" onChange={v => update('gap', v)} />
+      <ToggleControl label="Légendes" checked={data.showCaptions ?? false} onChange={v => update('showCaptions', v)} />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Variant selection */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">Style d'affichage</label>
-          <div className="grid grid-cols-2 gap-2">
-            {variants.map(v => (
-              <button
-                key={v.id}
-                onClick={() => update('variant', v.id)}
-                className={`flex items-center justify-center gap-2 py-2 rounded-lg border-2 text-sm transition-colors ${
-                  data.variant === v.id ? 'border-[#A8B5A0] bg-[#A8B5A0]/10' : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <span>{v.icon}</span>
-                <span>{v.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Collaborators section */}
-        {data.variant === 'collaborators' && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">👥</span>
-              <h4 className="font-medium text-blue-800 text-sm">Collaborateurs</h4>
-            </div>
-
-            {/* Existing collaborators */}
-            {data.collaborators && data.collaborators.length > 0 && (
-              <div className="space-y-2">
-                {data.collaborators.map((collab) => (
-                  <div key={collab.id} className="flex items-center gap-2 p-2 bg-white rounded-lg">
-                    <div className="w-8 h-8 rounded-full bg-[#A8B5A0]/20 flex items-center justify-center text-sm font-medium text-[#5D5A4E]">
-                      {collab.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#5D5A4E] truncate">{collab.name}</p>
-                      <input
-                        type="text"
-                        value={collab.role || ''}
-                        onChange={(e) => updateCollaboratorRole(collab.id, e.target.value)}
-                        placeholder="Rôle (ex: Co-créateur)"
-                        className="w-full text-xs text-gray-500 bg-transparent border-none outline-none placeholder-gray-300"
-                      />
-                    </div>
-                    <button
-                      onClick={() => removeCollaborator(collab.id)}
-                      className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+      {/* Images list */}
+      <div className="grid grid-cols-3 gap-1.5">
+        {(data.images || []).map((img, i) => (
+          <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-[var(--border)]">
+            {img.url ? (
+              <img src={img.url} alt={img.alt || ''} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-[var(--surface-secondary)] flex items-center justify-center">
+                <ImageIcon className="w-4 h-4 text-[var(--foreground-secondary)]/30" />
               </div>
             )}
-
-            {/* Add new collaborator */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newCollabName}
-                onChange={(e) => setNewCollabName(e.target.value)}
-                placeholder="Nom du collaborateur"
-                className="flex-1 px-3 py-2 text-sm border border-blue-200 rounded-lg focus:border-blue-400 outline-none bg-white"
-                onKeyDown={(e) => e.key === 'Enter' && addCollaborator()}
-              />
-              <button
-                onClick={addCollaborator}
-                disabled={!newCollabName.trim()}
-                className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Show revenue share toggle */}
-            <label className="flex items-center gap-2 cursor-pointer text-sm text-blue-800">
-              <input
-                type="checkbox"
-                checked={data.showRevenueShare ?? false}
-                onChange={(e) => update('showRevenueShare', e.target.checked)}
-                className="w-4 h-4 rounded border-blue-300 text-blue-500 focus:ring-blue-500"
-              />
-              <span>Afficher les parts de revenus (mode admin)</span>
-            </label>
+            <button
+              onClick={() => update('images', data.images.filter((_, j) => j !== i))}
+              className="absolute top-0.5 right-0.5 p-0.5 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <X className="w-3 h-3" />
+            </button>
           </div>
-        )}
+        ))}
+      </div>
 
-        {/* Standard options */}
-        {data.variant !== 'collaborators' && (
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={data.showStats ?? true}
-                onChange={(e) => update('showStats', e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-[#A8B5A0] focus:ring-[#A8B5A0]"
-              />
-              <span className="text-sm text-[#5D5A4E]">Afficher les statistiques</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={data.showFollowButton ?? false}
-                onChange={(e) => update('showFollowButton', e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-[#A8B5A0] focus:ring-[#A8B5A0]"
-              />
-              <span className="text-sm text-[#5D5A4E]">Bouton "Suivre"</span>
-            </label>
+      {/* Add image */}
+      <div className="flex gap-1.5">
+        <input
+          type="text" value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="URL image..."
+          onKeyDown={e => e.key === 'Enter' && addImage()}
+          className="flex-1 h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+        <button onClick={addImage} disabled={!newUrl.trim()} className="h-8 w-8 flex items-center justify-center rounded-lg bg-[var(--sage)] text-white disabled:opacity-40">
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <CloudinaryUploader
+        multiple
+        onUpload={(url) => update('images', [...(data.images || []), { url, alt: '' }])}
+        onUploadMultiple={(results) => update('images', [...(data.images || []), ...results.map(r => ({ url: r.url, alt: '' }))])}
+        folder="petit-ilot/resources/grid"
+      />
+    </div>
+  )
+}
+
+// ============================================
+// FAQ CONTENT EDITOR (NEW)
+// ============================================
+function FAQContentEditor({ data, update }: { data: FAQBlockData; update: (f: string, v: unknown) => void }) {
+  const [newQ, setNewQ] = useState('')
+
+  return (
+    <div className="space-y-3">
+      <SelectControl
+        label="Style" value={data.style || 'bordered'} variant="buttons"
+        options={[
+          { value: 'minimal', label: 'Minimal' },
+          { value: 'bordered', label: 'Bordure' },
+          { value: 'card', label: 'Carte' },
+        ]}
+        onChange={v => update('style', v)}
+      />
+      <SelectControl
+        label="Mode" value={data.expandMode || 'single'} variant="buttons"
+        options={[
+          { value: 'single', label: 'Un seul' },
+          { value: 'multiple', label: 'Plusieurs' },
+        ]}
+        onChange={v => update('expandMode', v)}
+      />
+      <SelectControl
+        label="Icône" value={data.iconStyle || 'chevron'} variant="buttons"
+        options={[
+          { value: 'chevron', label: '›' },
+          { value: 'plus', label: '+' },
+          { value: 'arrow', label: '↓' },
+        ]}
+        onChange={v => update('iconStyle', v)}
+      />
+
+      {/* FAQ items */}
+      {(data.items || []).map((item, i) => (
+        <div key={i} className="p-2.5 rounded-lg bg-[var(--surface-secondary)] space-y-1.5">
+          <div className="flex items-start gap-1.5">
+            <span className="text-xs font-bold text-[var(--sage)] mt-0.5">Q</span>
+            <input
+              type="text" value={item.question}
+              onChange={e => {
+                const items = [...(data.items || [])]
+                items[i] = { ...items[i], question: e.target.value }
+                update('items', items)
+              }}
+              placeholder="Question..."
+              className="flex-1 h-7 px-2 text-xs font-medium rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+            />
+            <button onClick={() => update('items', data.items.filter((_, j) => j !== i))} className="p-0.5 text-red-400 hover:text-red-600">
+              <Trash2 className="w-3 h-3" />
+            </button>
           </div>
-        )}
+          <div className="flex items-start gap-1.5">
+            <span className="text-xs font-bold text-[var(--foreground-secondary)] mt-0.5">R</span>
+            <textarea
+              value={item.answer}
+              onChange={e => {
+                const items = [...(data.items || [])]
+                items[i] = { ...items[i], answer: e.target.value }
+                update('items', items)
+              }}
+              placeholder="Réponse..."
+              rows={2}
+              className="flex-1 px-2 py-1 text-xs rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)] resize-none"
+            />
+          </div>
+        </div>
+      ))}
 
-        {/* Colors */}
-        <div className="space-y-3 pt-2 border-t">
-          <label className="block text-sm text-gray-600">{t.colors}</label>
-          <ColorPicker label={t.textColor} value={data.textColor} onChange={(v) => update('textColor', v || undefined)} />
-          <ColorPicker label={t.backgroundColor} value={data.backgroundColor} onChange={(v) => update('backgroundColor', v || undefined)} />
-          <ColorPicker label={t.borderColor} value={data.borderColor} onChange={(v) => update('borderColor', v || undefined)} />
+      {/* Add item */}
+      <div className="flex gap-1.5">
+        <input
+          type="text" value={newQ} onChange={e => setNewQ(e.target.value)} placeholder="Nouvelle question..."
+          onKeyDown={e => {
+            if (e.key === 'Enter' && newQ.trim()) {
+              update('items', [...(data.items || []), { question: newQ.trim(), answer: '' }])
+              setNewQ('')
+            }
+          }}
+          className="flex-1 h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+        <button
+          onClick={() => {
+            if (newQ.trim()) {
+              update('items', [...(data.items || []), { question: newQ.trim(), answer: '' }])
+              setNewQ('')
+            }
+          }}
+          disabled={!newQ.trim()}
+          className="h-8 w-8 flex items-center justify-center rounded-lg bg-[var(--sage)] text-white disabled:opacity-40"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <SliderControl label="Taille question" value={data.questionFontSize || 16} min={12} max={24} unit="px" onChange={v => update('questionFontSize', v)} />
+      <FontPicker label="Police question" value={data.questionFontFamily || 'default'} onChange={v => update('questionFontFamily', v)} />
+      <ColorPicker label="Couleur question" value={data.questionColor} onChange={v => update('questionColor', v)} />
+      <ColorPicker label="Couleur réponse" value={data.answerColor} onChange={v => update('answerColor', v)} />
+    </div>
+  )
+}
+
+// ============================================
+// MATERIAL CONTENT EDITOR (NEW)
+// ============================================
+function MaterialContentEditor({ data, update }: { data: MaterialBlockData; update: (f: string, v: unknown) => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label className="text-xs text-[var(--foreground-secondary)]">Titre du bloc</label>
+        <input
+          type="text" value={data.titleText || 'Matériel'} onChange={e => update('titleText', e.target.value)}
+          placeholder="Matériel nécessaire"
+          className="w-full h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+        />
+      </div>
+      <SelectControl
+        label="Disposition" value={data.layout || 'two-columns'} variant="buttons"
+        options={[
+          { value: 'list', label: 'Liste' },
+          { value: 'grid', label: 'Grille' },
+          { value: 'two-columns', label: '2 col.' },
+        ]}
+        onChange={v => update('layout', v)}
+      />
+      <ToggleControl label="Liens d'achat" checked={data.showLinks ?? true} onChange={v => update('showLinks', v)} />
+      <ToggleControl label="Badge récup" checked={data.showRecupBadge ?? true} onChange={v => update('showRecupBadge', v)} />
+      {data.showLinks && (
+        <ToggleControl label="Note affiliés" checked={data.showAffiliateNote ?? true} onChange={v => update('showAffiliateNote', v)} />
+      )}
+      <SliderControl label="Taille texte" value={data.fontSize || 14} min={10} max={24} unit="px" onChange={v => update('fontSize', v)} />
+      <FontPicker label="Police" value={data.fontFamily || 'default'} onChange={v => update('fontFamily', v)} />
+      <ColorPicker label="Couleur texte" value={data.textColor} onChange={v => update('textColor', v)} />
+      <ColorPicker label="Fond" value={data.backgroundColor} onChange={v => update('backgroundColor', v)} />
+      <ColorPicker label="Bordure" value={data.borderColor} onChange={v => update('borderColor', v)} />
+
+      <div className="p-2.5 rounded-lg bg-[var(--surface-secondary)]">
+        <p className="text-[10px] text-[var(--foreground-secondary)] leading-relaxed">
+          Ce bloc affiche automatiquement la liste de matériel saisie dans l'étape « Matériel » du wizard. Les données sont liées en temps réel.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// DOWNLOAD CONTENT EDITOR (NOUVEAU v4)
+// ============================================
+function DownloadContentEditor({ data, update }: { data: DownloadBlockData; update: (f: string, v: unknown) => void }) {
+  const handleFileUpload = async (file: File) => {
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop()
+      const fileName = `download-${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('resources').upload(fileName, file)
+      if (error) throw error
+      const { data: urlData } = supabase.storage.from('resources').getPublicUrl(fileName)
+      if (urlData) update('file', { name: file.name, url: urlData.publicUrl, size: file.size, mimeType: file.type, uploadedAt: new Date().toISOString() })
+    } catch (err) {
+      console.error('Upload error:', err)
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <FileUploadDropzone file={data.file} onUpload={handleFileUpload} label="Glissez un fichier ou cliquez" />
+      <MonetizationButtonEditor data={data} update={update} />
+      <ColorPicker label="Fond" value={data.backgroundColor} onChange={v => update('backgroundColor', v)} />
+      <ColorPicker label="Bordure" value={data.borderColor} onChange={v => update('borderColor', v)} />
+    </div>
+  )
+}
+
+// ============================================
+// PAID VIDEO CONTENT EDITOR (NOUVEAU v4)
+// ============================================
+function PaidVideoContentEditor({ data, update }: { data: PaidVideoBlockData; update: (f: string, v: unknown) => void }) {
+  return (
+    <div className="space-y-3">
+      {/* Video upload via Cloudinary */}
+      <CloudinaryUploader
+        onUpload={(url, publicId) => {
+          update('videoUrl', url)
+          update('videoPublicId', publicId)
+        }}
+        folder="petit-ilot/paid-videos"
+        maxSizeMB={200}
+        accept="video/mp4,video/webm,video/quicktime"
+        compact
+      />
+      {data.videoUrl && (
+        <div className="p-2 rounded-lg bg-[var(--surface-secondary)]">
+          <p className="text-[10px] text-[var(--foreground-secondary)]">Vidéo uploadée</p>
+          <p className="text-xs text-[var(--foreground)] truncate">{data.videoPublicId || data.videoUrl}</p>
+          <button onClick={() => { update('videoUrl', undefined); update('videoPublicId', undefined) }} className="text-[10px] text-red-400 hover:text-red-600 mt-1">Supprimer</button>
+        </div>
+      )}
+
+      <SelectControl
+        label="Format" value={data.aspectRatio || '16:9'} variant="buttons"
+        options={[
+          { value: '16:9', label: '16:9' },
+          { value: '9:16', label: '9:16' },
+          { value: '4:5', label: '4:5' },
+          { value: '1:1', label: '1:1' },
+        ]}
+        onChange={v => update('aspectRatio', v)}
+      />
+
+      <MonetizationButtonEditor data={data} update={update} />
+      <ColorPicker label="Fond" value={data.backgroundColor} onChange={v => update('backgroundColor', v)} />
+      <ColorPicker label="Bordure" value={data.borderColor} onChange={v => update('borderColor', v)} />
+
+      <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+        <p className="text-[10px] text-amber-700 dark:text-amber-300 leading-relaxed">
+          ⚠️ Réservé aux vidéos courtes ou exceptionnelles. Les vidéos sont hébergées sur Cloudinary (limite 200 MB).
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// PAYWALL CONTENT EDITOR (legacy — kept for backwards compat with old block type)
+// ============================================
+function PaywallContentEditor({ data, update }: { data: PaywallBlockData; update: (f: string, v: unknown) => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+        <p className="text-[10px] text-amber-700 dark:text-amber-300 leading-relaxed">
+          Ce bloc est obsolète. Supprimez-le et utilisez le rideau payant via le menu + (il sera ajouté comme overlay canvas).
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// PAYWALL EDITOR — canvas-level overlay editor (sidebar)
+// ============================================
+interface PaywallEditorProps {
+  paywall: PaywallConfig
+  onUpdate: (updates: Partial<PaywallConfig>) => void
+  onClose: () => void
+  onDelete: () => void
+  lang: Language
+}
+
+export function PaywallEditor({ paywall, onUpdate, onClose, onDelete, lang }: PaywallEditorProps) {
+  const update = (field: string, value: unknown) => {
+    onUpdate({ [field]: value } as Partial<PaywallConfig>)
+  }
+
+  return (
+    <div className="flex flex-col h-full rounded-2xl overflow-hidden" style={{
+      backgroundColor: 'var(--glass-bg)',
+      backdropFilter: 'blur(20px) saturate(160%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+      border: '1px solid var(--glass-border)',
+      boxShadow: 'var(--elevation-3)',
+    }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+        <div className="flex items-center gap-2">
+          <span className="text-[var(--sage)]"><KeyRound className="w-3.5 h-3.5" /></span>
+          <span className="text-sm font-semibold text-[var(--foreground)]">Rideau payant</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-md hover:bg-[var(--surface-secondary)] transition-colors"
+        >
+          <X className="w-4 h-4 text-[var(--foreground-secondary)]" />
+        </button>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Info */}
+        <div className="p-2.5 rounded-lg bg-[var(--surface-secondary)]">
+          <p className="text-[10px] text-[var(--foreground-secondary)] leading-relaxed">
+            Glissez le bord supérieur sur le canvas pour positionner le rideau. Tout le contenu en dessous sera flouté.
+          </p>
         </div>
 
-        {/* Border type */}
-        <div>
-          <label className="block text-sm text-gray-600 mb-2">{t.borderType}</label>
-          <BorderTypePicker value={data.borderRadius} onChange={(v) => update('borderRadius', v)} t={t} />
+        {/* Position */}
+        <SliderControl
+          label="Position Y"
+          value={paywall.cutY}
+          min={50} max={2000} step={8} unit="px"
+          onChange={v => update('cutY', v)}
+        />
+
+        {/* Message */}
+        <div className="space-y-1.5">
+          <label className="text-xs text-[var(--foreground-secondary)]">Message</label>
+          <input
+            type="text" value={paywall.message || ''} onChange={e => update('message', e.target.value)}
+            placeholder="Contenu premium"
+            className="w-full h-8 px-2.5 text-xs rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)]"
+          />
         </div>
+
+        {/* Blur */}
+        <SliderControl
+          label="Intensité flou"
+          value={paywall.blurIntensity || 12}
+          min={4} max={24} unit="px"
+          onChange={v => update('blurIntensity', v)}
+        />
+
+        {/* Overlay color */}
+        <ColorPicker
+          label="Couleur overlay"
+          value={paywall.overlayColor}
+          onChange={v => update('overlayColor', v)}
+        />
+
+        {/* Overlay opacity */}
+        <SliderControl
+          label="Opacité overlay"
+          value={paywall.overlayOpacity || 60}
+          min={0} max={100} step={5} unit="%"
+          onChange={v => update('overlayOpacity', v)}
+        />
+
+        {/* Button editor */}
+        <MonetizationButtonEditor
+          data={{
+            buttonText: paywall.buttonText,
+            buttonStyle: paywall.buttonStyle,
+            buttonShape: paywall.buttonShape,
+            buttonColor: paywall.buttonColor,
+            buttonGem: paywall.buttonGem,
+          }}
+          update={(field, value) => update(field, value)}
+        />
+
+        {/* Delete */}
+        <button
+          onClick={onDelete}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors"
+        >
+          <Trash2 className="w-4 h-4" />
+          Supprimer le rideau
+        </button>
       </div>
     </div>
   )
