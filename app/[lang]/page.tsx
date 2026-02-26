@@ -3,21 +3,14 @@ import type { Language } from '@/lib/types'
 import HeroSection from '@/components/home/HeroSection'
 import FeaturedCarousel from '@/components/home/FeaturedCarousel'
 import ResourcesSection from '@/components/home/ResourcesSection'
-import ActivitiesGrid from '@/components/home/ActivitiesGrid'
+import ActivitiesCarousel from '@/components/home/ActivitiesCarousel'
+import WhyCreatorsSection from '@/components/home/WhyCreatorsSection'
+import CreatorsCarousel from '@/components/home/CreatorsCarousel'
 
 const translations = {
-  fr: {
-    latestResources: "S'amuser et grandir : nos dernières activités d'éveil",
-    latestBooksGames: 'Derniers livres & jeux'
-  },
-  en: {
-    latestResources: 'Learn through play: our latest activities',
-    latestBooksGames: 'Latest books & games'
-  },
-  es: {
-    latestResources: 'Aprender jugando: nuestras últimas actividades',
-    latestBooksGames: 'Últimos libros y juegos'
-  }
+  fr: { latestResources: "Nos dernières activités d'éveil" },
+  en: { latestResources: 'Our latest activities' },
+  es: { latestResources: 'Nuestras últimas actividades' }
 }
 
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
@@ -34,44 +27,34 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   const latestResources = await getRessources(
     ['activite', 'motricite', 'alimentation'],
     currentLang,
-    { limit: 6 }
+    { limit: 10 }
   )
-
-  // MASQUÉ TEMPORAIREMENT - Droits d'auteur à clarifier
-  // const latestBooksGames = await getRessources(
-  //   ['livre', 'jeu'],
-  //   currentLang,
-  //   { limit: 6 }
-  // )
 
   const t = translations[currentLang] || translations.fr
 
   return (
     <div>
+      {/* 1. Hero */}
       <HeroSection lang={currentLang} />
+
+      {/* 2. Carousel infinite 2 lignes — no change */}
       <FeaturedCarousel resources={featuredResources} lang={currentLang} />
+
+      {/* 3. Pourquoi Petit Îlot — bento parents (facilité & qualité) */}
       <ResourcesSection lang={currentLang} />
 
-      {/* Dernières ressources */}
-      <section className="py-20 md:py-28 bg-background">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-foreground mb-12">
-            {t.latestResources}
-          </h2>
-          <ActivitiesGrid activities={latestResources} lang={currentLang} />
-        </div>
-      </section>
+      {/* 4. Dernières activités — 1 ligne, cartes resserrées */}
+      <ActivitiesCarousel
+        activities={latestResources}
+        lang={currentLang}
+        title={t.latestResources}
+      />
 
-      {/* MASQUÉ TEMPORAIREMENT - Droits d'auteur à clarifier
-      <section className="py-20 md:py-28 bg-surface">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-foreground mb-12">
-            {t.latestBooksGames}
-          </h2>
-          <ActivitiesGrid activities={latestBooksGames} lang={currentLang} />
-        </div>
-      </section>
-      */}
+      {/* 5. Pourquoi être créateur — bento aéré + preview dashboard */}
+      <WhyCreatorsSection lang={currentLang} />
+
+      {/* 6. Carousel créateurs */}
+      <CreatorsCarousel lang={currentLang} />
     </div>
   )
 }

@@ -219,7 +219,7 @@ export default function AdminDashboardPage({
           transition={{ delay: 0.1 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8"
         >
-          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
             <Users className="w-8 h-8 mb-2" style={{ color: 'var(--icon-sage)' }} />
             <p className="text-3xl font-bold text-foreground dark:text-foreground-dark">{stats.totalCreators}</p>
             <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary">{t.totalCreators}</p>
@@ -230,7 +230,7 @@ export default function AdminDashboardPage({
             )}
           </div>
 
-          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
             <Package className="w-8 h-8 mb-2" style={{ color: 'var(--icon-sky)' }} />
             <p className="text-3xl font-bold text-foreground dark:text-foreground-dark">{stats.totalResources}</p>
             <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary">{t.totalResources}</p>
@@ -239,13 +239,13 @@ export default function AdminDashboardPage({
             </p>
           </div>
 
-          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
             <Clock className="w-8 h-8 mb-2" style={{ color: 'var(--icon-terracotta)' }} />
             <p className="text-3xl font-bold text-foreground dark:text-foreground-dark">{stats.pendingResources}</p>
             <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary">{t.pendingResources}</p>
           </div>
 
-          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
             <AlertTriangle className="w-8 h-8 text-red-400 dark:text-red-500 mb-2" />
             <p className="text-3xl font-bold text-foreground dark:text-foreground-dark">{stats.deadLinks}</p>
             <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary">{t.deadLinks}</p>
@@ -260,28 +260,28 @@ export default function AdminDashboardPage({
           className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
         >
           <Link href={`/${lang}/admin/createurs`}>
-            <div className="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-apple hover:shadow-lg transition-all cursor-pointer text-center" style={{ border: '1px solid var(--border)' }}>
+            <div className="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-elevation-1 hover:shadow-lg transition-all cursor-pointer text-center" style={{ border: '1px solid var(--border)' }}>
               <Users className="w-6 h-6 mx-auto mb-2" style={{ color: 'var(--icon-sage)' }} />
               <p className="text-sm font-medium text-foreground dark:text-foreground-dark">{t.manageCreators}</p>
             </div>
           </Link>
 
           <Link href={`/${lang}/admin/ressources`}>
-            <div className="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-apple hover:shadow-lg transition-all cursor-pointer text-center" style={{ border: '1px solid var(--border)' }}>
+            <div className="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-elevation-1 hover:shadow-lg transition-all cursor-pointer text-center" style={{ border: '1px solid var(--border)' }}>
               <FileText className="w-6 h-6 mx-auto mb-2" style={{ color: 'var(--icon-sky)' }} />
               <p className="text-sm font-medium text-foreground dark:text-foreground-dark">{t.reviewResources}</p>
             </div>
           </Link>
 
           <Link href={`/${lang}/admin/monitoring`}>
-            <div className="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-apple hover:shadow-lg transition-all cursor-pointer text-center" style={{ border: '1px solid var(--border)' }}>
+            <div className="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-elevation-1 hover:shadow-lg transition-all cursor-pointer text-center" style={{ border: '1px solid var(--border)' }}>
               <AlertTriangle className="w-6 h-6 mx-auto mb-2" style={{ color: 'var(--icon-terracotta)' }} />
               <p className="text-sm font-medium text-foreground dark:text-foreground-dark">{t.checkUrls}</p>
             </div>
           </Link>
 
           <Link href={`/${lang}/admin/finance`}>
-            <div className="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-apple hover:shadow-lg transition-all cursor-pointer text-center" style={{ border: '1px solid var(--border)' }}>
+            <div className="bg-surface dark:bg-surface-dark rounded-xl p-4 shadow-elevation-1 hover:shadow-lg transition-all cursor-pointer text-center" style={{ border: '1px solid var(--border)' }}>
               <DollarSign className="w-6 h-6 mx-auto mb-2" style={{ color: 'var(--icon-sage)' }} />
               <p className="text-sm font-medium text-foreground dark:text-foreground-dark">{t.viewFinance}</p>
             </div>
@@ -294,7 +294,7 @@ export default function AdminDashboardPage({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-6"
+            className="bg-surface dark:bg-surface-dark rounded-3xl shadow-elevation-1 p-6"
             style={{ border: '1px solid var(--border)' }}
           >
             <div className="flex items-center justify-between mb-4">
@@ -302,7 +302,7 @@ export default function AdminDashboardPage({
                 {t.pendingResources} ({stats.pendingResources})
               </h2>
               <Link href={`/${lang}/admin/ressources?status=pending_review`}>
-                <Button variant="ghost" size="sm" className="text-sage">
+                <Button variant="ghost" gem="sage" size="sm">
                   {t.viewAll}
                 </Button>
               </Link>
@@ -346,7 +346,7 @@ export default function AdminDashboardPage({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-6"
+            className="bg-surface dark:bg-surface-dark rounded-3xl shadow-elevation-1 p-6"
             style={{ border: '1px solid var(--border)' }}
           >
             <div className="flex items-center justify-between mb-4">
@@ -354,7 +354,7 @@ export default function AdminDashboardPage({
                 {t.pendingCreators} ({stats.pendingCreators})
               </h2>
               <Link href={`/${lang}/admin/createurs?status=pending`}>
-                <Button variant="ghost" size="sm" className="text-sage">
+                <Button variant="ghost" gem="sage" size="sm">
                   {t.viewAll}
                 </Button>
               </Link>

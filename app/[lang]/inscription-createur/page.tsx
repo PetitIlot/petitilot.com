@@ -1,18 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, Sparkles, PartyPopper } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowLeft, CheckCircle, Sparkles, PartyPopper, Camera, X, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import type { Language } from '@/lib/types'
 
+// Thèmes éducatifs suggérés
+const SUGGESTED_THEMES = [
+  'Montessori', 'Waldorf', 'Nature', 'DIY', 'Motricité', 'Langage',
+  'Mathématiques', 'Créativité', 'Musique', 'Éveil sensoriel', 'Autonomie',
+  'Arts plastiques', 'Lecture', 'Sciences', 'Plein air', 'Jeu libre',
+  'Cuisine', 'Jardinage', 'Émotions', 'Vivre ensemble'
+]
+
 const translations = {
   fr: {
     title: 'Bienvenue chez les créateurs !',
     subtitle: 'Complétez votre profil pour commencer à publier',
+    avatarSection: 'Photo de profil',
+    avatarHint: 'Cliquez pour ajouter une photo (recommandé)',
+    avatarUploading: 'Upload en cours...',
     displayName: 'Nom d\'affichage',
     displayNamePlaceholder: 'Ex: Marie Éducatrice',
     displayNameHelp: 'Le nom visible par les utilisateurs',
@@ -23,8 +35,10 @@ const translations = {
     bio: 'Courte bio',
     bioPlaceholder: 'Présentez-vous en quelques mots...',
     bioHelp: 'Apparaît sur votre page créateur',
-    philosophy: 'Votre philosophie éducative',
-    philosophyPlaceholder: 'Qu\'est-ce qui vous anime dans l\'éducation des enfants ?',
+    themesSection: 'Thèmes & approches éducatives',
+    themesHint: 'Sélectionnez ou ajoutez vos thèmes (max 8)',
+    themesAdd: 'Ajouter',
+    themesPlaceholder: 'Autre thème...',
     cguLabel: 'J\'accepte les',
     cguLink: 'Conditions Générales d\'Utilisation',
     cguCreator: 'pour les créateurs',
@@ -45,6 +59,9 @@ const translations = {
   en: {
     title: 'Welcome to the creators!',
     subtitle: 'Complete your profile to start publishing',
+    avatarSection: 'Profile photo',
+    avatarHint: 'Click to add a photo (recommended)',
+    avatarUploading: 'Uploading...',
     displayName: 'Display name',
     displayNamePlaceholder: 'Ex: Marie Educator',
     displayNameHelp: 'The name visible to users',
@@ -55,8 +72,10 @@ const translations = {
     bio: 'Short bio',
     bioPlaceholder: 'Introduce yourself in a few words...',
     bioHelp: 'Appears on your creator page',
-    philosophy: 'Your educational philosophy',
-    philosophyPlaceholder: 'What drives you in educating children?',
+    themesSection: 'Themes & educational approaches',
+    themesHint: 'Select or add your themes (max 8)',
+    themesAdd: 'Add',
+    themesPlaceholder: 'Other theme...',
     cguLabel: 'I accept the',
     cguLink: 'Terms of Service',
     cguCreator: 'for creators',
@@ -77,6 +96,9 @@ const translations = {
   es: {
     title: '¡Bienvenido a los creadores!',
     subtitle: 'Completa tu perfil para empezar a publicar',
+    avatarSection: 'Foto de perfil',
+    avatarHint: 'Haz clic para agregar una foto (recomendado)',
+    avatarUploading: 'Subiendo...',
     displayName: 'Nombre visible',
     displayNamePlaceholder: 'Ej: María Educadora',
     displayNameHelp: 'El nombre visible para los usuarios',
@@ -87,8 +109,10 @@ const translations = {
     bio: 'Bio corta',
     bioPlaceholder: 'Preséntate en pocas palabras...',
     bioHelp: 'Aparece en tu página de creador',
-    philosophy: 'Tu filosofía educativa',
-    philosophyPlaceholder: '¿Qué te motiva en la educación infantil?',
+    themesSection: 'Temas y enfoques educativos',
+    themesHint: 'Selecciona o agrega tus temas (máx 8)',
+    themesAdd: 'Agregar',
+    themesPlaceholder: 'Otro tema...',
     cguLabel: 'Acepto los',
     cguLink: 'Términos y Condiciones',
     cguCreator: 'para creadores',
@@ -124,11 +148,20 @@ export default function CreatorRegistrationPage({
   const [cguAccepted, setCguAccepted] = useState(false)
   const [cguError, setCguError] = useState(false)
 
+  // Avatar
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+
+  // Themes
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([])
+  const [customTheme, setCustomTheme] = useState('')
+
   const [formData, setFormData] = useState({
     displayName: '',
     slug: '',
     bio: '',
-    philosophy: ''
   })
 
   useEffect(() => {
@@ -152,9 +185,14 @@ export default function CreatorRegistrationPage({
 
         setCreator(creatorData)
 
-        // Pré-remplir avec le nom existant si disponible
         if (creatorData?.display_name) {
           setFormData(prev => ({ ...prev, displayName: creatorData.display_name }))
+        }
+        if (creatorData?.avatar_url) {
+          setAvatarPreview(creatorData.avatar_url)
+        }
+        if (creatorData?.themes) {
+          setSelectedThemes(creatorData.themes)
         }
       }
 
@@ -171,14 +209,36 @@ export default function CreatorRegistrationPage({
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
-
     setFormData(prev => ({ ...prev, slug }))
     setSlugError('')
   }
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setAvatarPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const toggleTheme = (theme: string) => {
+    if (selectedThemes.includes(theme)) {
+      setSelectedThemes(prev => prev.filter(t => t !== theme))
+    } else if (selectedThemes.length < 8) {
+      setSelectedThemes(prev => [...prev, theme])
+    }
+  }
+
+  const addCustomTheme = () => {
+    const trimmed = customTheme.trim()
+    if (!trimmed || selectedThemes.includes(trimmed) || selectedThemes.length >= 8) return
+    setSelectedThemes(prev => [...prev, trimmed])
+    setCustomTheme('')
+  }
+
   const checkSlugAvailability = async (slug: string) => {
     if (!slug) return true
-
     const supabase = createClient()
     const { data } = await supabase
       .from('creators')
@@ -186,24 +246,33 @@ export default function CreatorRegistrationPage({
       .eq('slug', slug)
       .neq('user_id', user?.id)
       .single()
-
     return !data
+  }
+
+  const uploadAvatar = async (creatorId: string): Promise<string | null> => {
+    if (!avatarFile) return null
+    setAvatarUploading(true)
+    const supabase = createClient()
+    const ext = avatarFile.name.split('.').pop()
+    const path = `avatars/${creatorId}.${ext}`
+    const { error } = await supabase.storage
+      .from('creator-assets')
+      .upload(path, avatarFile, { upsert: true })
+    setAvatarUploading(false)
+    if (error) { console.error('Avatar upload error:', error); return null }
+    const { data: { publicUrl } } = supabase.storage.from('creator-assets').getPublicUrl(path)
+    return publicUrl
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !creator) return
 
-    // Vérifier CGU
-    if (!cguAccepted) {
-      setCguError(true)
-      return
-    }
+    if (!cguAccepted) { setCguError(true); return }
 
     setIsSubmitting(true)
     setCguError(false)
 
-    // Vérifier disponibilité du slug
     const isAvailable = await checkSlugAvailability(formData.slug)
     if (!isAvailable) {
       setSlugError(t.slugTaken)
@@ -213,14 +282,20 @@ export default function CreatorRegistrationPage({
 
     const supabase = createClient()
 
-    // Mettre à jour l'entrée creator existante avec les infos complètes
+    // Upload avatar si présent
+    let avatarUrl: string | null = creator.avatar_url || null
+    if (avatarFile) {
+      avatarUrl = await uploadAvatar(creator.id)
+    }
+
     const { error } = await supabase
       .from('creators')
       .update({
         slug: formData.slug,
         display_name: formData.displayName,
         bio: formData.bio,
-        philosophy: formData.philosophy,
+        themes: selectedThemes.length > 0 ? selectedThemes : null,
+        avatar_url: avatarUrl,
         cgu_accepted_at: new Date().toISOString()
       })
       .eq('user_id', user.id)
@@ -232,7 +307,6 @@ export default function CreatorRegistrationPage({
       return
     }
 
-    // Mettre à jour le rôle dans profiles
     await supabase
       .from('profiles')
       .update({ role: 'creator' })
@@ -250,93 +324,64 @@ export default function CreatorRegistrationPage({
     )
   }
 
-  // Not logged in
   if (!user) {
     return (
       <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center py-12 px-4">
         <div className="text-center">
           <Sparkles className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--icon-sage)' }} />
-          <h1 className="font-quicksand text-2xl font-bold text-foreground dark:text-foreground-dark mb-2">
-            {t.loginFirst}
-          </h1>
+          <h1 className="font-quicksand text-2xl font-bold text-foreground dark:text-foreground-dark mb-2">{t.loginFirst}</h1>
           <Link href={`/${lang}/connexion?redirect=/${lang}/inscription-createur`}>
-            <Button className="mt-4 bg-sage hover:bg-sage-light text-white">
-              {t.login}
-            </Button>
+            <Button gem="sage" className="mt-4">{t.login}</Button>
           </Link>
         </div>
       </div>
     )
   }
 
-  // No creator entry or not approved → not invited
   if (!creator || !creator.is_approved) {
     return (
       <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center py-12 px-4">
         <div className="text-center">
           <Sparkles className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--icon-sky)' }} />
-          <h1 className="font-quicksand text-2xl font-bold text-foreground dark:text-foreground-dark mb-2">
-            {t.notInvited}
-          </h1>
-          <p className="text-foreground-secondary dark:text-foreground-dark-secondary max-w-md mx-auto mb-4">
-            {t.notInvitedDesc}
-          </p>
+          <h1 className="font-quicksand text-2xl font-bold text-foreground dark:text-foreground-dark mb-2">{t.notInvited}</h1>
+          <p className="text-foreground-secondary dark:text-foreground-dark-secondary max-w-md mx-auto mb-4">{t.notInvitedDesc}</p>
           <Link href={`/${lang}/devenir-createur`}>
-            <Button className="mt-4 bg-sage hover:bg-sage-light text-white">
-              {t.apply}
-            </Button>
+            <Button gem="sage" className="mt-4">{t.apply}</Button>
           </Link>
         </div>
       </div>
     )
   }
 
-  // Already has slug → already a creator
   if (creator.slug) {
     return (
       <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center py-12 px-4">
         <div className="text-center">
           <CheckCircle className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--icon-sage)' }} />
-          <h1 className="font-quicksand text-2xl font-bold text-foreground dark:text-foreground-dark mb-2">
-            {t.alreadyCreator}
-          </h1>
+          <h1 className="font-quicksand text-2xl font-bold text-foreground dark:text-foreground-dark mb-2">{t.alreadyCreator}</h1>
           <Link href={`/${lang}/createur`}>
-            <Button className="mt-4 bg-sage hover:bg-sage-light text-white">
-              {t.goToDashboard}
-            </Button>
+            <Button gem="sage" className="mt-4">{t.goToDashboard}</Button>
           </Link>
         </div>
       </div>
     )
   }
 
-  // Success state
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center py-12 px-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
           <PartyPopper className="w-20 h-20 mx-auto mb-4" style={{ color: 'var(--icon-sage)' }} />
-          <h1 className="font-quicksand text-3xl font-bold text-foreground dark:text-foreground-dark mb-2">
-            {t.success}
-          </h1>
-          <p className="text-foreground-secondary dark:text-foreground-dark-secondary max-w-md mx-auto">
-            {t.successDesc}
-          </p>
+          <h1 className="font-quicksand text-3xl font-bold text-foreground dark:text-foreground-dark mb-2">{t.success}</h1>
+          <p className="text-foreground-secondary dark:text-foreground-dark-secondary max-w-md mx-auto">{t.successDesc}</p>
           <Link href={`/${lang}/createur`}>
-            <Button className="mt-6 bg-sage hover:bg-sage-light text-white">
-              {t.goToDashboard}
-            </Button>
+            <Button gem="sage" className="mt-6">{t.goToDashboard}</Button>
           </Link>
         </motion.div>
       </div>
     )
   }
 
-  // Registration form (approved but no slug)
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark py-12 px-4">
       <div className="max-w-2xl mx-auto">
@@ -347,24 +392,42 @@ export default function CreatorRegistrationPage({
           </Button>
         </Link>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="text-center mb-10">
             <PartyPopper className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--icon-sage)' }} />
-            <h1 className="font-quicksand text-3xl font-bold text-foreground dark:text-foreground-dark mb-2">
-              {t.title}
-            </h1>
-            <p className="text-foreground-secondary dark:text-foreground-dark-secondary text-lg">
-              {t.subtitle}
-            </p>
+            <h1 className="font-quicksand text-3xl font-bold text-foreground dark:text-foreground-dark mb-2">{t.title}</h1>
+            <p className="text-foreground-secondary dark:text-foreground-dark-secondary text-lg">{t.subtitle}</p>
           </div>
 
-          {/* Registration Form */}
-          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-8" style={{ border: '1px solid var(--border)' }}>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-elevation-1 p-8" style={{ border: '1px solid var(--border)' }}>
+            <form onSubmit={handleSubmit} className="space-y-7">
+
+              {/* Avatar */}
+              <div className="flex flex-col items-center gap-3">
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="relative w-28 h-28 rounded-full overflow-hidden group cursor-pointer"
+                  style={{ border: '2px dashed var(--border)' }}
+                >
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-surface-secondary dark:bg-surface-dark-secondary">
+                      <Camera className="w-8 h-8 text-foreground/30 dark:text-foreground-dark/30" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Camera className="w-7 h-7 text-white" />
+                  </div>
+                </button>
+                <p className="text-xs text-foreground-secondary dark:text-foreground-dark-secondary">
+                  {avatarUploading ? t.avatarUploading : t.avatarHint}
+                </p>
+              </div>
+
+              {/* Display name */}
               <div>
                 <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-2">
                   {t.displayName} *
@@ -372,17 +435,19 @@ export default function CreatorRegistrationPage({
                 <input
                   type="text"
                   value={formData.displayName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, displayName: e.target.value }))
+                    if (!formData.slug) handleSlugChange(e.target.value)
+                  }}
                   placeholder={t.displayNamePlaceholder}
                   className="w-full px-4 py-3 rounded-xl bg-surface dark:bg-surface-dark text-foreground dark:text-foreground-dark outline-none transition-all focus:ring-2 focus:ring-sage/30"
                   style={{ border: '1px solid var(--border)' }}
                   required
                 />
-                <p className="text-xs text-foreground-secondary dark:text-foreground-dark-secondary mt-1">
-                  {t.displayNameHelp}
-                </p>
+                <p className="text-xs text-foreground-secondary dark:text-foreground-dark-secondary mt-1">{t.displayNameHelp}</p>
               </div>
 
+              {/* Slug */}
               <div>
                 <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-2">
                   {t.slug} *
@@ -401,15 +466,12 @@ export default function CreatorRegistrationPage({
                     required
                   />
                 </div>
-                {slugError && (
-                  <p className="text-xs text-red-500 mt-1">{slugError}</p>
-                )}
+                {slugError && <p className="text-xs text-red-500 mt-1">{slugError}</p>}
               </div>
 
+              {/* Bio */}
               <div>
-                <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-2">
-                  {t.bio}
-                </label>
+                <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-2">{t.bio}</label>
                 <textarea
                   value={formData.bio}
                   onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
@@ -418,62 +480,94 @@ export default function CreatorRegistrationPage({
                   className="w-full px-4 py-3 rounded-xl bg-surface dark:bg-surface-dark text-foreground dark:text-foreground-dark outline-none transition-all resize-none focus:ring-2 focus:ring-sage/30"
                   style={{ border: '1px solid var(--border)' }}
                 />
-                <p className="text-xs text-foreground-secondary dark:text-foreground-dark-secondary mt-1">
-                  {t.bioHelp}
-                </p>
+                <p className="text-xs text-foreground-secondary dark:text-foreground-dark-secondary mt-1">{t.bioHelp}</p>
               </div>
 
+              {/* Themes */}
               <div>
-                <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-2">
-                  {t.philosophy}
+                <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-1">
+                  {t.themesSection}
                 </label>
-                <textarea
-                  value={formData.philosophy}
-                  onChange={(e) => setFormData(prev => ({ ...prev, philosophy: e.target.value }))}
-                  placeholder={t.philosophyPlaceholder}
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-xl bg-surface dark:bg-surface-dark text-foreground dark:text-foreground-dark outline-none transition-all resize-none focus:ring-2 focus:ring-sage/30"
-                  style={{ border: '1px solid var(--border)' }}
-                />
+                <p className="text-xs text-foreground-secondary dark:text-foreground-dark-secondary mb-3">{t.themesHint}</p>
+
+                {/* Selected themes */}
+                {selectedThemes.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedThemes.map(theme => (
+                      <span
+                        key={theme}
+                        className="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-sage/20 text-sage"
+                      >
+                        {theme}
+                        <button type="button" onClick={() => toggleTheme(theme)} className="hover:text-sage/60">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Suggested themes */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {SUGGESTED_THEMES.filter(t => !selectedThemes.includes(t)).map(theme => (
+                    <button
+                      key={theme}
+                      type="button"
+                      onClick={() => toggleTheme(theme)}
+                      disabled={selectedThemes.length >= 8}
+                      className="px-3 py-1 rounded-full text-sm border transition-colors hover:bg-sage/10 hover:border-sage disabled:opacity-40 disabled:cursor-not-allowed text-foreground dark:text-foreground-dark"
+                      style={{ border: '1px solid var(--border)' }}
+                    >
+                      {theme}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom theme */}
+                {selectedThemes.length < 8 && (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={customTheme}
+                      onChange={(e) => setCustomTheme(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTheme())}
+                      placeholder={t.themesPlaceholder}
+                      className="flex-1 px-3 py-2 rounded-lg text-sm bg-surface dark:bg-surface-dark text-foreground dark:text-foreground-dark outline-none focus:ring-2 focus:ring-sage/30"
+                      style={{ border: '1px solid var(--border)' }}
+                    />
+                    <Button type="button" gem="sage" variant="outline" size="sm" onClick={addCustomTheme}>
+                      <Plus className="w-4 h-4 mr-1" />
+                      {t.themesAdd}
+                    </Button>
+                  </div>
+                )}
               </div>
 
-              {/* CGU Checkbox */}
+              {/* CGU */}
               <div className="space-y-2">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={cguAccepted}
-                    onChange={(e) => {
-                      setCguAccepted(e.target.checked)
-                      setCguError(false)
-                    }}
+                    onChange={(e) => { setCguAccepted(e.target.checked); setCguError(false) }}
                     className="mt-1 w-4 h-4 rounded border-gray-300 text-sage focus:ring-sage"
                   />
                   <span className="text-sm text-foreground dark:text-foreground-dark">
                     {t.cguLabel}{' '}
-                    <Link
-                      href={`/${lang}/cgu-createurs`}
-                      target="_blank"
-                      className="text-sage hover:underline"
-                    >
+                    <Link href={`/${lang}/cgu-createurs`} target="_blank" className="text-sage hover:underline">
                       {t.cguLink}
                     </Link>{' '}
                     {t.cguCreator}
                   </span>
                 </label>
-                {cguError && (
-                  <p className="text-xs text-red-500">{t.cguRequired}</p>
-                )}
+                {cguError && <p className="text-xs text-red-500">{t.cguRequired}</p>}
               </div>
 
               <Button
                 type="submit"
                 disabled={isSubmitting || !formData.displayName || !formData.slug || !cguAccepted}
-                className="w-full py-3 rounded-xl font-semibold text-white transition-colors"
-                style={{
-                  backgroundColor: isSubmitting || !formData.displayName || !formData.slug || !cguAccepted ? '#9ca3af' : '#B794C0',
-                  cursor: isSubmitting || !formData.displayName || !formData.slug || !cguAccepted ? 'not-allowed' : 'pointer'
-                }}
+                gem="mauve"
+                className="w-full py-3 rounded-xl font-semibold transition-colors"
               >
                 {isSubmitting ? t.submitting : t.submit}
               </Button>

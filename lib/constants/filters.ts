@@ -1,4 +1,5 @@
 import type { Language } from '@/lib/types'
+import type { GemColor } from '@/components/ui/button'
 
 // Type pour les items avec traductions
 export interface FilterOption {
@@ -6,6 +7,7 @@ export interface FilterOption {
   label: Record<Language, string>
   emoji?: string
   group?: string // pour regrouper dans l'UI
+  gem?: GemColor  // couleur gemme pour les boutons de catégorie
 }
 
 // ==========================================
@@ -24,16 +26,16 @@ export const BUDGET_TYPES: FilterOption[] = [
 // CATÉGORIES (Types d'activité) - Liste fermée
 // ==========================================
 export const CATEGORIES: FilterOption[] = [
-  { value: 'sensoriel', label: { fr: 'Sensoriel', en: 'Sensory', es: 'Sensorial' }, emoji: '🖐️' },
-  { value: 'motricite-fine', label: { fr: 'Motricité fine', en: 'Fine motor', es: 'Motricidad fina' }, emoji: '✂️' },
-  { value: 'motricite-globale', label: { fr: 'Motricité globale', en: 'Gross motor', es: 'Motricidad gruesa' }, emoji: '🏃' },
-  { value: 'art-plastique', label: { fr: 'Art plastique', en: 'Visual arts', es: 'Artes plásticas' }, emoji: '🎨' },
-  { value: 'nature-plein-air', label: { fr: 'Nature & plein air', en: 'Nature & outdoor', es: 'Naturaleza' }, emoji: '🌿' },
-  { value: 'diy-recup', label: { fr: 'DIY & récup', en: 'DIY & recycling', es: 'DIY & reciclaje' }, emoji: '♻️' },
-  { value: 'cuisine', label: { fr: 'Cuisine', en: 'Cooking', es: 'Cocina' }, emoji: '👩‍🍳' },
-  { value: 'jeux-symboliques', label: { fr: 'Jeux symboliques', en: 'Imaginative play', es: 'Juego simbólico' }, emoji: '🎭' },
-  { value: 'rituels-routines', label: { fr: 'Rituels & routines', en: 'Routines', es: 'Rutinas' }, emoji: '📋' },
-  { value: 'imprimables', label: { fr: 'Imprimables', en: 'Printables', es: 'Imprimibles' }, emoji: '🖨️' }
+  { value: 'sensoriel', label: { fr: 'Sensoriel', en: 'Sensory', es: 'Sensorial' }, emoji: '🖐️', gem: 'rose' },
+  { value: 'motricite-fine', label: { fr: 'Motricité fine', en: 'Fine motor', es: 'Motricidad fina' }, emoji: '✂️', gem: 'mauve' },
+  { value: 'motricite-globale', label: { fr: 'Motricité globale', en: 'Gross motor', es: 'Motricidad gruesa' }, emoji: '🏃', gem: 'sky' },
+  { value: 'art-plastique', label: { fr: 'Art plastique', en: 'Visual arts', es: 'Artes plásticas' }, emoji: '🎨', gem: 'terracotta' },
+  { value: 'nature-plein-air', label: { fr: 'Nature & plein air', en: 'Nature & outdoor', es: 'Naturaleza' }, emoji: '🌿', gem: 'sage' },
+  { value: 'diy-recup', label: { fr: 'DIY & récup', en: 'DIY & recycling', es: 'DIY & reciclaje' }, emoji: '♻️', gem: 'amber' },
+  { value: 'cuisine', label: { fr: 'Cuisine', en: 'Cooking', es: 'Cocina' }, emoji: '👩‍🍳', gem: 'terracotta' },
+  { value: 'jeux-symboliques', label: { fr: 'Jeux symboliques', en: 'Imaginative play', es: 'Juego simbólico' }, emoji: '🎭', gem: 'mauve' },
+  { value: 'rituels-routines', label: { fr: 'Rituels & routines', en: 'Routines', es: 'Rutinas' }, emoji: '📋', gem: 'neutral' },
+  { value: 'imprimables', label: { fr: 'Imprimables', en: 'Printables', es: 'Imprimibles' }, emoji: '🖨️', gem: 'sky' }
 ]
 
 // ==========================================
@@ -313,8 +315,6 @@ export const RESOURCE_TYPES: FilterOption[] = [
   { value: 'activite', label: { fr: 'Activité', en: 'Activity', es: 'Actividad' }, emoji: '🎨' },
   { value: 'motricite', label: { fr: 'Motricité', en: 'Motor skills', es: 'Motricidad' }, emoji: '🏃' },
   { value: 'alimentation', label: { fr: 'Recette', en: 'Recipe', es: 'Receta' }, emoji: '🍳' },
-  { value: 'livre', label: { fr: 'Livre', en: 'Book', es: 'Libro' }, emoji: '📚' },
-  { value: 'jeu', label: { fr: 'Jeu', en: 'Game', es: 'Juego' }, emoji: '🎲' },
 ]
 
 // ==========================================
@@ -383,7 +383,6 @@ export const FILTER_TRANSLATIONS = {
     free: 'Gratuit',
     paid: 'Payant',
     priceRange: '{min} - {max} crédits',
-    hasDownload: 'PDF téléchargeable',
 
     // Matériel
     materialMode: 'Mode matériel',
@@ -427,7 +426,6 @@ export const FILTER_TRANSLATIONS = {
     free: 'Free',
     paid: 'Paid',
     priceRange: '{min} - {max} credits',
-    hasDownload: 'Downloadable PDF',
 
     materialMode: 'Material mode',
     modeFilter: 'Contains',
@@ -468,7 +466,6 @@ export const FILTER_TRANSLATIONS = {
     free: 'Gratis',
     paid: 'De pago',
     priceRange: '{min} - {max} créditos',
-    hasDownload: 'PDF descargable',
 
     materialMode: 'Modo material',
     modeFilter: 'Contiene',

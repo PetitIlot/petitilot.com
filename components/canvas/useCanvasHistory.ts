@@ -16,6 +16,8 @@ interface UseCanvasHistoryReturn {
   // Actions
   setBlocks: (blocks: ContentBlock[], action?: string) => void
   updateBlock: (id: string, updates: Partial<ContentBlock>, action?: string) => void
+  updateBlockData: (id: string, dataUpdates: Record<string, unknown>, action?: string) => void
+  updateBlockStyle: (id: string, styleUpdates: Partial<ContentBlock['style']>, action?: string) => void
   addBlock: (block: ContentBlock, action?: string) => void
   removeBlock: (id: string, action?: string) => void
   moveBlock: (id: string, x: number, y: number) => void
@@ -103,6 +105,32 @@ export function useCanvasHistory(initialBlocks: ContentBlock[] = []): UseCanvasH
     setBlocksState(prev => {
       const newBlocks = prev.map(block =>
         block.id === id ? { ...block, ...updates } : block
+      )
+      pushToHistory(newBlocks, action)
+      return newBlocks
+    })
+  }, [pushToHistory])
+
+  // Update block data (merges inside functional update to avoid stale closure)
+  const updateBlockData = useCallback((id: string, dataUpdates: Record<string, unknown>, action = 'Edit block') => {
+    setBlocksState(prev => {
+      const newBlocks = prev.map(block =>
+        block.id === id
+          ? { ...block, data: { ...block.data, ...dataUpdates } as ContentBlock['data'] }
+          : block
+      )
+      pushToHistory(newBlocks, action)
+      return newBlocks
+    })
+  }, [pushToHistory])
+
+  // Update block style (merges inside functional update to avoid stale closure)
+  const updateBlockStyle = useCallback((id: string, styleUpdates: Partial<ContentBlock['style']>, action = 'Style block') => {
+    setBlocksState(prev => {
+      const newBlocks = prev.map(block =>
+        block.id === id
+          ? { ...block, style: { ...block.style, ...styleUpdates } }
+          : block
       )
       pushToHistory(newBlocks, action)
       return newBlocks
@@ -204,6 +232,8 @@ export function useCanvasHistory(initialBlocks: ContentBlock[] = []): UseCanvasH
     canRedo: history.currentIndex < history.entries.length - 1,
     setBlocks,
     updateBlock,
+    updateBlockData,
+    updateBlockStyle,
     addBlock,
     removeBlock,
     moveBlock,

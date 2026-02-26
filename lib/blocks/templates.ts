@@ -1,509 +1,735 @@
 /**
- * Canvas Templates
- * Templates prédéfinis pour différents types de ressources
+ * Canvas Templates v4.0
+ * 6 templates organisés par format de mise en page :
+ *   ÉTROIT   (2) — paddingHorizontal 400 — colonne 600px
+ *   MOYEN    (2) — paddingHorizontal 200 — zone 1000px
+ *   PLEINE   (2) — paddingHorizontal   0 — largeur totale ~1400px
  */
 
-import type { ContentBlocksData, ContentBlock, BlockPosition, BlockStyle } from './types'
-import { createBlock, BLOCK_PRESETS } from './types'
+import type { ContentBlocksData, ContentBlock } from './types'
+import { createBlock } from './types'
 
-// Helper pour créer un ID unique
-const generateId = () => `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+// ─────────────────────────────────────────────
+// HELPERS géométrie
+// ─────────────────────────────────────────────
 
-// Template: Activité classique
-// Titre + Description + Image + Astuce + Achat
-export function createActivityTemplate(): ContentBlocksData {
+/** ÉTROIT : colonne 600px centrée, marge 400 de chaque côté */
+const NARROW = { left: 400, w: 600 }
+
+/** MOYEN : zone 1000px, marge 200 de chaque côté */
+const MEDIUM = { left: 200, w: 1000, colW: 480, col2: 720 }
+
+/** PLEIN : largeur totale ~1400px */
+const FULL = { left: 40, w: 1320, colW: 640, col2: 720 }
+
+// ─────────────────────────────────────────────
+// T1 — ÉTROIT : Fiche Essentielle
+// Colonne unique épurée. Titre → Image → Texte → Matériel → Achat → Créateur
+// ─────────────────────────────────────────────
+export function createNarrowEssentialTemplate(): ContentBlocksData {
+  const { left, w } = NARROW
   const blocks: ContentBlock[] = [
-    // Titre en haut
     createBlock('title', {
-      showBadges: true,
-      showThemes: true,
-      showCompetences: false,
-      titleSize: 'xl' as const,
-      alignment: 'left' as const
-    }, { x: 32, y: 32, width: 540, height: 'auto', zIndex: 1 }),
+      titleSize: 36,
+      alignment: 'center' as const,
+      borderRadius: 'rounded' as const,
+      elements: { showTitle: true, showSocial: true, showTags: true },
+      social: { variant: 'classic' as const, style: 'gem' as const },
+      tags: { variant: 'classic' as const, alignment: 'center' as const, style: 'gem' as const, shape: 'pill' as const, themeColor: 'sky' as const, competenceColor: 'rose' as const },
+    }, { x: left, y: 40, width: w, height: 'auto', zIndex: 1 }),
 
-    // Image principale à droite
     createBlock('image', {
       url: '',
-      alt: '',
-      objectFit: 'cover' as const
-    }, { x: 450, y: 32, width: 300, height: 225, zIndex: 2 }),
+      alt: 'Illustration principale',
+      objectFit: 'cover' as const,
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 220, width: w, height: 280, zIndex: 2 }, {
+      borderRadius: 16,
+      shadow: 'apple',
+    }),
 
-    // Description sous le titre
     createBlock('text', {
-      content: '<p>Description de votre activité...</p>'
-    }, { x: 32, y: 180, width: 400, height: 'auto', zIndex: 3 }),
+      content: '<p>Décrivez votre activité ici. Expliquez ce que les enfants vont apprendre et pourquoi elle est enrichissante pour leur développement.</p>',
+      fontSize: 15,
+      alignment: 'left' as const,
+    }, { x: left, y: 520, width: w, height: 'auto', zIndex: 3 }),
 
-    // Astuce
-    createBlock('tip', {
-      content: '<p>Partagez un conseil utile ici...</p>',
-      icon: 'lightbulb' as const,
-      accentColor: 'sage' as const
-    }, { x: 32, y: 320, width: 400, height: 'auto', zIndex: 4 }),
+    createBlock('material', {
+      showLinks: true,
+      showRecupBadge: true,
+      showAffiliateNote: false,
+      layout: 'list' as const,
+      titleText: 'Matériel',
+      fontSize: 14,
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 670, width: w, height: 'auto', zIndex: 4 }, {
+      backgroundColor: '#F0F4ED',
+      borderRadius: 14,
+      padding: 20,
+      border: true,
+      borderColor: '#C5D4BC',
+      shadow: 'sm',
+    }),
 
-    // Bloc achat
+    createBlock('separator', {
+      style: 'fade' as const,
+      direction: 'horizontal' as const,
+      thickness: 1,
+      length: 60,
+      color: '#C5D4BC',
+      align: 'center' as const,
+      opacity: 50,
+    }, { x: left + 100, y: 920, width: w - 200, height: 20, zIndex: 5 }),
+
     createBlock('purchase', {
       variant: 'full' as const,
       showPrice: true,
-      buttonText: 'Obtenir',
-      buttonColor: '#A8B5A0'
-    }, { x: 500, y: 280, width: 250, height: 'auto', zIndex: 5 }),
+      buttonText: 'Obtenir cette fiche',
+      buttonColor: '#7A8B6F',
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 960, width: w, height: 'auto', zIndex: 6 }, {
+      borderRadius: 18,
+      padding: 22,
+      shadow: 'apple',
+      backgroundGradient: {
+        type: 'linear',
+        angle: 145,
+        colors: [
+          { color: '#F0F4ED', position: 0 },
+          { color: '#FFFFFF', position: 100 },
+        ],
+      },
+    }),
 
-    // Créateur en bas
     createBlock('creator', {
       variant: 'compact' as const,
-      showStats: true,
-      showFollowButton: true
-    }, { x: 32, y: 450, width: 300, height: 'auto', zIndex: 6 })
+      showStats: false,
+      showFollowButton: true,
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 1140, width: w, height: 'auto', zIndex: 7 }),
   ]
 
   return {
     version: 2,
-    canvas: {
-      width: 800,
-      height: 'auto',
-      gridSize: 8,
-      snapToGrid: true
-    },
-    layout: {
-      desktop: blocks
-    },
-    metadata: {
-      templateName: 'activity',
-      lastEditedAt: new Date().toISOString()
-    }
+    canvas: { width: 800, height: 'auto', gridSize: 8, snapToGrid: true, paddingHorizontal: 400 },
+    layout: { desktop: blocks },
+    metadata: { templateName: 'narrow-essential', lastEditedAt: new Date().toISOString() },
   }
 }
 
-// Template: Recette de cuisine
-// Titre + Image + Liste d'ingrédients + Instructions + Astuce chef
-export function createRecipeTemplate(): ContentBlocksData {
+// ─────────────────────────────────────────────
+// T2 — ÉTROIT : Journal & Découverte
+// Story-driven, texte en tête. Titre → Intro → Liste → Image → Astuce → Créateur → Achat
+// ─────────────────────────────────────────────
+export function createNarrowStoryTemplate(): ContentBlocksData {
+  const { left, w } = NARROW
   const blocks: ContentBlock[] = [
-    // Titre
     createBlock('title', {
-      showBadges: true,
-      showThemes: false,
-      showCompetences: false,
-      titleSize: 'xl' as const,
-      alignment: 'center' as const
-    }, { x: 100, y: 32, width: 600, height: 'auto', zIndex: 1 }),
+      titleSize: 38,
+      alignment: 'left' as const,
+      borderRadius: 'rounded' as const,
+      elements: { showTitle: true, showSocial: true, showTags: true },
+      social: { variant: 'classic' as const, style: 'gem' as const },
+      tags: { variant: 'classic' as const, alignment: 'left' as const, style: 'gem' as const, shape: 'pill' as const, themeColor: 'sky' as const, competenceColor: 'rose' as const },
+    }, { x: left, y: 40, width: w, height: 'auto', zIndex: 1 }),
 
-    // Image du plat
-    createBlock('image', {
-      url: '',
-      alt: '',
-      objectFit: 'cover' as const
-    }, { x: 150, y: 120, width: 500, height: 280, zIndex: 2 }),
+    createBlock('text', {
+      content: '<p>Une courte introduction pour accrocher le lecteur. Expliquez en quelques phrases pourquoi cette activité est précieuse pour les enfants.</p>',
+      fontSize: 15,
+      alignment: 'left' as const,
+    }, { x: left, y: 220, width: w, height: 'auto', zIndex: 2 }),
 
-    // Liste des ingrédients
+    createBlock('separator', {
+      style: 'fade' as const,
+      direction: 'horizontal' as const,
+      thickness: 1,
+      length: 30,
+      color: '#A8B5A0',
+      align: 'start' as const,
+      opacity: 60,
+    }, { x: left, y: 370, width: 200, height: 20, zIndex: 3 }),
+
     createBlock('list', {
-      title: 'Ingrédients',
-      items: ['Ingrédient 1', 'Ingrédient 2', 'Ingrédient 3'],
+      title: 'Ce que l\'on va explorer',
+      items: ['Observation de la nature', 'Manipulation et toucher', 'Éveil créatif', 'Partage et langage', 'Patience et concentration'],
       bulletStyle: 'check' as const,
-      columns: 1
-    }, { x: 32, y: 420, width: 340, height: 'auto', zIndex: 3 }),
+      columns: 1,
+      fontSize: 14,
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 410, width: w, height: 'auto', zIndex: 4 }, {
+      borderRadius: 14,
+      padding: 20,
+      border: true,
+      borderColor: '#C5D4BC',
+      backgroundColor: '#F8FAF7',
+    }),
 
-    // Instructions
-    createBlock('list', {
-      title: 'Préparation',
-      items: ['Étape 1', 'Étape 2', 'Étape 3'],
-      bulletStyle: 'number' as const,
-      columns: 1
-    }, { x: 400, y: 420, width: 360, height: 'auto', zIndex: 4 }),
+    createBlock('image', {
+      url: '',
+      alt: 'Photo de l\'activité',
+      objectFit: 'cover' as const,
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 630, width: w, height: 260, zIndex: 5 }, {
+      borderRadius: 14,
+      shadow: 'md',
+    }),
 
-    // Astuce du chef
-    createBlock('tip', {
-      content: '<p>Astuce du chef : ...</p>',
-      icon: 'chef' as const,
-      accentColor: 'terracotta' as const
-    }, { x: 32, y: 600, width: 350, height: 'auto', zIndex: 5 }),
-
-    // Achat
-    createBlock('purchase', {
-      variant: 'compact' as const,
-      showPrice: true,
-      buttonText: 'Télécharger la recette',
-      buttonColor: '#D4A59A'
-    }, { x: 430, y: 600, width: 330, height: 'auto', zIndex: 6 })
-  ]
-
-  return {
-    version: 2,
-    canvas: {
-      width: 800,
-      height: 'auto',
-      gridSize: 8,
-      snapToGrid: true
-    },
-    layout: {
-      desktop: blocks
-    },
-    metadata: {
-      templateName: 'recipe',
-      lastEditedAt: new Date().toISOString()
-    }
-  }
-}
-
-// Template: Galerie / Portfolio
-// Titre + Galerie d'images + Description + Liens
-export function createGalleryTemplate(): ContentBlocksData {
-  const blocks: ContentBlock[] = [
-    // Titre centré
-    createBlock('title', {
-      showBadges: false,
-      showThemes: true,
-      showCompetences: false,
-      titleSize: 'lg' as const,
-      alignment: 'center' as const
-    }, { x: 100, y: 32, width: 600, height: 'auto', zIndex: 1 }),
-
-    // Galerie carousel
-    createBlock('carousel', {
-      images: [],
-      autoPlay: false,
-      showDots: true,
-      showArrows: true,
-      interval: 3000
-    }, { x: 50, y: 120, width: 700, height: 400, zIndex: 2 }),
-
-    // Description
     createBlock('text', {
-      content: '<p>Description de la galerie...</p>'
-    }, { x: 50, y: 540, width: 450, height: 'auto', zIndex: 3 }),
+      content: '<p><strong>Astuce pédagogique</strong></p><p>Laissez l\'enfant aller à son rythme. L\'observation libre est souvent plus riche qu\'une consigne stricte.</p>',
+      fontSize: 14,
+    }, { x: left, y: 910, width: w, height: 'auto', zIndex: 6 }, {
+      borderRadius: 14,
+      padding: 18,
+      border: true,
+      borderColor: 'rgba(168, 181, 160, 0.4)',
+      backgroundColor: 'rgba(168, 181, 160, 0.08)',
+    }),
 
-    // Liens / Ressources
-    createBlock('list-links', {
-      title: 'Ressources',
-      items: [],
-      showAffiliateNote: false
-    }, { x: 520, y: 540, width: 230, height: 'auto', zIndex: 4 }),
-
-    // Créateur
     createBlock('creator', {
+      variant: 'compact' as const,
+      showStats: false,
+      showFollowButton: true,
+    }, { x: left, y: 1050, width: w, height: 'auto', zIndex: 7 }),
+
+    createBlock('purchase', {
       variant: 'full' as const,
-      showStats: true,
-      showFollowButton: true
-    }, { x: 300, y: 680, width: 200, height: 'auto', zIndex: 5 })
+      showPrice: true,
+      buttonText: 'Accéder à la ressource',
+      buttonColor: '#7A8B6F',
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 1200, width: w, height: 'auto', zIndex: 8 }, {
+      borderRadius: 18,
+      padding: 22,
+      shadow: 'apple',
+    }),
   ]
 
   return {
     version: 2,
-    canvas: {
-      width: 800,
-      height: 'auto',
-      gridSize: 8,
-      snapToGrid: true
-    },
-    layout: {
-      desktop: blocks
-    },
-    metadata: {
-      templateName: 'gallery',
-      lastEditedAt: new Date().toISOString()
-    }
+    canvas: { width: 800, height: 'auto', gridSize: 8, snapToGrid: true, paddingHorizontal: 400 },
+    layout: { desktop: blocks },
+    metadata: { templateName: 'narrow-story', lastEditedAt: new Date().toISOString() },
   }
 }
 
-// Template: Tutoriel vidéo
-// Titre + Vidéo + Description + Liste étapes + Téléchargement
-export function createVideoTutorialTemplate(): ContentBlocksData {
+// ─────────────────────────────────────────────
+// T3 — MOYEN : Activité & Matériel
+// Deux colonnes confortables. Titre → Image bannière → Texte|Matériel → Créateur|Achat
+// ─────────────────────────────────────────────
+export function createMediumActivityTemplate(): ContentBlocksData {
+  const { left, w, colW, col2 } = MEDIUM
   const blocks: ContentBlock[] = [
-    // Titre
     createBlock('title', {
-      showBadges: true,
-      showThemes: false,
-      showCompetences: true,
-      titleSize: 'xl' as const,
-      alignment: 'left' as const
-    }, { x: 32, y: 32, width: 500, height: 'auto', zIndex: 1 }),
+      titleSize: 40,
+      alignment: 'left' as const,
+      borderRadius: 'rounded' as const,
+      elements: { showTitle: true, showSocial: true, showTags: true },
+      social: { variant: 'classic' as const, style: 'gem' as const },
+      tags: { variant: 'classic' as const, alignment: 'left' as const, style: 'gem' as const, shape: 'pill' as const, themeColor: 'sky' as const, competenceColor: 'rose' as const },
+    }, { x: left, y: 40, width: w, height: 'auto', zIndex: 1 }),
 
-    // Vidéo principale
+    createBlock('image', {
+      url: '',
+      alt: 'Image principale',
+      objectFit: 'cover' as const,
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 220, width: w, height: 340, zIndex: 2 }, {
+      borderRadius: 20,
+      shadow: 'apple',
+    }),
+
+    createBlock('text', {
+      content: '<h3>Description</h3><p>Expliquez en détail le déroulement de l\'activité. Mentionnez les compétences développées, l\'âge recommandé et le niveau d\'autonomie nécessaire.</p>',
+      fontSize: 15,
+    }, { x: left, y: 580, width: colW, height: 'auto', zIndex: 3 }),
+
+    createBlock('material', {
+      showLinks: true,
+      showRecupBadge: true,
+      showAffiliateNote: true,
+      layout: 'two-columns' as const,
+      titleText: 'Matériel nécessaire',
+      fontSize: 14,
+      borderRadius: 'rounded' as const,
+    }, { x: col2, y: 580, width: colW, height: 'auto', zIndex: 4 }, {
+      backgroundColor: '#F0F4ED',
+      borderRadius: 16,
+      padding: 20,
+      border: true,
+      borderColor: '#C5D4BC',
+      shadow: 'sm',
+    }),
+
+    createBlock('separator', {
+      style: 'fade' as const,
+      direction: 'horizontal' as const,
+      thickness: 1,
+      length: 60,
+      color: '#C5D4BC',
+      align: 'center' as const,
+      opacity: 50,
+    }, { x: left + 100, y: 840, width: w - 200, height: 20, zIndex: 5 }),
+
+    createBlock('creator', {
+      variant: 'compact' as const,
+      showStats: true,
+      showFollowButton: true,
+    }, { x: left, y: 880, width: colW, height: 'auto', zIndex: 6 }),
+
+    createBlock('purchase', {
+      variant: 'full' as const,
+      showPrice: true,
+      buttonText: 'Obtenir cette activité',
+      buttonColor: '#7A8B6F',
+      borderRadius: 'rounded' as const,
+    }, { x: col2, y: 880, width: colW, height: 'auto', zIndex: 7 }, {
+      glass: true,
+      glassIntensity: 'medium',
+      borderRadius: 20,
+      padding: 24,
+      shadow: 'apple',
+    }),
+  ]
+
+  return {
+    version: 2,
+    canvas: { width: 800, height: 'auto', gridSize: 8, snapToGrid: true, paddingHorizontal: 200 },
+    layout: { desktop: blocks },
+    metadata: { templateName: 'medium-activity', lastEditedAt: new Date().toISOString() },
+  }
+}
+
+// ─────────────────────────────────────────────
+// T4 — MOYEN : Tutoriel Vidéo
+// Vidéo + objectifs côte à côte → FAQ|Achat → Créateur pleine largeur
+// ─────────────────────────────────────────────
+export function createMediumVideoTemplate(): ContentBlocksData {
+  const { left, w, col2 } = MEDIUM
+  const blocks: ContentBlock[] = [
+    createBlock('title', {
+      titleSize: 38,
+      alignment: 'left' as const,
+      borderRadius: 'rounded' as const,
+      elements: { showTitle: true, showSocial: true, showTags: true },
+      social: { variant: 'classic' as const, style: 'gem' as const },
+      tags: { variant: 'classic' as const, alignment: 'left' as const, style: 'gem' as const, shape: 'pill' as const, themeColor: 'sky' as const, competenceColor: 'rose' as const },
+    }, { x: left, y: 40, width: w, height: 'auto', zIndex: 1 }),
+
+    // Vidéo large + liste objectifs à droite
     createBlock('video', {
       url: '',
       platform: 'auto' as const,
-      aspectRatio: '16:9' as const
-    }, { x: 32, y: 130, width: 520, height: 290, zIndex: 2 }),
+      aspectRatio: '16:9' as const,
+    }, { x: left, y: 220, width: 620, height: 350, zIndex: 2 }, {
+      borderRadius: 16,
+      shadow: 'apple',
+    }),
 
-    // Description à droite
-    createBlock('text', {
-      content: '<p>Dans ce tutoriel, vous apprendrez...</p>'
-    }, { x: 570, y: 130, width: 200, height: 'auto', zIndex: 3 }),
-
-    // Liste des étapes
     createBlock('list', {
       title: 'Ce que vous apprendrez',
-      items: ['Compétence 1', 'Compétence 2', 'Compétence 3'],
+      items: ['Compétence clé 1', 'Compétence clé 2', 'Compétence clé 3', 'Compétence clé 4'],
       bulletStyle: 'check' as const,
-      columns: 1
-    }, { x: 570, y: 280, width: 200, height: 'auto', zIndex: 4 }),
+      columns: 1,
+      fontSize: 14,
+      borderRadius: 'rounded' as const,
+    }, { x: col2 + 40, y: 220, width: 340, height: 'auto', zIndex: 3 }, {
+      backgroundColor: '#F0F4ED',
+      borderRadius: 16,
+      padding: 20,
+      border: true,
+      borderColor: '#C5D4BC',
+    }),
 
-    // Astuce
-    createBlock('tip', {
-      content: '<p>Conseil : Prenez des notes pendant le visionnage !</p>',
-      icon: 'info' as const,
-      accentColor: 'sky' as const
-    }, { x: 32, y: 440, width: 350, height: 'auto', zIndex: 5 }),
+    createBlock('text', {
+      content: '<p>Dans ce tutoriel, suivez les étapes une à une. Mettez pause dès que vous en avez besoin. Chaque geste compte !</p>',
+      fontSize: 15,
+    }, { x: left, y: 590, width: w, height: 'auto', zIndex: 4 }),
 
-    // Achat / Téléchargement
+    createBlock('faq', {
+      items: [
+        { question: 'Quel âge est recommandé ?', answer: 'Dès 3 ans avec accompagnement, en autonomie à partir de 5 ans.' },
+        { question: 'Ai-je besoin de matériel spécifique ?', answer: 'Non, tout le matériel est listé dans la fiche téléchargeable.' },
+      ],
+      style: 'bordered' as const,
+      expandMode: 'single' as const,
+      iconStyle: 'chevron' as const,
+      questionFontSize: 14,
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 720, width: 480, height: 'auto', zIndex: 5 }),
+
     createBlock('purchase', {
       variant: 'full' as const,
       showPrice: true,
       buttonText: 'Télécharger les ressources',
-      buttonColor: '#7BA3C4'
-    }, { x: 400, y: 440, width: 370, height: 'auto', zIndex: 6 })
-  ]
+      buttonColor: '#7BA3C4',
+      borderRadius: 'rounded' as const,
+    }, { x: col2, y: 720, width: 480, height: 'auto', zIndex: 6 }, {
+      backgroundGradient: {
+        type: 'linear',
+        angle: 135,
+        colors: [
+          { color: '#EDF4F8', position: 0 },
+          { color: '#FFFFFF', position: 100 },
+        ],
+      },
+      borderRadius: 20,
+      padding: 24,
+      shadow: 'apple',
+    }),
 
-  return {
-    version: 2,
-    canvas: {
-      width: 800,
-      height: 'auto',
-      gridSize: 8,
-      snapToGrid: true
-    },
-    layout: {
-      desktop: blocks
-    },
-    metadata: {
-      templateName: 'video-tutorial',
-      lastEditedAt: new Date().toISOString()
-    }
-  }
-}
-
-// Template: Document / Guide
-// Titre + Introduction + Sections multiples + Téléchargement PDF
-export function createDocumentTemplate(): ContentBlocksData {
-  const blocks: ContentBlock[] = [
-    // Titre
-    createBlock('title', {
-      showBadges: true,
-      showThemes: true,
-      showCompetences: false,
-      titleSize: 'xl' as const,
-      alignment: 'center' as const
-    }, { x: 100, y: 32, width: 600, height: 'auto', zIndex: 1 }),
-
-    // Séparateur
-    createBlock('separator', {
-      style: 'line' as const,
-      thickness: 1,
-      color: '#E5E7EB',
-      direction: 'horizontal' as const
-    }, { x: 150, y: 120, width: 500, height: 20, zIndex: 2 }),
-
-    // Introduction
-    createBlock('text', {
-      content: '<p><strong>Introduction</strong></p><p>Présentation du guide...</p>'
-    }, { x: 100, y: 150, width: 600, height: 'auto', zIndex: 3 }),
-
-    // Section 1
-    createBlock('text', {
-      content: '<p><strong>Section 1</strong></p><p>Contenu de la première section...</p>'
-    }, { x: 100, y: 280, width: 600, height: 'auto', zIndex: 4 }),
-
-    // Astuce
-    createBlock('tip', {
-      content: '<p>Point important à retenir...</p>',
-      icon: 'star' as const,
-      accentColor: 'mauve' as const
-    }, { x: 100, y: 400, width: 350, height: 'auto', zIndex: 5 }),
-
-    // Téléchargement PDF
-    createBlock('purchase', {
-      variant: 'full' as const,
-      showPrice: true,
-      buttonText: 'Télécharger le PDF complet',
-      buttonColor: '#9B8AA8'
-    }, { x: 480, y: 400, width: 220, height: 'auto', zIndex: 6 }),
-
-    // Créateur
     createBlock('creator', {
       variant: 'compact' as const,
       showStats: true,
-      showFollowButton: false
-    }, { x: 100, y: 520, width: 300, height: 'auto', zIndex: 7 })
+      showFollowButton: true,
+    }, { x: left, y: 960, width: w, height: 'auto', zIndex: 7 }),
   ]
 
   return {
     version: 2,
-    canvas: {
-      width: 800,
-      height: 'auto',
-      gridSize: 8,
-      snapToGrid: true
-    },
-    layout: {
-      desktop: blocks
-    },
-    metadata: {
-      templateName: 'document',
-      lastEditedAt: new Date().toISOString()
-    }
+    canvas: { width: 800, height: 'auto', gridSize: 8, snapToGrid: true, paddingHorizontal: 200 },
+    layout: { desktop: blocks },
+    metadata: { templateName: 'medium-video', lastEditedAt: new Date().toISOString() },
   }
 }
 
-// Template: Minimaliste
-// Juste titre + texte + achat
-export function createMinimalTemplate(): ContentBlocksData {
+// ─────────────────────────────────────────────
+// T5 — PLEIN : Galerie de Projet
+// Image-forward, pleine largeur. Titre → Carousel → Texte|Liens → Grille → Créateur|Achat
+// ─────────────────────────────────────────────
+export function createFullGalleryTemplate(): ContentBlocksData {
+  const { left, w, colW, col2 } = FULL
   const blocks: ContentBlock[] = [
     createBlock('title', {
-      showBadges: true,
-      showThemes: false,
-      showCompetences: false,
-      titleSize: 'lg' as const,
-      alignment: 'center' as const
-    }, { x: 150, y: 50, width: 500, height: 'auto', zIndex: 1 }),
+      titleSize: 42,
+      alignment: 'center' as const,
+      borderRadius: 'rounded' as const,
+      elements: { showTitle: true, showSocial: true, showTags: true },
+      social: { variant: 'classic' as const, style: 'gem' as const },
+      tags: { variant: 'classic' as const, alignment: 'center' as const, style: 'gem' as const, shape: 'pill' as const, themeColor: 'sky' as const, competenceColor: 'rose' as const },
+    }, { x: left, y: 30, width: w, height: 'auto', zIndex: 1 }),
+
+    createBlock('carousel', {
+      images: [],
+      carouselType: 'coverflow' as const,
+      autoPlay: false,
+      showDots: true,
+      showArrows: true,
+      interval: 3000,
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 210, width: w, height: 450, zIndex: 2 }, {
+      borderRadius: 20,
+      shadow: 'apple',
+    }),
 
     createBlock('text', {
-      content: '<p>Votre contenu ici...</p>'
-    }, { x: 150, y: 150, width: 500, height: 'auto', zIndex: 2 }),
+      content: '<p>Décrivez votre projet ou galerie. Expliquez la démarche créative, les matériaux utilisés et ce que les enfants ont découvert en réalisant chaque pièce.</p>',
+      fontSize: 15,
+    }, { x: left, y: 680, width: colW, height: 'auto', zIndex: 3 }),
+
+    createBlock('list-links', {
+      title: 'Ressources & fournitures',
+      items: [],
+      bulletStyle: 'dot' as const,
+      showAffiliateNote: true,
+      fontSize: 14,
+      borderRadius: 'rounded' as const,
+    }, { x: col2, y: 680, width: colW, height: 'auto', zIndex: 4 }, {
+      borderRadius: 16,
+      padding: 20,
+      border: true,
+      borderColor: 'var(--border)',
+    }),
+
+    createBlock('image-grid', {
+      images: [],
+      layout: 'grid-3' as const,
+      gap: 10,
+      borderRadius: 'rounded' as const,
+      showCaptions: true,
+      captionFontSize: 11,
+    }, { x: left, y: 890, width: w, height: 'auto', zIndex: 5 }, {
+      borderRadius: 16,
+    }),
+
+    createBlock('creator', {
+      variant: 'full' as const,
+      showStats: true,
+      showFollowButton: true,
+    }, { x: left, y: 1200, width: colW, height: 'auto', zIndex: 6 }),
 
     createBlock('purchase', {
-      variant: 'minimal' as const,
+      variant: 'full' as const,
       showPrice: true,
-      buttonText: 'Obtenir',
-      buttonColor: '#A8B5A0'
-    }, { x: 250, y: 280, width: 300, height: 'auto', zIndex: 3 })
+      buttonText: 'Obtenir le dossier complet',
+      buttonColor: '#7A8B6F',
+      borderRadius: 'rounded' as const,
+    }, { x: col2, y: 1200, width: colW, height: 'auto', zIndex: 7 }, {
+      glass: true,
+      glassIntensity: 'light',
+      borderRadius: 20,
+      padding: 24,
+      shadow: 'md',
+    }),
   ]
 
   return {
     version: 2,
-    canvas: {
-      width: 800,
-      height: 'auto',
-      gridSize: 8,
-      snapToGrid: true
-    },
-    layout: {
-      desktop: blocks
-    },
-    metadata: {
-      templateName: 'minimal',
-      lastEditedAt: new Date().toISOString()
-    }
+    canvas: { width: 800, height: 'auto', gridSize: 8, snapToGrid: true, paddingHorizontal: 0 },
+    layout: { desktop: blocks },
+    metadata: { templateName: 'full-gallery', lastEditedAt: new Date().toISOString() },
   }
 }
 
-// Liste des templates disponibles
+// ─────────────────────────────────────────────
+// T6 — PLEIN : Atelier & DIY
+// Complet et structuré. Titre|Image → Texte|Matériel → Grille photos → Étapes|FAQ → Créateur|Achat
+// ─────────────────────────────────────────────
+export function createFullWorkshopTemplate(): ContentBlocksData {
+  const { left, w, colW, col2 } = FULL
+  const blocks: ContentBlock[] = [
+    createBlock('title', {
+      titleSize: 40,
+      alignment: 'left' as const,
+      borderRadius: 'rounded' as const,
+      elements: { showTitle: true, showSocial: true, showTags: true },
+      social: { variant: 'classic' as const, style: 'gem' as const },
+      tags: { variant: 'classic' as const, alignment: 'left' as const, style: 'gem' as const, shape: 'pill' as const, themeColor: 'sky' as const, competenceColor: 'rose' as const },
+    }, { x: left, y: 30, width: 780, height: 'auto', zIndex: 1 }),
+
+    createBlock('image', {
+      url: '',
+      alt: 'Résultat final',
+      objectFit: 'cover' as const,
+      borderRadius: 'rounded' as const,
+    }, { x: 860, y: 30, width: 500, height: 260, zIndex: 2 }, {
+      borderRadius: 20,
+      shadow: 'apple',
+    }),
+
+    createBlock('text', {
+      content: '<h3>Présentation</h3><p>Décrivez l\'atelier : ce que les enfants vont réaliser, les compétences développées, la durée et le niveau de difficulté.</p>',
+      fontSize: 15,
+    }, { x: left, y: 320, width: colW, height: 'auto', zIndex: 3 }),
+
+    createBlock('material', {
+      showLinks: true,
+      showRecupBadge: true,
+      showAffiliateNote: true,
+      layout: 'two-columns' as const,
+      titleText: 'Matériel nécessaire',
+      fontSize: 14,
+      borderRadius: 'rounded' as const,
+    }, { x: col2, y: 320, width: colW, height: 'auto', zIndex: 4 }, {
+      backgroundColor: '#FFF8F0',
+      borderRadius: 16,
+      padding: 20,
+      border: true,
+      borderColor: '#F0D4C0',
+      shadow: 'sm',
+    }),
+
+    createBlock('image-grid', {
+      images: [],
+      layout: 'grid-2x2' as const,
+      gap: 8,
+      borderRadius: 'rounded' as const,
+      showCaptions: true,
+      captionFontSize: 11,
+    }, { x: left, y: 600, width: w, height: 400, zIndex: 5 }, {
+      borderRadius: 16,
+    }),
+
+    createBlock('list', {
+      title: 'Étapes de réalisation',
+      items: ['Préparez votre espace de travail', 'Rassemblez le matériel', 'Suivez les étapes pas à pas', 'Laissez sécher si nécessaire', 'Admirez le résultat !'],
+      bulletStyle: 'number' as const,
+      columns: 1,
+      fontSize: 14,
+      borderRadius: 'rounded' as const,
+    }, { x: left, y: 1020, width: colW, height: 'auto', zIndex: 6 }, {
+      backgroundColor: '#FFFFFF',
+      borderRadius: 16,
+      padding: 20,
+      border: true,
+      borderColor: '#F0D4C0',
+      shadow: 'sm',
+    }),
+
+    createBlock('faq', {
+      items: [
+        { question: 'À partir de quel âge ?', answer: 'Adapté dès 3 ans avec accompagnement adulte.' },
+        { question: 'Combien de temps prévoir ?', answer: '30 à 45 minutes selon le rythme de l\'enfant.' },
+        { question: 'Peut-on adapter l\'activité ?', answer: 'Oui, chaque étape est modulable selon l\'âge.' },
+      ],
+      style: 'card' as const,
+      expandMode: 'single' as const,
+      iconStyle: 'chevron' as const,
+      questionFontSize: 14,
+      borderRadius: 'rounded' as const,
+    }, { x: col2, y: 1020, width: colW, height: 'auto', zIndex: 7 }, {
+      borderRadius: 16,
+      padding: 16,
+    }),
+
+    createBlock('separator', {
+      style: 'fade' as const,
+      direction: 'horizontal' as const,
+      thickness: 1,
+      length: 50,
+      color: '#A8B5A0',
+      align: 'center' as const,
+      opacity: 40,
+    }, { x: 200, y: 1290, width: w - 160, height: 20, zIndex: 8 }),
+
+    createBlock('creator', {
+      variant: 'compact' as const,
+      showStats: true,
+      showFollowButton: true,
+    }, { x: left, y: 1330, width: colW, height: 'auto', zIndex: 9 }),
+
+    createBlock('purchase', {
+      variant: 'full' as const,
+      showPrice: true,
+      buttonText: 'Obtenir le tutoriel complet',
+      buttonColor: '#7A8B6F',
+      borderRadius: 'rounded' as const,
+    }, { x: col2, y: 1330, width: colW, height: 'auto', zIndex: 10 }, {
+      glass: true,
+      glassIntensity: 'medium',
+      borderRadius: 20,
+      padding: 24,
+      shadow: 'apple',
+    }),
+  ]
+
+  return {
+    version: 2,
+    canvas: { width: 800, height: 'auto', gridSize: 8, snapToGrid: true, paddingHorizontal: 0 },
+    layout: { desktop: blocks },
+    metadata: { templateName: 'full-workshop', lastEditedAt: new Date().toISOString() },
+  }
+}
+
+// ===========================================
+// Registre des templates
+// ===========================================
+
 export interface TemplateInfo {
   id: string
-  name: {
-    fr: string
-    en: string
-    es: string
-  }
-  description: {
-    fr: string
-    en: string
-    es: string
-  }
-  icon: string // Emoji ou nom d'icône
+  layout: 'narrow' | 'medium' | 'full'
+  name: { fr: string; en: string; es: string }
+  description: { fr: string; en: string; es: string }
+  icon: string
+  category: 'general' | 'cooking' | 'creative' | 'education'
   create: () => ContentBlocksData
 }
 
 export const AVAILABLE_TEMPLATES: TemplateInfo[] = [
+  // ── ÉTROIT ──────────────────────────────
   {
-    id: 'activity',
-    name: {
-      fr: 'Activité classique',
-      en: 'Classic Activity',
-      es: 'Actividad clásica'
-    },
+    id: 'narrow-essential',
+    layout: 'narrow',
+    name: { fr: 'Fiche essentielle', en: 'Essential Sheet', es: 'Ficha esencial' },
     description: {
-      fr: 'Titre, image, description et bloc achat',
-      en: 'Title, image, description and purchase block',
-      es: 'Título, imagen, descripción y bloque de compra'
+      fr: 'Colonne unique épurée. Titre, image, matériel et achat.',
+      en: 'Clean single column. Title, image, materials and purchase.',
+      es: 'Columna única limpia. Título, imagen, materiales y compra.',
     },
-    icon: '🎨',
-    create: createActivityTemplate
+    icon: '📋',
+    category: 'general',
+    create: createNarrowEssentialTemplate,
   },
   {
-    id: 'recipe',
-    name: {
-      fr: 'Recette de cuisine',
-      en: 'Recipe',
-      es: 'Receta'
-    },
+    id: 'narrow-story',
+    layout: 'narrow',
+    name: { fr: 'Journal & Découverte', en: 'Journal & Discovery', es: 'Diario & Descubrimiento' },
     description: {
-      fr: 'Image, ingrédients, étapes de préparation',
-      en: 'Image, ingredients, preparation steps',
-      es: 'Imagen, ingredientes, pasos de preparación'
+      fr: 'Style récit. Intro, liste d\'objectifs, image et astuce.',
+      en: 'Story style. Intro, objectives list, image and tip.',
+      es: 'Estilo relato. Intro, lista de objetivos, imagen y consejo.',
     },
-    icon: '🍳',
-    create: createRecipeTemplate
+    icon: '📖',
+    category: 'general',
+    create: createNarrowStoryTemplate,
+  },
+
+  // ── MOYEN ───────────────────────────────
+  {
+    id: 'medium-activity',
+    layout: 'medium',
+    name: { fr: 'Activité & Matériel', en: 'Activity & Materials', es: 'Actividad & Materiales' },
+    description: {
+      fr: 'Deux colonnes confortables. Image bannière, texte et matériel.',
+      en: 'Comfortable two columns. Banner image, text and materials.',
+      es: 'Dos columnas amplias. Imagen banner, texto y materiales.',
+    },
+    icon: '🎯',
+    category: 'general',
+    create: createMediumActivityTemplate,
   },
   {
-    id: 'gallery',
-    name: {
-      fr: 'Galerie / Portfolio',
-      en: 'Gallery / Portfolio',
-      es: 'Galería / Portfolio'
-    },
+    id: 'medium-video',
+    layout: 'medium',
+    name: { fr: 'Tutoriel Vidéo', en: 'Video Tutorial', es: 'Tutorial en Vídeo' },
     description: {
-      fr: 'Carousel d\'images avec description',
-      en: 'Image carousel with description',
-      es: 'Carrusel de imágenes con descripción'
-    },
-    icon: '🖼️',
-    create: createGalleryTemplate
-  },
-  {
-    id: 'video-tutorial',
-    name: {
-      fr: 'Tutoriel vidéo',
-      en: 'Video Tutorial',
-      es: 'Tutorial en video'
-    },
-    description: {
-      fr: 'Vidéo principale avec liste des apprentissages',
-      en: 'Main video with learning objectives',
-      es: 'Video principal con lista de aprendizajes'
+      fr: 'Vidéo + objectifs côte à côte, FAQ et bloc téléchargement.',
+      en: 'Video + goals side by side, FAQ and download block.',
+      es: 'Vídeo + objetivos uno al lado del otro, FAQ y descarga.',
     },
     icon: '🎬',
-    create: createVideoTutorialTemplate
+    category: 'education',
+    create: createMediumVideoTemplate,
+  },
+
+  // ── PLEINE PAGE ──────────────────────────
+  {
+    id: 'full-gallery',
+    layout: 'full',
+    name: { fr: 'Galerie de Projet', en: 'Project Gallery', es: 'Galería de Proyecto' },
+    description: {
+      fr: 'Pleine largeur. Carousel, grille photos et liens ressources.',
+      en: 'Full width. Carousel, image grid and resource links.',
+      es: 'Ancho completo. Carrusel, cuadrícula y enlaces de recursos.',
+    },
+    icon: '🖼️',
+    category: 'creative',
+    create: createFullGalleryTemplate,
   },
   {
-    id: 'document',
-    name: {
-      fr: 'Document / Guide',
-      en: 'Document / Guide',
-      es: 'Documento / Guía'
-    },
+    id: 'full-workshop',
+    layout: 'full',
+    name: { fr: 'Atelier & DIY', en: 'Workshop & DIY', es: 'Taller & DIY' },
     description: {
-      fr: 'Structure de document avec sections',
-      en: 'Document structure with sections',
-      es: 'Estructura de documento con secciones'
+      fr: 'Complet. Matériel, grille photos, étapes et FAQ.',
+      en: 'Full featured. Materials, image grid, steps and FAQ.',
+      es: 'Completo. Materiales, cuadrícula, pasos y FAQ.',
     },
-    icon: '📄',
-    create: createDocumentTemplate
+    icon: '🔨',
+    category: 'creative',
+    create: createFullWorkshopTemplate,
   },
-  {
-    id: 'minimal',
-    name: {
-      fr: 'Minimaliste',
-      en: 'Minimal',
-      es: 'Minimalista'
-    },
-    description: {
-      fr: 'Juste l\'essentiel : titre, texte, achat',
-      en: 'Just the essentials: title, text, purchase',
-      es: 'Solo lo esencial: título, texto, compra'
-    },
-    icon: '✨',
-    create: createMinimalTemplate
-  }
 ]
 
-// Helper pour obtenir un template par ID
+export const TEMPLATE_LAYOUT_LABELS = {
+  narrow: { fr: 'Étroit', en: 'Narrow', es: 'Estrecho' },
+  medium: { fr: 'Moyen', en: 'Medium', es: 'Medio' },
+  full: { fr: 'Pleine page', en: 'Full page', es: 'Página completa' },
+} as const
+
 export function getTemplateById(id: string): TemplateInfo | undefined {
   return AVAILABLE_TEMPLATES.find(t => t.id === id)
 }
 
-// Helper pour créer un layout depuis un template
 export function createFromTemplate(templateId: string): ContentBlocksData | null {
   const template = getTemplateById(templateId)
   if (!template) return null
   return template.create()
+}
+
+export function getTemplatesByLayout(layout: TemplateInfo['layout']): TemplateInfo[] {
+  return AVAILABLE_TEMPLATES.filter(t => t.layout === layout)
+}
+
+export function getTemplatesByCategory(category: TemplateInfo['category']): TemplateInfo[] {
+  return AVAILABLE_TEMPLATES.filter(t => t.category === category)
 }

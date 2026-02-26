@@ -1,7 +1,10 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import type { Language } from '@/lib/types'
 import { DURATION_PRESETS } from '@/lib/constants/filters'
+import { gemPillStyle } from './gemFilterStyle'
+import { FilterIcon } from '@/lib/constants/resourceIcons'
 
 interface DurationFilterProps {
   selected: number | null
@@ -9,34 +12,32 @@ interface DurationFilterProps {
   lang: Language
 }
 
-/**
- * Boutons presets pour filtrer par durée maximum
- */
 export default function DurationFilter({ selected, onChange, lang }: DurationFilterProps) {
-  const handleClick = (value: number) => {
-    // Toggle : si déjà sélectionné, on désélectionne
-    onChange(selected === value ? null : value)
-  }
+  const [isDark, setIsDark] = useState(false)
+  useEffect(() => {
+    const check = () => setIsDark(document.documentElement.classList.contains('dark'))
+    check()
+    const obs = new MutationObserver(check)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+
+  const GEM = 'sky' as const
 
   return (
     <div className="flex flex-wrap gap-2">
       {DURATION_PRESETS.map(preset => {
         const value = parseInt(preset.value)
         const isSelected = selected === value
+        const s = gemPillStyle(GEM, isSelected, isDark)
         return (
-          <button
-            key={preset.value}
-            type="button"
-            onClick={() => handleClick(value)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-              isSelected
-                ? 'bg-[#A8B5A0] text-white'
-                : 'bg-surface-secondary dark:bg-surface-dark text-foreground-secondary dark:text-foreground-dark-secondary hover:bg-[#A8B5A0]/20'
-            }`}
-            style={!isSelected ? { border: '1px solid var(--border)' } : undefined}
-          >
-            <span>{preset.emoji}</span>
-            <span>{preset.label[lang]}</span>
+          <button key={preset.value} type="button" onClick={() => onChange(isSelected ? null : value)} className="transition-all duration-300 active:scale-[0.97]" style={s.wrapper}>
+            <div className="flex items-center gap-1.5" style={{ ...s.inner, padding: '6px 12px' }}>
+              {isSelected && <span aria-hidden style={s.frost} />}
+              {isSelected && <span aria-hidden style={s.shine} />}
+              <span style={{ position: 'relative', zIndex: 2 }}><FilterIcon value={preset.value} size={16} /></span>
+              <span style={{ position: 'relative', zIndex: 2 }}>{preset.label[lang]}</span>
+            </div>
           </button>
         )
       })}

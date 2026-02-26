@@ -31,8 +31,8 @@ export default function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="text-foreground/70">
-        <Sun className="w-5 h-5" />
+      <Button variant="ghost" size="icon" className="text-foreground/70 dark:text-foreground-dark/70">
+        <Sun className="w-4 h-4" />
       </Button>
     )
   }
@@ -42,13 +42,13 @@ export default function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="text-foreground/70 hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5"
+      className="text-foreground/70 dark:text-foreground-dark/70 hover:text-foreground dark:hover:text-foreground-dark hover:bg-black/[0.08] dark:hover:bg-white/5"
       aria-label={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
     >
       {theme === 'light' ? (
-        <Moon className="w-5 h-5" />
+        <Moon className="w-4 h-4" />
       ) : (
-        <Sun className="w-5 h-5" />
+        <Sun className="w-4 h-4" />
       )}
     </Button>
   )

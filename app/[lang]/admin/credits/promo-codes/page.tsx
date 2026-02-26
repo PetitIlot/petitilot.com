@@ -245,8 +245,8 @@ export default function PromoCodesPage() {
             </h1>
           </div>
           <Button
+            gem="terracotta"
             onClick={() => setShowModal(true)}
-            className="bg-terracotta hover:bg-terracotta/90 text-white"
           >
             <Plus className="w-4 h-4 mr-2" /> {t.createNew}
           </Button>
@@ -436,9 +436,10 @@ export default function PromoCodesPage() {
                 {t.cancel}
               </Button>
               <Button
+                gem="terracotta"
                 onClick={handleCreate}
                 disabled={creating || !newCode.trim() || newCredits <= 0}
-                className="flex-1 bg-terracotta hover:bg-terracotta/90 text-white"
+                className="flex-1"
               >
                 {creating ? (
                   <>

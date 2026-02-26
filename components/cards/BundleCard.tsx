@@ -82,7 +82,7 @@ export default function BundleCard({ bundle, lang }: BundleCardProps) {
       transition={{ duration: 0.2 }}
     >
       <Link href={`/${lang}/packs/${bundle.id}`}>
-        <div className="bg-surface dark:bg-surface-dark rounded-2xl overflow-hidden shadow-apple hover:shadow-apple-hover transition-all duration-300 group relative" style={{ border: '1px solid var(--border)' }}>
+        <div className="bg-surface dark:bg-surface-dark rounded-2xl overflow-hidden shadow-elevation-1 hover:shadow-elevation-2 transition-all duration-300 group relative" style={{ border: '1px solid var(--border)' }}>
 
           {/* Bordure gradient premium */}
           <div

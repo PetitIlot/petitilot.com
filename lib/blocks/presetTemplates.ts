@@ -1,15 +1,20 @@
 /**
- * Preset Templates v2
+ * Preset Templates v2.1
  * Templates prédéfinis pour démarrage rapide
- *
- * NOTE: En cours de refonte pour v2 (canvas libre)
- * TODO Phase 7: Recréer avec nouveaux types
+ * Réexporte les templates depuis templates.ts
  */
 
 import type { ContentBlocksData } from './types'
-import { createDefaultLayout } from './defaultLayout'
+import {
+  AVAILABLE_TEMPLATES,
+  getTemplateById,
+  createFromTemplate,
+  getTemplatesByCategory,
+  type TemplateInfo
+} from './templates'
 
-export type TemplateId = 'base' | 'recipe' | 'craft' | 'game'
+// Réexporter pour compatibilité
+export type TemplateId = 'activity' | 'recipe' | 'diy' | 'video-tutorial' | 'gallery' | 'document' | 'minimal' | 'atelier' | 'nature-guide'
 
 export interface PresetTemplate {
   id: TemplateId
@@ -23,31 +28,38 @@ export interface PresetTemplate {
     en: string
     es: string
   }
+  icon: string
+  category: 'general' | 'cooking' | 'creative' | 'education'
   layout: ContentBlocksData
 }
 
 /**
- * Templates prédéfinis - Version placeholder
- * TODO Phase 7: Créer vrais templates avec layouts spécifiques
+ * Templates prédéfinis - Génération dynamique depuis templates.ts
  */
-export const PRESET_TEMPLATES: PresetTemplate[] = [
-  {
-    id: 'base',
-    name: {
-      fr: 'Template de base',
-      en: 'Basic Template',
-      es: 'Plantilla básica'
-    },
-    description: {
-      fr: 'Layout simple et polyvalent',
-      en: 'Simple and versatile layout',
-      es: 'Diseño simple y versátil'
-    },
-    layout: createDefaultLayout()
-  }
-]
+export const PRESET_TEMPLATES: PresetTemplate[] = AVAILABLE_TEMPLATES.map(t => ({
+  id: t.id as TemplateId,
+  name: t.name,
+  description: t.description,
+  icon: t.icon,
+  category: t.category,
+  layout: t.create()
+}))
 
+/**
+ * Obtenir un template par ID
+ */
 export function getTemplate(id: TemplateId): ContentBlocksData {
   const template = PRESET_TEMPLATES.find(t => t.id === id)
-  return template?.layout || createDefaultLayout()
+  return template?.layout || PRESET_TEMPLATES[0].layout
 }
+
+/**
+ * Obtenir tous les templates d'une catégorie
+ */
+export function getPresetsByCategory(category: PresetTemplate['category']): PresetTemplate[] {
+  return PRESET_TEMPLATES.filter(t => t.category === category)
+}
+
+// Réexporter les helpers
+export { getTemplateById, createFromTemplate, getTemplatesByCategory }
+export type { TemplateInfo }

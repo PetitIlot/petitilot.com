@@ -8,7 +8,8 @@ import {
   Minus, User, Images, Film, Grid, HelpCircle, Package,
   Sparkles, Sun, Waves, Circle, Square, Star, Heart, Diamond,
   ChevronDown, ChevronRight, Palette,
-  Download, PlayCircle, KeyRound, Lock
+  Download, PlayCircle, KeyRound, Lock, LayoutGrid,
+  UserCircle, Share2, BookOpen, Instagram, Youtube, Facebook, Globe, Mail, ShoppingBag
 } from 'lucide-react'
 import type { Language } from '@/lib/types'
 import type {
@@ -16,13 +17,15 @@ import type {
   CarouselBlockData, CarouselVideoBlockData, VideoBlockData, ListBlockData, ListLinksBlockData,
   PurchaseBlockData, TitleBlockData, CreatorBlockData, SeparatorBlockData,
   ImageGridBlockData, FAQBlockData, MaterialBlockData,
-  DownloadBlockData, PaidVideoBlockData, PaywallBlockData,
-  GemColor, PaywallConfig, SocialPlatform, SocialLink
+  DownloadBlockData, PaywallBlockData, ActivityCardsBlockData,
+  GemColor, PaywallConfig, SocialPlatform, SocialLink,
+  ProfileHeroBlockData, CreatorResourcesBlockData, CreatorFeaturedBlockData, SocialWidgetBlockData, SocialWidgetPlatform
 } from '@/lib/blocks/types'
 import { createClient } from '@/lib/supabase-client'
 import { EditorSection, ColorPicker, SliderControl, SelectControl, ToggleControl, FontPicker, TiptapEditor, CloudinaryUploader } from './editor'
 import { TitleEditor } from './title'
 import { GEMS } from '@/components/ui/button'
+import ActivityCardsEditor from './ActivityCardsEditor'
 
 // ============================================
 // BLOCK TYPE CONFIG
@@ -43,8 +46,12 @@ const BLOCK_TYPE_LABELS: Record<BlockType, Record<string, string>> = {
   faq: { fr: 'FAQ', en: 'FAQ', es: 'FAQ' },
   material: { fr: 'Matériel', en: 'Material', es: 'Material' },
   download: { fr: 'Téléchargement', en: 'Download', es: 'Descarga' },
-  'paid-video': { fr: 'Vidéo payante', en: 'Paid Video', es: 'Video de pago' },
   paywall: { fr: 'Rideau payant', en: 'Paywall', es: 'Paywall' },
+  'activity-cards': { fr: 'Carrousel activités', en: 'Activity carousel', es: 'Carrusel' },
+  'profile-hero': { fr: 'Profil héro', en: 'Profile hero', es: 'Perfil héroe' },
+  'creator-resources': { fr: 'Mes ressources', en: 'My resources', es: 'Mis recursos' },
+  'creator-featured': { fr: 'Ressource vedette', en: 'Featured resource', es: 'Recurso destacado' },
+  'social-widget': { fr: 'Réseau social', en: 'Social media', es: 'Red social' },
 }
 
 const BLOCK_TYPE_ICONS: Record<BlockType, React.ReactNode> = {
@@ -63,23 +70,39 @@ const BLOCK_TYPE_ICONS: Record<BlockType, React.ReactNode> = {
   faq: <HelpCircle className="w-3.5 h-3.5" />,
   material: <Package className="w-3.5 h-3.5" />,
   download: <Download className="w-3.5 h-3.5" />,
-  'paid-video': <PlayCircle className="w-3.5 h-3.5" />,
   paywall: <KeyRound className="w-3.5 h-3.5" />,
+  'activity-cards': <LayoutGrid className="w-3.5 h-3.5" />,
+  'profile-hero': <UserCircle className="w-3.5 h-3.5" />,
+  'creator-resources': <LayoutGrid className="w-3.5 h-3.5" />,
+  'creator-featured': <Star className="w-3.5 h-3.5" />,
+  'social-widget': <Share2 className="w-3.5 h-3.5" />,
 }
 
 // ============================================
 // MAIN BLOCK EDITOR
 // ============================================
+interface CreatorFormData {
+  slug?: string
+  display_name?: string
+  avatar_url?: string | null
+  bio?: string | null
+  instagram_handle?: string | null
+  youtube_handle?: string | null
+  tiktok_handle?: string | null
+  website_url?: string | null
+}
+
 interface BlockEditorProps {
   block: ContentBlock
   onUpdate: (data: Record<string, unknown>) => void
   onUpdateStyle: (style: Partial<BlockStyle>) => void
   onClose: () => void
   lang: Language
+  formData?: { creator?: CreatorFormData | null } | null
   onDetachElement?: (elementName: string) => void
 }
 
-export function BlockEditor({ block, onUpdate, onUpdateStyle, onClose, lang, onDetachElement }: BlockEditorProps) {
+export function BlockEditor({ block, onUpdate, onUpdateStyle, onClose, lang, formData, onDetachElement }: BlockEditorProps) {
   const typeName = BLOCK_TYPE_LABELS[block.type]?.[lang] || block.type
   const typeIcon = BLOCK_TYPE_ICONS[block.type]
 
@@ -131,7 +154,7 @@ export function BlockEditor({ block, onUpdate, onUpdateStyle, onClose, lang, onD
               onDetachElement={onDetachElement}
             />
           ) : (
-            <BlockContentEditor block={block} onUpdate={onUpdate} lang={lang} />
+            <BlockContentEditor block={block} onUpdate={onUpdate} lang={lang} creatorProfile={formData?.creator} />
           )}
         </EditorSection>
       </div>
@@ -442,10 +465,11 @@ function InnerStyleEditor({ style, onUpdateStyle }: {
 // ============================================
 // BLOCK CONTENT EDITOR (dispatches to type-specific editors)
 // ============================================
-function BlockContentEditor({ block, onUpdate, lang }: {
+function BlockContentEditor({ block, onUpdate, lang, creatorProfile }: {
   block: ContentBlock
   onUpdate: (data: Record<string, unknown>) => void
   lang: Language
+  creatorProfile?: CreatorFormData | null
 }) {
   const update = useCallback((field: string, value: unknown) => {
     onUpdate({ [field]: value })
@@ -469,7 +493,7 @@ function BlockContentEditor({ block, onUpdate, lang }: {
     case 'purchase':
       return <PurchaseContentEditor data={block.data as PurchaseBlockData} update={update} />
     case 'creator':
-      return <CreatorContentEditor data={block.data as CreatorBlockData} update={update} />
+      return <CreatorContentEditor data={block.data as CreatorBlockData} update={update} creatorProfile={creatorProfile} />
     case 'separator':
       return <SeparatorContentEditor data={block.data as SeparatorBlockData} update={update} />
     case 'image-grid':
@@ -480,10 +504,24 @@ function BlockContentEditor({ block, onUpdate, lang }: {
       return <MaterialContentEditor data={block.data as MaterialBlockData} update={update} />
     case 'download':
       return <DownloadContentEditor data={block.data as DownloadBlockData} update={update} />
-    case 'paid-video':
-      return <PaidVideoContentEditor data={block.data as PaidVideoBlockData} update={update} />
     case 'paywall':
       return <PaywallContentEditor data={block.data as PaywallBlockData} update={update} />
+    case 'activity-cards':
+      return (
+        <ActivityCardsEditor
+          data={block.data as ActivityCardsBlockData}
+          update={update}
+          lang={lang}
+        />
+      )
+    case 'profile-hero':
+      return <ProfileHeroEditor data={block.data as ProfileHeroBlockData} update={update} />
+    case 'creator-resources':
+      return <CreatorResourcesEditor data={block.data as CreatorResourcesBlockData} update={update} />
+    case 'creator-featured':
+      return <CreatorFeaturedEditor data={block.data as CreatorFeaturedBlockData} update={update} />
+    case 'social-widget':
+      return <SocialWidgetEditor data={block.data as SocialWidgetBlockData} update={update} creatorProfile={creatorProfile} />
     default:
       return <p className="text-xs text-[var(--foreground-secondary)]">Pas d'options pour ce bloc</p>
   }
@@ -847,7 +885,7 @@ function ListLinksContentEditor({ data, update }: { data: ListLinksBlockData; up
 }
 
 // ============================================
-// MONETIZATION BUTTON EDITOR (shared by purchase, download, paid-video, paywall)
+// MONETIZATION BUTTON EDITOR (shared by purchase, download, paywall)
 // ============================================
 const GEM_OPTIONS: { value: GemColor; label: string }[] = [
   { value: 'gold', label: '🥇 Or' },
@@ -983,38 +1021,49 @@ function PurchaseContentEditor({ data, update }: { data: PurchaseBlockData; upda
 // ============================================
 // CREATOR CONTENT EDITOR
 // ============================================
-// Labels et ordre des plateformes
-const SOCIAL_PLATFORMS: { value: SocialPlatform; label: string }[] = [
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'pinterest', label: 'Pinterest' },
-  { value: 'youtube', label: 'YouTube' },
-  { value: 'facebook', label: 'Facebook' },
-  { value: 'tiktok', label: 'TikTok' },
-  { value: 'website', label: 'Site web' },
+
+// Plateformes issues du profil créateur
+const PROFILE_SOCIAL_MAP: { platform: SocialPlatform; label: string; profileKey: keyof CreatorFormData }[] = [
+  { platform: 'instagram', label: 'Instagram',  profileKey: 'instagram_handle' },
+  { platform: 'youtube',   label: 'YouTube',    profileKey: 'youtube_handle'   },
+  { platform: 'tiktok',    label: 'TikTok',     profileKey: 'tiktok_handle'    },
+  { platform: 'website',   label: 'Site web',   profileKey: 'website_url'      },
 ]
 
-// Retourne la liste initiale avec toutes les plateformes (désactivées par défaut)
-function getDefaultSocialLinks(existing: SocialLink[] = []): SocialLink[] {
-  return SOCIAL_PLATFORMS.map(p => {
-    const found = existing.find(s => s.platform === p.value)
-    return found ?? { platform: p.value, url: '', enabled: false }
-  })
-}
+const SOCIALS_DEFAULT_VISIBLE = 2
 
-function CreatorContentEditor({ data, update }: { data: CreatorBlockData; update: (f: string, v: unknown) => void }) {
+function CreatorContentEditor({
+  data, update, creatorProfile,
+}: {
+  data: CreatorBlockData
+  update: (f: string, v: unknown) => void
+  creatorProfile?: CreatorFormData | null
+}) {
   const [newCollabName, setNewCollabName] = useState('')
+  const [socialsExpanded, setSocialsExpanded] = useState(false)
 
-  const socialLinks = getDefaultSocialLinks(data.socialLinks)
+  // Filtrer uniquement les réseaux renseignés sur le profil
+  const configuredSocials = PROFILE_SOCIAL_MAP.filter(
+    p => creatorProfile?.[p.profileKey]
+  )
 
-  const updateSocialLink = (platform: SocialPlatform, field: keyof SocialLink, value: unknown) => {
-    const updated = socialLinks.map(s =>
-      s.platform === platform ? { ...s, [field]: value } : s
-    )
+  const toggleSocial = (platform: SocialPlatform, enabled: boolean) => {
+    const current = data.socialLinks || []
+    const exists = current.find(s => s.platform === platform)
+    const updated = exists
+      ? current.map(s => s.platform === platform ? { ...s, enabled } : s)
+      : [...current, { platform, url: '', enabled }]
     update('socialLinks', updated)
   }
 
+  const isSocialEnabled = (platform: SocialPlatform) =>
+    data.socialLinks?.find(s => s.platform === platform)?.enabled ?? false
+
   const showSocials = data.variant === 'compact' || data.variant === 'full'
-  const showBio = data.variant === 'compact' || data.variant === 'full'
+  const visibleSocials = socialsExpanded
+    ? configuredSocials
+    : configuredSocials.slice(0, SOCIALS_DEFAULT_VISIBLE)
+  const hasMore = configuredSocials.length > SOCIALS_DEFAULT_VISIBLE
 
   return (
     <div className="space-y-3">
@@ -1022,72 +1071,52 @@ function CreatorContentEditor({ data, update }: { data: CreatorBlockData; update
       <SelectControl
         label="Variante" value={data.variant || 'full'} variant="buttons"
         options={[
-          { value: 'minimal', label: 'Mini' },
-          { value: 'compact', label: 'Compact' },
-          { value: 'full', label: 'Complet' },
-          { value: 'collaborators', label: 'Équipe' },
+          { value: 'minimal',       label: 'Mini'    },
+          { value: 'compact',       label: 'Compact' },
+          { value: 'full',          label: 'Complet' },
+          { value: 'collaborators', label: 'Équipe'  },
         ]}
         onChange={v => update('variant', v)}
       />
 
-      {/* Bio — compact + complet */}
-      {showBio && (
-        <EditorSection title="Bio" defaultOpen={true}>
-          <textarea
-            value={data.bio || ''}
-            onChange={e => update('bio', e.target.value)}
-            placeholder="Courte description du créateur..."
-            rows={2}
-            maxLength={160}
-            className="w-full text-xs rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] px-2.5 py-2 focus:outline-none focus:border-[var(--sage)] resize-none placeholder:text-[var(--foreground-secondary)]/40"
-          />
-          <p className="text-[10px] text-[var(--foreground-secondary)]/50 text-right mt-0.5">{(data.bio || '').length}/160</p>
-        </EditorSection>
-      )}
-
       {/* Réseaux sociaux — compact + complet */}
-      {showSocials && (
+      {showSocials && configuredSocials.length > 0 && (
         <EditorSection title="Réseaux sociaux" defaultOpen={true}>
-          <div className="space-y-1.5">
-            {socialLinks.map(social => (
-              <div key={social.platform} className="rounded-md overflow-hidden border border-[var(--border)]">
-                {/* Ligne toggle + label */}
-                <div className="flex items-center gap-2 px-2.5 py-1.5 bg-[var(--surface-secondary)]">
+          <div className="space-y-1">
+            {visibleSocials.map(social => {
+              const enabled = isSocialEnabled(social.platform)
+              return (
+                <div
+                  key={social.platform}
+                  className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg bg-[var(--surface-secondary)]"
+                >
+                  <span className="text-xs font-medium">{social.label}</span>
                   <button
-                    onClick={() => updateSocialLink(social.platform, 'enabled', !social.enabled)}
-                    className={`w-7 h-4 rounded-full transition-colors flex-shrink-0 relative ${social.enabled ? 'bg-[var(--sage)]' : 'bg-[var(--border)]'}`}
+                    onClick={() => toggleSocial(social.platform, !enabled)}
+                    className={`w-8 h-4.5 rounded-full transition-colors flex-shrink-0 relative ${enabled ? 'bg-[var(--sage)]' : 'bg-[var(--border)]'}`}
+                    style={{ height: '18px', width: '32px' }}
                   >
-                    <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${social.enabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+                    <span className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full shadow transition-transform ${enabled ? 'translate-x-[14px]' : 'translate-x-0.5'}`} />
                   </button>
-                  <span className="text-xs font-medium flex-1">
-                    {SOCIAL_PLATFORMS.find(p => p.value === social.platform)?.label}
-                  </span>
                 </div>
-                {/* Champs URL + compteur si activé */}
-                {social.enabled && (
-                  <div className="px-2.5 py-2 space-y-1.5 bg-[var(--surface)]">
-                    <input
-                      type="url"
-                      value={social.url}
-                      onChange={e => updateSocialLink(social.platform, 'url', e.target.value)}
-                      placeholder="https://..."
-                      className="w-full h-7 px-2 text-xs rounded border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)] placeholder:text-[var(--foreground-secondary)]/40"
-                    />
-                    {/* Compteur abonnés — variante complet uniquement */}
-                    {data.variant === 'full' && (
-                      <input
-                        type="number"
-                        value={social.followerCount ?? ''}
-                        onChange={e => updateSocialLink(social.platform, 'followerCount', e.target.value ? Number(e.target.value) : undefined)}
-                        placeholder="Nombre d'abonnés (optionnel)"
-                        min={0}
-                        className="w-full h-7 px-2 text-xs rounded border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--foreground)] focus:outline-none focus:border-[var(--sage)] placeholder:text-[var(--foreground-secondary)]/40"
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
+            {hasMore && (
+              <button
+                onClick={() => setSocialsExpanded(v => !v)}
+                className="w-full text-[11px] text-[var(--foreground-secondary)] hover:text-[var(--foreground)] py-1 transition-colors"
+              >
+                {socialsExpanded
+                  ? '↑ Réduire'
+                  : `+ ${configuredSocials.length - SOCIALS_DEFAULT_VISIBLE} autre${configuredSocials.length - SOCIALS_DEFAULT_VISIBLE > 1 ? 's' : ''}`
+                }
+              </button>
+            )}
+            {configuredSocials.length === 0 && (
+              <p className="text-[11px] text-[var(--foreground-secondary)] italic px-1">
+                Aucun réseau renseigné sur le profil.
+              </p>
+            )}
           </div>
         </EditorSection>
       )}
@@ -1469,52 +1498,6 @@ function DownloadContentEditor({ data, update }: { data: DownloadBlockData; upda
 // ============================================
 // PAID VIDEO CONTENT EDITOR (NOUVEAU v4)
 // ============================================
-function PaidVideoContentEditor({ data, update }: { data: PaidVideoBlockData; update: (f: string, v: unknown) => void }) {
-  return (
-    <div className="space-y-3">
-      {/* Video upload via Cloudinary */}
-      <CloudinaryUploader
-        onUpload={(url, publicId) => {
-          update('videoUrl', url)
-          update('videoPublicId', publicId)
-        }}
-        folder="petit-ilot/paid-videos"
-        maxSizeMB={200}
-        accept="video/mp4,video/webm,video/quicktime"
-        compact
-      />
-      {data.videoUrl && (
-        <div className="p-2 rounded-lg bg-[var(--surface-secondary)]">
-          <p className="text-[10px] text-[var(--foreground-secondary)]">Vidéo uploadée</p>
-          <p className="text-xs text-[var(--foreground)] truncate">{data.videoPublicId || data.videoUrl}</p>
-          <button onClick={() => { update('videoUrl', undefined); update('videoPublicId', undefined) }} className="text-[10px] text-red-400 hover:text-red-600 mt-1">Supprimer</button>
-        </div>
-      )}
-
-      <SelectControl
-        label="Format" value={data.aspectRatio || '16:9'} variant="buttons"
-        options={[
-          { value: '16:9', label: '16:9' },
-          { value: '9:16', label: '9:16' },
-          { value: '4:5', label: '4:5' },
-          { value: '1:1', label: '1:1' },
-        ]}
-        onChange={v => update('aspectRatio', v)}
-      />
-
-      <MonetizationButtonEditor data={data} update={update} />
-      <ColorPicker label="Fond" value={data.backgroundColor} onChange={v => update('backgroundColor', v)} />
-      <ColorPicker label="Bordure" value={data.borderColor} onChange={v => update('borderColor', v)} />
-
-      <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-        <p className="text-[10px] text-amber-700 dark:text-amber-300 leading-relaxed">
-          ⚠️ Réservé aux vidéos courtes ou exceptionnelles. Les vidéos sont hébergées sur Cloudinary (limite 200 MB).
-        </p>
-      </div>
-    </div>
-  )
-}
-
 // ============================================
 // PAYWALL CONTENT EDITOR (legacy — kept for backwards compat with old block type)
 // ============================================
@@ -1639,6 +1622,292 @@ export function PaywallEditor({ paywall, onUpdate, onClose, onDelete, lang }: Pa
           Supprimer le rideau
         </button>
       </div>
+    </div>
+  )
+}
+
+// ============================================
+// PROFILE HERO EDITOR
+// ============================================
+function ProfileHeroEditor({ data, update }: { data: ProfileHeroBlockData; update: (f: string, v: unknown) => void }) {
+  const el = data.elements ?? {
+    showAvatar: true, showName: true, showBio: true,
+    showThemes: true, showStats: true, showSocials: true, showFollowButton: true
+  }
+  const updateElement = (key: keyof typeof el, val: boolean) => {
+    update('elements', { ...el, [key]: val })
+  }
+
+  return (
+    <div className="space-y-4">
+      <SelectControl
+        label="Disposition"
+        value={data.layout ?? 'horizontal'}
+        options={[
+          { value: 'horizontal', label: 'Horizontal' },
+          { value: 'vertical', label: 'Vertical' },
+          { value: 'centered', label: 'Centré' },
+        ]}
+        onChange={v => update('layout', v)}
+      />
+      <SelectControl
+        label="Variante"
+        value={data.variant ?? 'full'}
+        options={[
+          { value: 'full', label: 'Complet' },
+          { value: 'compact', label: 'Compact' },
+          { value: 'mini', label: 'Mini' },
+        ]}
+        onChange={v => update('variant', v)}
+      />
+      <SelectControl
+        label="Taille avatar"
+        value={data.avatarSize ?? 'lg'}
+        options={[
+          { value: 'lg', label: 'Grand' },
+          { value: 'md', label: 'Moyen' },
+          { value: 'sm', label: 'Petit' },
+        ]}
+        onChange={v => update('avatarSize', v)}
+      />
+      <div>
+        <label className="text-xs font-medium text-[var(--foreground-secondary)] mb-2 block">Éléments visibles</label>
+        <div className="space-y-1">
+          {([
+            ['showAvatar', 'Avatar'],
+            ['showName', 'Nom'],
+            ['showBio', 'Bio'],
+            ['showThemes', 'Thèmes'],
+            ['showStats', 'Statistiques'],
+            ['showSocials', 'Réseaux sociaux'],
+            ['showFollowButton', 'Bouton Suivre'],
+          ] as [keyof typeof el, string][]).map(([key, label]) => (
+            <ToggleControl key={key} label={label} checked={!!el[key]} onChange={v => updateElement(key, v)} />
+          ))}
+        </div>
+      </div>
+      <p className="text-xs text-[var(--foreground-secondary)] italic">
+        Les données profil (nom, bio, avatar…) sont automatiquement injectées depuis ton profil créateur.
+      </p>
+    </div>
+  )
+}
+
+// ============================================
+// CREATOR RESOURCES EDITOR
+// ============================================
+function CreatorResourcesEditor({ data, update }: { data: CreatorResourcesBlockData; update: (f: string, v: unknown) => void }) {
+  return (
+    <div className="space-y-4">
+      <ToggleControl label="Afficher le titre" checked={data.showTitle ?? true} onChange={v => update('showTitle', v)} />
+      {data.showTitle && (
+        <div>
+          <label className="text-xs text-[var(--foreground-secondary)] mb-1 block">Titre de la section</label>
+          <input
+            type="text"
+            value={data.title ?? 'Mes ressources'}
+            onChange={e => update('title', e.target.value)}
+            className="w-full px-3 py-1.5 rounded-lg text-sm border"
+            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+          />
+        </div>
+      )}
+      <SelectControl
+        label="Disposition"
+        value={data.layout ?? 'grid'}
+        options={[
+          { value: 'grid', label: 'Grille' },
+          { value: 'carousel', label: 'Carrousel' },
+          { value: 'list', label: 'Liste' },
+        ]}
+        onChange={v => update('layout', v)}
+      />
+      {data.layout === 'grid' && (
+        <SelectControl
+          label="Colonnes"
+          value={String(data.columns ?? 3)}
+          options={[
+            { value: '2', label: '2 colonnes' },
+            { value: '3', label: '3 colonnes' },
+            { value: '4', label: '4 colonnes' },
+          ]}
+          onChange={v => update('columns', Number(v))}
+        />
+      )}
+      <SelectControl
+        label="Nombre de ressources"
+        value={String(data.maxItems ?? 6)}
+        options={[
+          { value: '4', label: '4' },
+          { value: '6', label: '6' },
+          { value: '8', label: '8' },
+          { value: '12', label: '12' },
+        ]}
+        onChange={v => update('maxItems', Number(v))}
+      />
+      <p className="text-xs text-[var(--foreground-secondary)] italic">
+        Les ressources affichées sont récupérées automatiquement depuis ton profil.
+      </p>
+    </div>
+  )
+}
+
+// ============================================
+// CREATOR FEATURED EDITOR
+// ============================================
+function CreatorFeaturedEditor({ data, update }: { data: CreatorFeaturedBlockData; update: (f: string, v: unknown) => void }) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="text-xs text-[var(--foreground-secondary)] mb-1 block">ID de la ressource (optionnel)</label>
+        <input
+          type="text"
+          value={data.resourceId ?? ''}
+          onChange={e => update('resourceId', e.target.value || undefined)}
+          placeholder="Laissez vide pour la première ressource"
+          className="w-full px-3 py-1.5 rounded-lg text-sm border"
+          style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+        />
+      </div>
+      <SelectControl
+        label="Style d'affichage"
+        value={data.style ?? 'card'}
+        options={[
+          { value: 'card', label: 'Carte' },
+          { value: 'banner', label: 'Bannière' },
+          { value: 'minimal', label: 'Minimal' },
+        ]}
+        onChange={v => update('style', v)}
+      />
+      <ToggleControl label="Afficher la description" checked={data.showDescription ?? true} onChange={v => update('showDescription', v)} />
+      <ToggleControl label="Afficher le prix" checked={data.showPrice ?? true} onChange={v => update('showPrice', v)} />
+      <ToggleControl label="Afficher le bouton CTA" checked={data.showCta ?? true} onChange={v => update('showCta', v)} />
+      {data.showCta && (
+        <div>
+          <label className="text-xs text-[var(--foreground-secondary)] mb-1 block">Texte du bouton</label>
+          <input
+            type="text"
+            value={data.ctaText ?? 'Voir la ressource'}
+            onChange={e => update('ctaText', e.target.value)}
+            className="w-full px-3 py-1.5 rounded-lg text-sm border"
+            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// SOCIAL WIDGET EDITOR
+// ============================================
+function SocialWidgetEditor({ data, update, creatorProfile }: {
+  data: SocialWidgetBlockData
+  update: (f: string, v: unknown) => void
+  creatorProfile?: CreatorFormData | null
+}) {
+  const PLATFORM_OPTIONS: Array<{ value: string; label: string }> = [
+    { value: 'instagram', label: 'Instagram' },
+    { value: 'youtube', label: 'YouTube' },
+    { value: 'tiktok', label: 'TikTok' },
+    { value: 'facebook', label: 'Facebook' },
+    { value: 'amazon', label: 'Amazon' },
+    { value: 'pinterest', label: 'Pinterest' },
+    { value: 'website', label: 'Site web' },
+    { value: 'newsletter', label: 'Newsletter' },
+  ]
+
+  // Auto-fill handle from creator profile when platform changes
+  const getDefaultHandle = (platform: SocialWidgetPlatform): string => {
+    if (!creatorProfile) return ''
+    switch (platform) {
+      case 'instagram': return creatorProfile.instagram_handle ?? ''
+      case 'youtube': return creatorProfile.youtube_handle ?? ''
+      case 'tiktok': return creatorProfile.tiktok_handle ?? ''
+      case 'website': return creatorProfile.website_url ?? ''
+      default: return ''
+    }
+  }
+
+  const handlePlatformChange = (platform: string) => {
+    const defaultHandle = getDefaultHandle(platform as SocialWidgetPlatform)
+    update('platform', platform)
+    if (defaultHandle && !data.handle) {
+      update('handle', defaultHandle)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <SelectControl
+        label="Plateforme"
+        value={data.platform ?? 'instagram'}
+        options={PLATFORM_OPTIONS}
+        onChange={handlePlatformChange}
+      />
+      <SelectControl
+        label="Variante"
+        value={data.variant ?? 'compact'}
+        options={[
+          { value: 'mini', label: 'Mini (icône + lien)' },
+          { value: 'compact', label: 'Compact (avec bouton)' },
+          { value: 'full', label: 'Complet (avec description)' },
+        ]}
+        onChange={v => update('variant', v)}
+      />
+      <div>
+        <label className="text-xs text-[var(--foreground-secondary)] mb-1 block">Handle / URL</label>
+        <input
+          type="text"
+          value={data.handle ?? getDefaultHandle(data.platform ?? 'instagram')}
+          onChange={e => update('handle', e.target.value)}
+          placeholder="@nomutilisateur ou URL"
+          className="w-full px-3 py-1.5 rounded-lg text-sm border"
+          style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+        />
+      </div>
+      {(data.variant === 'compact' || data.variant === 'full') && (
+        <>
+          <ToggleControl label="Afficher nb abonnés" checked={data.showFollowerCount ?? true} onChange={v => update('showFollowerCount', v)} />
+          {data.showFollowerCount && (
+            <div>
+              <label className="text-xs text-[var(--foreground-secondary)] mb-1 block">Nombre d'abonnés</label>
+              <input
+                type="number"
+                value={data.followerCount ?? ''}
+                onChange={e => update('followerCount', e.target.value ? Number(e.target.value) : undefined)}
+                placeholder="ex: 12500"
+                className="w-full px-3 py-1.5 rounded-lg text-sm border"
+                style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+              />
+            </div>
+          )}
+          <div>
+            <label className="text-xs text-[var(--foreground-secondary)] mb-1 block">Texte bouton</label>
+            <input
+              type="text"
+              value={data.buttonText ?? 'Suivre'}
+              onChange={e => update('buttonText', e.target.value)}
+              className="w-full px-3 py-1.5 rounded-lg text-sm border"
+              style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+            />
+          </div>
+        </>
+      )}
+      {data.variant === 'full' && (
+        <div>
+          <label className="text-xs text-[var(--foreground-secondary)] mb-1 block">Description (optionnel)</label>
+          <textarea
+            value={data.description ?? ''}
+            onChange={e => update('description', e.target.value)}
+            placeholder="Courte description de ta page..."
+            rows={2}
+            className="w-full px-3 py-1.5 rounded-lg text-sm border resize-none"
+            style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+          />
+        </div>
+      )}
+      <ColorPicker label="Couleur accent (optionnel)" value={data.customColor} onChange={v => update('customColor', v || undefined)} />
     </div>
   )
 }

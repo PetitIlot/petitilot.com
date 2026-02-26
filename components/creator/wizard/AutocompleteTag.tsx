@@ -3,6 +3,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { X, Plus, Sparkles } from 'lucide-react'
 import type { Language } from '@/lib/types'
+import type { GemColor } from '@/components/ui/button'
+import { gemPillStyle } from '@/components/filters/gemFilterStyle'
+import { FilterIcon } from '@/lib/constants/resourceIcons'
 
 export interface TagItem {
   value: string
@@ -22,6 +25,8 @@ interface AutocompleteTagProps {
   allowCustom?: boolean
   customLabel?: string
   colorClass?: string
+  gem?: GemColor
+  hideTags?: boolean
 }
 
 const translations = {
@@ -54,7 +59,9 @@ export default function AutocompleteTag({
   placeholder,
   maxItems,
   allowCustom = true,
-  colorClass = 'bg-[#A8B5A0]/20'
+  colorClass = 'bg-[#A8B5A0]/20',
+  gem,
+  hideTags = false
 }: AutocompleteTagProps) {
   const t = translations[lang]
   const [inputValue, setInputValue] = useState('')
@@ -62,6 +69,17 @@ export default function AutocompleteTag({
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Detect dark mode for gem styles
+  const [isDark, setIsDark] = useState(false)
+  useEffect(() => {
+    if (!gem) return
+    const check = () => setIsDark(document.documentElement.classList.contains('dark'))
+    check()
+    const obs = new MutationObserver(check)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [gem])
 
   // Filtrer les options disponibles
   const availableOptions = predefinedOptions.filter(
@@ -180,17 +198,17 @@ export default function AutocompleteTag({
           onKeyDown={handleKeyDown}
           placeholder={canAdd ? placeholder : `Maximum ${maxItems} atteint`}
           disabled={!canAdd}
-          className="w-full px-4 py-3 rounded-xl border border-[#A8B5A0]/30 focus:border-[#A8B5A0] focus:ring-2 focus:ring-[#A8B5A0]/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-3 rounded-xl border border-[#A8B5A0]/30 dark:border-white/10 bg-transparent dark:bg-white/5 focus:border-[#A8B5A0] dark:focus:border-[#6EE8A0]/50 focus:ring-2 focus:ring-[#A8B5A0]/20 dark:focus:ring-[#6EE8A0]/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed dark:text-white dark:placeholder:text-white/30"
         />
 
         {/* Dropdown */}
         {isOpen && inputValue.trim() && (
           <div
             ref={dropdownRef}
-            className="absolute z-20 w-full mt-1 bg-white rounded-xl border border-[#E5E7EB] shadow-lg max-h-60 overflow-y-auto"
+            className="absolute z-20 w-full mt-1 bg-white dark:bg-[#1e1e22] rounded-xl border border-[#E5E7EB] dark:border-white/10 shadow-lg max-h-60 overflow-y-auto"
           >
             {filteredOptions.length === 0 && !isCustomValue && (
-              <div className="px-4 py-3 text-sm text-[#5D5A4E]/50">
+              <div className="px-4 py-3 text-sm text-[#5D5A4E]/50 dark:text-white/40">
                 {t.noResults}
               </div>
             )}
@@ -203,12 +221,12 @@ export default function AutocompleteTag({
                 onClick={() => handleSelect(option)}
                 className={`w-full px-4 py-2.5 text-left flex items-center gap-2 transition-colors ${
                   highlightedIndex === index
-                    ? 'bg-[#A8B5A0]/10'
-                    : 'hover:bg-[#F5E6D3]/50'
+                    ? 'bg-[#A8B5A0]/10 dark:bg-white/10'
+                    : 'hover:bg-[#F5E6D3]/50 dark:hover:bg-white/5'
                 }`}
               >
-                {option.emoji && <span>{option.emoji}</span>}
-                <span className="text-sm text-[#5D5A4E]">{option.label[lang]}</span>
+                <FilterIcon value={option.value} size={14} />
+                <span className="text-sm text-[#5D5A4E] dark:text-white">{option.label[lang]}</span>
               </button>
             ))}
 
@@ -217,14 +235,14 @@ export default function AutocompleteTag({
               <button
                 type="button"
                 onClick={handleAddCustom}
-                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 border-t border-[#E5E7EB] transition-colors ${
+                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 border-t border-[#E5E7EB] dark:border-white/10 transition-colors ${
                   highlightedIndex === filteredOptions.length
-                    ? 'bg-[#A8B5A0]/10'
-                    : 'hover:bg-[#F5E6D3]/50'
+                    ? 'bg-[#A8B5A0]/10 dark:bg-white/10'
+                    : 'hover:bg-[#F5E6D3]/50 dark:hover:bg-white/5'
                 }`}
               >
-                <Plus className="w-4 h-4 text-[#A8B5A0]" />
-                <span className="text-sm text-[#5D5A4E]">
+                <Plus className="w-4 h-4 text-[#A8B5A0] dark:text-[#6EE8A0]" />
+                <span className="text-sm text-[#5D5A4E] dark:text-white">
                   {t.addCustom} "<strong>{inputValue.trim()}</strong>"
                 </span>
                 <span className="ml-auto flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
@@ -238,31 +256,79 @@ export default function AutocompleteTag({
       </div>
 
       {/* Tags sélectionnés */}
-      {selectedValues.length > 0 && (
+      {!hideTags && selectedValues.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedValues.map(value => (
-            <span
-              key={value}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm ${
-                isCustom(value)
-                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                  : `${colorClass} text-[#5D5A4E]`
-              }`}
-            >
-              {getEmoji(value) && <span>{getEmoji(value)}</span>}
-              <span>{getLabel(value)}</span>
-              {isCustom(value) && (
-                <Sparkles className="w-3 h-3 text-amber-500" />
-              )}
-              <button
-                type="button"
-                onClick={() => onRemove(value)}
-                className="hover:text-red-500 transition-colors ml-1"
+          {selectedValues.map(value => {
+            // Custom tags keep the amber style
+            if (isCustom(value)) {
+              return (
+                <span
+                  key={value}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700/30"
+                >
+                  <FilterIcon value={value} size={14} />
+                  <span>{getLabel(value)}</span>
+                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  <button
+                    type="button"
+                    onClick={() => onRemove(value)}
+                    className="hover:text-red-500 transition-colors ml-1"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              )
+            }
+
+            // Gem-styled tags
+            if (gem) {
+              const gs = gemPillStyle(gem, true, isDark)
+              return (
+                <span
+                  key={value}
+                  className="inline-flex transition-all duration-300"
+                  style={{ ...gs.wrapper, borderRadius: 20, padding: 1.5 }}
+                >
+                  <span
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5"
+                    style={{ ...gs.inner, borderRadius: 18.5, display: 'inline-flex', position: 'relative', overflow: 'hidden' } as React.CSSProperties}
+                  >
+                    <span style={gs.frost as React.CSSProperties} aria-hidden />
+                    <span style={gs.shine as React.CSSProperties} aria-hidden />
+                    <span className="relative z-[2] inline-flex items-center gap-1.5 text-sm" style={{ fontWeight: 600 }}>
+                      <FilterIcon value={value} size={14} />
+                      <span>{getLabel(value)}</span>
+                      <button
+                        type="button"
+                        onClick={() => onRemove(value)}
+                        className="hover:opacity-60 transition-opacity ml-0.5"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  </span>
+                </span>
+              )
+            }
+
+            // Fallback: simple colorClass style
+            return (
+              <span
+                key={value}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm ${colorClass} text-[#5D5A4E] dark:text-white/80`}
               >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </span>
-          ))}
+                <FilterIcon value={value} size={14} />
+                <span>{getLabel(value)}</span>
+                <button
+                  type="button"
+                  onClick={() => onRemove(value)}
+                  className="hover:text-red-500 transition-colors ml-1"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )
+          })}
         </div>
       )}
     </div>

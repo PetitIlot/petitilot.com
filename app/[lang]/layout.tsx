@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
 const locales = ['fr', 'en', 'es']
@@ -23,8 +22,7 @@ export default async function LocaleLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header lang={lang} />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pt-16">{children}</main>
       <Footer lang={lang} />
     </div>
   )

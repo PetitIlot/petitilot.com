@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Check, Loader2, Save } from 'lucide-react'
@@ -8,24 +8,21 @@ import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
 import type { Language } from '@/lib/types'
 
-// Step components (v2 - 6 étapes, Collaboration intégrée dans Step1)
+// Step components (v3 - 4 étapes)
 import StepBasicInfo from './wizard/StepBasicInfo'
-import StepPedagogy from './wizard/StepPedagogy'
-import StepCategories from './wizard/StepCategories'
-import StepMaterials from './wizard/StepMaterials'
-import StepCanvas from './wizard/StepCanvas'  // Remplace StepMedia + StepLayout
+import StepMetadata from './wizard/StepMetadata'
+import StepCanvas from './wizard/StepCanvas'
 import StepReview from './wizard/StepReview'
+import GemStepper from './wizard/GemStepper'
 import type { ContentBlocksData } from '@/lib/blocks'
 
 const translations = {
   fr: {
-    // 6 étapes v2: Infos (+ Collab) → Catégories → Pédagogie → Matériel → Canvas → Validation
+    // 4 étapes v3: Infos → Métadonnées → Canvas → Validation
     step1: 'Infos',
-    step2: 'Catégories',
-    step3: 'Pédagogie',
-    step4: 'Matériel',
-    step5: 'Canvas',
-    step6: 'Validation',
+    step2: 'Métadonnées',
+    step3: 'Canvas',
+    step4: 'Validation',
     back: 'Retour',
     next: 'Suivant',
     submit: 'Soumettre pour validation',
@@ -36,11 +33,9 @@ const translations = {
   },
   en: {
     step1: 'Info',
-    step2: 'Categories',
-    step3: 'Pedagogy',
-    step4: 'Materials',
-    step5: 'Canvas',
-    step6: 'Review',
+    step2: 'Metadata',
+    step3: 'Canvas',
+    step4: 'Review',
     back: 'Back',
     next: 'Next',
     submit: 'Submit for review',
@@ -51,11 +46,9 @@ const translations = {
   },
   es: {
     step1: 'Info',
-    step2: 'Categorías',
-    step3: 'Pedagogía',
-    step4: 'Materiales',
-    step5: 'Canvas',
-    step6: 'Revisión',
+    step2: 'Metadatos',
+    step3: 'Canvas',
+    step4: 'Revisión',
     back: 'Volver',
     next: 'Siguiente',
     submit: 'Enviar para revisión',
@@ -71,6 +64,7 @@ export interface MaterielItem {
   item: string
   recup: boolean
   isCustom?: boolean
+  url?: string
 }
 
 // Types pour les collaborateurs
@@ -121,27 +115,6 @@ export interface ResourceFormData {
 
   // Step 5: Canvas Editor (tout est dans content_blocks)
   content_blocks: ContentBlocksData | null
-
-  // ============================================
-  // Champs obsolètes (conservés pour migration)
-  // À supprimer après migration des données
-  // ============================================
-  /** @deprecated Utiliser bloc texte dans content_blocks */
-  subtitle?: string
-  /** @deprecated Utiliser bloc texte dans content_blocks */
-  description?: string
-  /** @deprecated Utiliser bloc tip dans content_blocks */
-  astuces?: string
-  /** @deprecated Utiliser bloc image dans content_blocks */
-  images_urls?: string[]
-  /** @deprecated Utiliser bloc carousel dans content_blocks */
-  gallery_urls?: string[]
-  /** @deprecated Utiliser bloc video dans content_blocks */
-  video_url?: string
-  /** @deprecated Utiliser upload dans bloc purchase */
-  pdf_url?: string
-  /** @deprecated Supprimé */
-  meta_seo?: string
 }
 
 export const initialFormData: ResourceFormData = {
@@ -178,15 +151,6 @@ export const initialFormData: ResourceFormData = {
 
   // Step 5: Canvas
   content_blocks: null,
-
-  // Legacy (vide pour nouvelles ressources)
-  subtitle: '',
-  description: '',
-  astuces: '',
-  images_urls: [],
-  gallery_urls: [],
-  video_url: '',
-  pdf_url: ''
 }
 
 interface ResourceWizardProps {
@@ -194,6 +158,17 @@ interface ResourceWizardProps {
   creatorId: string
   initialData?: Partial<ResourceFormData>
   resourceId?: string
+}
+
+interface CreatorProfile {
+  slug?: string
+  display_name?: string
+  avatar_url?: string | null
+  bio?: string | null
+  instagram_handle?: string | null
+  youtube_handle?: string | null
+  tiktok_handle?: string | null
+  website_url?: string | null
 }
 
 export default function ResourceWizard({ lang, creatorId, initialData, resourceId }: ResourceWizardProps) {
@@ -205,20 +180,30 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null)
+
+  // Fetch du profil créateur (bio + réseaux sociaux) pour le canvas
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('creators')
+      .select('slug, display_name, avatar_url, bio, instagram_handle, youtube_handle, tiktok_handle, website_url')
+      .eq('id', creatorId)
+      .single()
+      .then(({ data }) => { if (data) setCreatorProfile(data) })
+  }, [creatorId])
 
   const t = translations[lang]
-  const totalSteps = 6  // v2: 6 étapes (Collaboration intégrée dans Step1)
+  const totalSteps = 4  // v3: 4 étapes
   const isEditMode = !!resourceId
-  const isCanvasStep = currentStep === 5
+  const isCanvasStep = currentStep === 3
 
-  // v2: 6 étapes - Infos (+ Collab) → Pédagogie → Catégories → Matériel → Canvas → Validation
+  // v3: 4 étapes - Infos → Métadonnées → Canvas → Validation
   const steps = [
-    { number: 1, label: t.step1 },  // Infos de base + Collaboration
-    { number: 2, label: t.step2 },  // Pédagogie
-    { number: 3, label: t.step3 },  // Catégories
-    { number: 4, label: t.step4 },  // Matériel
-    { number: 5, label: t.step5 },  // Canvas Editor
-    { number: 6, label: t.step6 }   // Validation/Review
+    { number: 1, label: t.step1 },  // Infos + Type d'activité
+    { number: 2, label: t.step2 },  // Thèmes, Pédagogie, Matériel
+    { number: 3, label: t.step3 },  // Canvas Editor
+    { number: 4, label: t.step4 },  // Validation/Review
   ]
 
   const updateFormData = (updates: Partial<ResourceFormData>) => {
@@ -228,8 +213,9 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
   const canProceed = (): boolean => {
     switch (currentStep) {
       case 1:
-        // v2: Titre requis + si collaborateurs, vérifier partage total = 100%
+        // Titre + au moins 1 type d'activité requis
         if (formData.title.trim() === '') return false
+        if (formData.categories.length === 0) return false
         if (formData.collaborators.length > 0) {
           const total = formData.owner_revenue_share +
             formData.collaborators.reduce((sum, c) => sum + c.revenue_share, 0)
@@ -237,15 +223,10 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
         }
         return true
       case 2:
-        return true // Pédagogie - Champs optionnels
+        return true // Métadonnées - tout optionnel
       case 3:
-        // Au moins une catégorie ou un thème
-        return formData.categories.length > 0 || formData.themes.length > 0
+        return true // Canvas - optionnel
       case 4:
-        return true // Matériel optionnel
-      case 5:
-        return true // Canvas - optionnel mais recommandé
-      case 6:
         return true // Review - toujours OK
       default:
         return false
@@ -317,25 +298,15 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
 
         // Marketplace (v2)
         price_credits: formData.price_credits,
-        // accept_free_credits: formData.accept_free_credits,  // Requiert migration SQL
+        accept_free_credits: formData.accept_free_credits,
         is_premium: formData.price_credits > 0,
 
         // Statut
         status: asDraft ? 'draft' : 'pending_review',
         updated_at: new Date().toISOString(),
 
-        // v2: Tout le contenu visuel est dans content_blocks
+        // Tout le contenu visuel est dans content_blocks
         content_blocks: formData.content_blocks,
-
-        // Champs legacy (conservés pour migration, seront null/vide pour nouvelles ressources)
-        subtitle: formData.subtitle || null,
-        description: formData.description || '',
-        astuces: formData.astuces || null,
-        images_urls: formData.images_urls || [],
-        gallery_urls: formData.gallery_urls || [],
-        video_url: formData.video_url || null,
-        pdf_url: formData.pdf_url || null,
-        meta_seo: {}
       }
 
       let finalResourceId = resourceId
@@ -411,14 +382,12 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
   const renderStep = () => {
     const props = { formData, updateFormData, lang }
 
-    // v2: 6 étapes - Infos (+ Collab) → Catégories → Pédagogie → Matériel → Canvas → Review
+    // v3: 4 étapes
     switch (currentStep) {
       case 1: return <StepBasicInfo {...props} />
-      case 2: return <StepCategories {...props} />
-      case 3: return <StepPedagogy {...props} />
-      case 4: return <StepMaterials {...props} />
-      case 5: return <StepCanvas {...props} creatorId={creatorId} />
-      case 6: return <StepReview {...props} />
+      case 2: return <StepMetadata {...props} />
+      case 3: return <StepCanvas {...props} creatorId={creatorId} creatorProfile={creatorProfile} />
+      case 4: return <StepReview {...props} />
       default: return null
     }
   }
@@ -426,78 +395,29 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
   // Layout spécial pour l'étape Canvas (plein écran)
   if (isCanvasStep) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-[#FAF9F6]">
-        {/* Header minimal avec navigation */}
-        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
-          {/* Progress mini */}
-          <div className="flex items-center gap-2">
-            {steps.map((step, index) => (
-              <div key={step.number} className="flex items-center">
-                <button
-                  onClick={() => step.number < currentStep && setCurrentStep(step.number)}
-                  disabled={step.number > currentStep}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                    currentStep > step.number
-                      ? 'bg-[#A8B5A0] text-white cursor-pointer hover:bg-[#95a28f]'
-                      : currentStep === step.number
-                      ? 'bg-[#5D5A4E] text-white'
-                      : 'bg-[#F5E6D3] text-[#5D5A4E]/40 cursor-not-allowed'
-                  }`}
-                >
-                  {currentStep > step.number ? <Check className="w-4 h-4" /> : step.number}
-                </button>
-                {index < steps.length - 1 && (
-                  <div className={`w-4 h-0.5 mx-1 rounded ${
-                    currentStep > step.number ? 'bg-[#A8B5A0]' : 'bg-[#F5E6D3]'
-                  }`} />
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Navigation buttons */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleBack}
-              disabled={isSubmitting}
-              className="border-[#5D5A4E]/20"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              {t.back}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleSubmit(true)}
-              disabled={isSubmitting || !formData.title.trim()}
-              className="border-[#5D5A4E]/20"
-            >
-              {isSubmitting ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-              {t.saveDraft}
-            </Button>
-
-            <Button
-              size="sm"
-              onClick={handleNext}
-              disabled={!canProceed()}
-              className="bg-[#A8B5A0] hover:bg-[#95a28f] text-white"
-            >
-              {t.next}
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Canvas en plein écran */}
-        <div className="flex-1 overflow-hidden">
-          <StepCanvas formData={formData} updateFormData={updateFormData} lang={lang} creatorId={creatorId} />
+      <div className="fixed inset-0 z-50 flex flex-col bg-[#FAF9F6] dark:bg-[#1E1E1E] pt-[60px]">
+        {/* Canvas en plein écran — navigation intégrée dans la toolbar StepCanvas */}
+        <div className="flex-1 overflow-y-auto">
+          <StepCanvas
+            formData={formData}
+            updateFormData={updateFormData}
+            lang={lang}
+            creatorId={creatorId}
+            creatorProfile={creatorProfile}
+            onNext={handleNext}
+            onBack={handleBack}
+            onSaveDraft={() => handleSubmit(true)}
+            canProceed={canProceed()}
+            canSaveDraft={!isSubmitting && !!formData.title.trim()}
+            isSubmitting={isSubmitting}
+            steps={steps}
+            currentStep={currentStep}
+            onStepClick={setCurrentStep}
+          />
         </div>
 
         {error && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm shadow-lg">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 rounded-lg text-sm shadow-lg">
             {error}
           </div>
         )}
@@ -508,47 +428,17 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
   // Layout normal pour les autres étapes
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Progress Steps */}
+      {/* Progress Steps — Gem Stepper */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {steps.map((step, index) => (
-            <div key={step.number} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <button
-                  onClick={() => step.number < currentStep && setCurrentStep(step.number)}
-                  disabled={step.number > currentStep}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
-                    currentStep > step.number
-                      ? 'bg-[#A8B5A0] text-white cursor-pointer hover:bg-[#95a28f]'
-                      : currentStep === step.number
-                      ? 'bg-[#5D5A4E] text-white'
-                      : 'bg-[#F5E6D3] text-[#5D5A4E]/60 cursor-not-allowed'
-                  }`}
-                >
-                  {currentStep > step.number ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    step.number
-                  )}
-                </button>
-                <span className={`mt-2 text-xs font-medium hidden sm:block ${
-                  currentStep >= step.number ? 'text-[#5D5A4E]' : 'text-[#5D5A4E]/40'
-                }`}>
-                  {step.label}
-                </span>
-              </div>
-              {index < steps.length - 1 && (
-                <div className={`w-8 sm:w-16 h-1 mx-1 sm:mx-2 rounded ${
-                  currentStep > step.number ? 'bg-[#A8B5A0]' : 'bg-[#F5E6D3]'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
+        <GemStepper
+          steps={steps}
+          currentStep={currentStep}
+          onStepClick={setCurrentStep}
+        />
       </div>
 
       {/* Step Content */}
-      <div className="bg-white rounded-3xl shadow-sm p-6 md:p-8 min-h-[400px]">
+      <div className="bg-white dark:bg-white/5 dark:border dark:border-white/10 rounded-3xl shadow-sm p-6 md:p-8 min-h-[400px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
@@ -562,7 +452,7 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
         </AnimatePresence>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
             {error}
           </div>
         )}
@@ -571,10 +461,10 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
       {/* Navigation Buttons */}
       <div className="flex items-center justify-between mt-6">
         <Button
+          gem="terracotta"
           variant="outline"
           onClick={handleBack}
           disabled={currentStep === 1 || isSubmitting}
-          className="border-[#5D5A4E]/20"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t.back}
@@ -583,10 +473,10 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
         <div className="flex gap-3">
           {/* Bouton brouillon disponible à chaque étape */}
           <Button
+            gem="neutral"
             variant="outline"
             onClick={() => handleSubmit(true)}
             disabled={isSubmitting || !formData.title.trim()}
-            className="border-[#5D5A4E]/20"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -598,9 +488,9 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
 
           {currentStep === totalSteps ? (
             <Button
+              gem="sage"
               onClick={() => handleSubmit(false)}
               disabled={isSubmitting || !canProceed()}
-              className="bg-[#A8B5A0] hover:bg-[#95a28f] text-white"
             >
               {isSubmitting ? (
                 <>
@@ -616,9 +506,9 @@ export default function ResourceWizard({ lang, creatorId, initialData, resourceI
             </Button>
           ) : (
             <Button
+              gem="sage"
               onClick={handleNext}
               disabled={!canProceed()}
-              className="bg-[#A8B5A0] hover:bg-[#95a28f] text-white"
             >
               {t.next}
               <ArrowRight className="w-4 h-4 ml-2" />

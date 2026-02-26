@@ -194,7 +194,7 @@ export default function BecomeCreatorPage({
             {t.loginFirst}
           </h1>
           <Link href={`/${lang}/connexion?redirect=/${lang}/devenir-createur`}>
-            <Button className="mt-4 bg-sage hover:bg-sage-light text-white">
+            <Button gem="sage" className="mt-4">
               {t.login}
             </Button>
           </Link>
@@ -215,7 +215,7 @@ export default function BecomeCreatorPage({
               {t.alreadyCreator}
             </h1>
             <Link href={`/${lang}/createur`}>
-              <Button className="mt-4 bg-sage hover:bg-sage-light text-white">
+              <Button gem="sage" className="mt-4">
                 {t.goToDashboard}
               </Button>
             </Link>
@@ -237,7 +237,7 @@ export default function BecomeCreatorPage({
               Complétez votre profil créateur pour commencer.
             </p>
             <Link href={`/${lang}/inscription-createur`}>
-              <Button className="mt-4 bg-sage hover:bg-sage-light text-white">
+              <Button gem="sage" className="mt-4">
                 {t.completeRegistration}
               </Button>
             </Link>
@@ -335,7 +335,7 @@ export default function BecomeCreatorPage({
           </div>
 
           {/* Simplified Application Form */}
-          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-8" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-elevation-1 p-8" style={{ border: '1px solid var(--border)' }}>
             <h2 className="text-xl font-bold text-foreground dark:text-foreground-dark mb-6">
               {t.formTitle}
             </h2>
@@ -386,11 +386,8 @@ export default function BecomeCreatorPage({
               <Button
                 type="submit"
                 disabled={isSubmitting || !formData.displayName || !formData.motivation}
-                className="w-full py-3 rounded-xl font-semibold text-white transition-colors"
-                style={{
-                  backgroundColor: isSubmitting || !formData.displayName || !formData.motivation ? '#9ca3af' : '#7A8B6F',
-                  cursor: isSubmitting || !formData.displayName || !formData.motivation ? 'not-allowed' : 'pointer'
-                }}
+                gem="sage"
+                className="w-full py-3 rounded-xl font-semibold transition-colors"
               >
                 {isSubmitting ? t.submitting : t.submit}
               </Button>

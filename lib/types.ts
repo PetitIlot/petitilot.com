@@ -1,5 +1,4 @@
-// Types existants (catalogue legacy)
-export type RessourceType = 'activite' | 'motricite' | 'alimentation' | 'livre' | 'jeu'
+export type RessourceType = 'activite' | 'motricite' | 'alimentation'
 export type Language = 'fr' | 'en' | 'es'
 export type Difficulte = 'beginner' | 'advanced' | 'expert'
 
@@ -14,6 +13,8 @@ export interface Ressource {
   group_id: string
   lang: Language
   type: RessourceType
+  title: string
+  vignette_url: string | null
   age_min: number | null
   age_max: number | null
   themes: string[] | null
@@ -23,25 +24,10 @@ export interface Ressource {
   autonomie: boolean | null
   duration: number | null
   duration_max: number | null
-  auteur: string | null
-  editeur: string | null
-  annee: number | null
-  illustrateur: string | null
-  isbn: string | null
-  collection: string | null
-  nb_joueurs_min: number | null
-  nb_joueurs_max: number | null
-  title: string
-  subtitle: string | null
-  description: string | null
-  astuces: string | null
-  materiel: string | null
-  vignette_url: string | null
-  images_urls: string[] | null
-  gallery_urls: string[] | null
-  video_url: string | null
-  pdf_url: string | null
+  duration_prep: number | null
+  intensity: string | null        // 'leger' | 'moyen' | 'intense'
   is_premium: boolean
+  accept_free_credits: boolean
   materiel_json: MaterielItem[] | null
   price_credits?: number | null
   content_blocks?: unknown | null  // Block-based layout (ContentBlocksData)
@@ -72,7 +58,8 @@ export interface Creator {
   slug: string
   display_name: string
   bio: string | null
-  philosophy: string | null
+  philosophy: string | null       // deprecated — kept for legacy data
+  themes: string[] | null         // tags/thèmes éducatifs (remplace philosophy)
   avatar_url: string | null
   instagram_handle: string | null
   youtube_handle: string | null
@@ -87,8 +74,15 @@ export interface Creator {
   total_resources: number
   total_sales_credits: number
   total_earnings_cents: number
+  page_content: PageBlock[] | null  // canvas de la page publique
   created_at: string
   updated_at: string
+}
+
+export interface PageBlock {
+  id: string
+  type: 'hero' | 'bio' | 'text' | 'image' | 'gallery' | 'quote' | 'divider' | 'socials' | 'cta'
+  content: Record<string, unknown>
 }
 
 export interface Resource {

@@ -244,7 +244,7 @@ export default function ContactPage({
                     <p className="text-foreground dark:text-foreground-dark font-medium">{t.thankYou}</p>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple space-y-4" style={{ border: '1px solid var(--border)' }}>
+                  <form onSubmit={handleSubmit} className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1 space-y-4" style={{ border: '1px solid var(--border)' }}>
                     <div>
                       <label className="block text-sm font-medium text-foreground dark:text-foreground-dark mb-1">{t.yourName}</label>
                       <Input
@@ -281,8 +281,8 @@ export default function ContactPage({
                     <Button
                       type="submit"
                       disabled={loading}
-                      className="w-full h-11 font-semibold"
-                      style={{ backgroundColor: '#7A8B6F', color: 'white' }}
+                      gem="sage"
+                      className="w-full"
                     >
                       {loading ? '...' : t.send}
                       <Send className="w-4 h-4 ml-2" />
@@ -295,7 +295,7 @@ export default function ContactPage({
               </div>
 
               {/* FAQ */}
-              <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+              <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
                 <h3 className="font-semibold text-foreground dark:text-foreground-dark mb-4">{t.faqTitle}</h3>
                 <div>
                   {t.faq.map((item, i) => (
@@ -322,7 +322,7 @@ export default function ContactPage({
               </div>
             </div>
 
-            <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+            <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
               <p className="text-foreground-secondary dark:text-foreground-dark-secondary mb-8">{t.creatorIntro}</p>
 
               {/* Avantages */}
@@ -355,13 +355,11 @@ export default function ContactPage({
 
               {/* CTA */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <Link
-                  href={`/${lang}/devenir-createur`}
-                  className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-full transition-colors"
-                  style={{ backgroundColor: '#C9A092', color: 'white' }}
-                >
-                  {t.creatorCta}
-                  <ArrowRight className="w-4 h-4" />
+                <Link href={`/${lang}/devenir-createur`}>
+                  <Button gem="terracotta" size="lg">
+                    {t.creatorCta}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </Link>
                 <span className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary">
                   {t.creatorEmail}{' '}
@@ -389,16 +387,14 @@ export default function ContactPage({
               </div>
             </div>
 
-            <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+            <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
               <p className="text-foreground-secondary dark:text-foreground-dark-secondary mb-6">{t.partnerIntro}</p>
 
-              <a
-                href="mailto:partnership@petitilot.ca"
-                className="inline-flex items-center gap-2 font-semibold hover:opacity-90 px-6 py-3 rounded-full transition-colors mb-8"
-                style={{ backgroundColor: '#CCA6C8', color: 'white' }}
-              >
-                {t.partnerCta}
-                <Mail className="w-4 h-4" />
+              <a href="mailto:partnership@petitilot.ca" className="mb-8 inline-block">
+                <Button gem="mauve" size="lg">
+                  {t.partnerCta}
+                  <Mail className="w-4 h-4 ml-2" />
+                </Button>
               </a>
 
               {/* Marques partenaires - placeholder */}

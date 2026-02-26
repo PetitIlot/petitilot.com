@@ -8,15 +8,11 @@ export default async function TestSupabasePage({ params }: { params: Promise<{ l
 
   // Test 1: Compter les ressources
   const totalActivites = await countRessources('activite', currentLang)
-  const totalLivres = await countRessources('livre', currentLang)
-  const totalJeux = await countRessources('jeu', currentLang)
   const totalMotricite = await countRessources('motricite', currentLang)
   const totalAlimentation = await countRessources('alimentation', currentLang)
 
   // Test 2: Récupérer quelques ressources
   const activites = await getRessources('activite', currentLang, { limit: 5 })
-  const livres = await getRessources('livre', currentLang, { limit: 5 })
-  const jeux = await getRessources('jeu', currentLang, { limit: 5 })
 
   return (
     <div className="py-20">
@@ -30,7 +26,7 @@ export default async function TestSupabasePage({ params }: { params: Promise<{ l
           <h2 className="text-2xl font-semibold text-brown mb-4">
             Statistiques (Langue: {lang.toUpperCase()})
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="bg-sage/10 p-4 rounded-lg">
               <p className="text-sm text-brown/60">Activités</p>
               <p className="text-3xl font-bold text-sage">{totalActivites}</p>
@@ -42,14 +38,6 @@ export default async function TestSupabasePage({ params }: { params: Promise<{ l
             <div className="bg-terracotta/10 p-4 rounded-lg">
               <p className="text-sm text-brown/60">Recettes</p>
               <p className="text-3xl font-bold text-terracotta">{totalAlimentation}</p>
-            </div>
-            <div className="bg-sage/10 p-4 rounded-lg">
-              <p className="text-sm text-brown/60">Livres</p>
-              <p className="text-3xl font-bold text-sage">{totalLivres}</p>
-            </div>
-            <div className="bg-terracotta/10 p-4 rounded-lg">
-              <p className="text-sm text-brown/60">Jeux</p>
-              <p className="text-3xl font-bold text-terracotta">{totalJeux}</p>
             </div>
           </div>
         </div>
@@ -77,44 +65,6 @@ export default async function TestSupabasePage({ params }: { params: Promise<{ l
             </ul>
           ) : (
             <p className="text-brown/60">Aucune activité trouvée</p>
-          )}
-        </div>
-
-        {/* Livres */}
-        <div className="bg-white rounded-2xl p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-brown mb-4">
-            Derniers Livres ({livres.length})
-          </h2>
-          {livres.length > 0 ? (
-            <ul className="space-y-2">
-              {livres.map((livre) => (
-                <li key={livre.id} className="border-l-4 border-terracotta pl-4 py-2">
-                  <p className="font-semibold text-brown">{livre.title}</p>
-                  <p className="text-sm text-brown/60">{livre.subtitle}</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-brown/60">Aucun livre trouvé</p>
-          )}
-        </div>
-
-        {/* Jeux */}
-        <div className="bg-white rounded-2xl p-6">
-          <h2 className="text-2xl font-semibold text-brown mb-4">
-            Derniers Jeux ({jeux.length})
-          </h2>
-          {jeux.length > 0 ? (
-            <ul className="space-y-2">
-              {jeux.map((jeu) => (
-                <li key={jeu.id} className="border-l-4 border-sage pl-4 py-2">
-                  <p className="font-semibold text-brown">{jeu.title}</p>
-                  <p className="text-sm text-brown/60">{jeu.subtitle}</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-brown/60">Aucun jeu trouvé</p>
           )}
         </div>
 

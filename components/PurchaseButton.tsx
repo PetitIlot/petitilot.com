@@ -52,12 +52,19 @@ const translations = {
   }
 }
 
+import type { GemColor } from '@/lib/blocks/types'
+
 interface PurchaseButtonProps {
   ressourceId: string
   priceCredits: number
   pdfUrl?: string | null
   lang: Language
   className?: string
+  // Gem style overrides from block data
+  buttonStyle?: 'gem' | 'gem-outline' | 'classic'
+  buttonShape?: 'rounded' | 'square'
+  buttonColor?: string
+  buttonGem?: GemColor
 }
 
 export default function PurchaseButton({
@@ -65,7 +72,11 @@ export default function PurchaseButton({
   priceCredits,
   pdfUrl,
   lang,
-  className = ''
+  className = '',
+  buttonStyle = 'gem',
+  buttonShape = 'rounded',
+  buttonColor,
+  buttonGem = 'gold'
 }: PurchaseButtonProps) {
   const router = useRouter()
   const t = translations[lang]
@@ -160,9 +171,18 @@ export default function PurchaseButton({
     }
   }
 
+  // Determine gem variant for Button component
+  const gemVariant = buttonStyle === 'gem-outline' ? 'outline' as const : 'default' as const
+  const gemColor = buttonStyle === 'classic' ? 'neutral' as const : (buttonGem || 'gold') as GemColor
+  const isSquare = buttonShape === 'square'
+  // Classic mode: use custom color via style prop
+  const classicStyle = buttonStyle === 'classic' && buttonColor
+    ? { backgroundColor: buttonColor, borderColor: buttonColor }
+    : undefined
+
   if (isLoading) {
     return (
-      <Button disabled className={`bg-[#A8B5A0] ${className}`}>
+      <Button disabled gem={gemColor} className={className} pill={!isSquare} style={classicStyle}>
         <Loader2 className="w-4 h-4 animate-spin" />
       </Button>
     )
@@ -192,7 +212,11 @@ export default function PurchaseButton({
         <Button
           onClick={handleDownload}
           disabled={isLoading}
-          className={`bg-[#A8B5A0] hover:bg-[#95a28f] text-white ${className}`}
+          gem={gemColor}
+          variant={gemVariant}
+          pill={!isSquare}
+          className={className}
+          style={classicStyle}
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
           {t.free}
@@ -209,7 +233,11 @@ export default function PurchaseButton({
         <Button
           onClick={handleDownload}
           disabled={isLoading}
-          className={`bg-[#A8B5A0] hover:bg-[#95a28f] text-white ${className}`}
+          gem={gemColor}
+          variant={gemVariant}
+          pill={!isSquare}
+          className={className}
+          style={classicStyle}
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
           {t.download}
@@ -217,7 +245,7 @@ export default function PurchaseButton({
       )
     }
     return (
-      <Button disabled className={`bg-[#A8B5A0]/50 text-white ${className}`}>
+      <Button disabled gem={gemColor} variant="outline" pill={!isSquare} className={className}>
         <Check className="w-4 h-4 mr-2" />
         {t.purchased}
       </Button>
@@ -229,7 +257,9 @@ export default function PurchaseButton({
     return (
       <Button
         onClick={() => router.push(`/${lang}/connexion`)}
-        className={`bg-[#5D5A4E] hover:bg-[#4a4840] text-white ${className}`}
+        gem="neutral"
+        pill={!isSquare}
+        className={className}
       >
         <Lock className="w-4 h-4 mr-2" />
         {t.login}
@@ -243,7 +273,10 @@ export default function PurchaseButton({
       <div className="space-y-2">
         <Button
           onClick={() => router.push(`/${lang}/profil/credits`)}
-          className={`bg-[#D4A59A] hover:bg-[#c49589] text-white ${className}`}
+          gem="destructive"
+          variant="outline"
+          pill={!isSquare}
+          className={className}
         >
           <ShoppingCart className="w-4 h-4 mr-2" />
           {priceCredits} {t.credits}
@@ -259,7 +292,11 @@ export default function PurchaseButton({
       <Button
         onClick={handlePurchase}
         disabled={isPurchasing}
-        className={`bg-[#A8B5A0] hover:bg-[#95a28f] text-white ${className}`}
+        gem={gemColor}
+        variant={gemVariant}
+        pill={!isSquare}
+        className={className}
+        style={classicStyle}
       >
         {isPurchasing ? (
           <>

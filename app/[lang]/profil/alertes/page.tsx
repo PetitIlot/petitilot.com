@@ -14,7 +14,8 @@ import {
   Loader2,
   ArrowLeft,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button, GEMS } from '@/components/ui/button'
+import type { GemColor } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/lib/supabase-client'
 import { useNotifications } from '@/lib/hooks/useNotifications'
@@ -24,7 +25,11 @@ import {
   CATEGORIES,
   THEMES,
   COMPETENCES,
+  MATERIALS,
   DIFFICULTY_OPTIONS,
+  INTENSITY_OPTIONS,
+  DURATION_PRESETS,
+  PREP_TIME_PRESETS,
   getOptionLabel,
 } from '@/lib/constants/filters'
 
@@ -107,6 +112,11 @@ const translations = {
   },
 }
 
+function hexToRgb(hex: string) {
+  const n = parseInt(hex.replace("#", ""), 16)
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
+}
+
 export default function AlertesPage({ params }: PageProps) {
   const { lang } = use(params)
   const router = useRouter()
@@ -118,6 +128,15 @@ export default function AlertesPage({ params }: PageProps) {
   const [follows, setFollows] = useState<(Follow & { creator: Creator })[]>([])
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [unfollowingId, setUnfollowingId] = useState<string | null>(null)
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsDark(document.documentElement.classList.contains('dark'))
+    check()
+    const obs = new MutationObserver(check)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
 
   const {
     notifications,
@@ -254,10 +273,6 @@ export default function AlertesPage({ params }: PageProps) {
     const materialMode = filters.materialMode as string | null
     if (materialMode && materialMode !== 'filter') params.set('matmode', materialMode)
 
-    // Has download
-    const hasDownload = filters.hasDownload as boolean | null
-    if (hasDownload !== null && hasDownload !== undefined) params.set('dl', hasDownload ? '1' : '0')
-
     // Is free
     const isFree = filters.isFree as boolean | null
     if (isFree !== null && isFree !== undefined) params.set('free', isFree ? '1' : '0')
@@ -284,41 +299,80 @@ export default function AlertesPage({ params }: PageProps) {
     return `/${lang}/activites?${params.toString()}`
   }
 
-  // Generate filter badges
-  const getFilterBadges = (filters: Record<string, unknown>): string[] => {
-    const badges: string[] = []
+  // Generate filter badges with gem colors (same mapping as ActiveFilters)
+  const getFilterBadges = (filters: Record<string, unknown>): { label: string; gem: GemColor }[] => {
+    const badges: { label: string; gem: GemColor }[] = []
 
+    // Categories — gem from category option
     const categories = filters.categories as string[] | undefined
     categories?.forEach(cat => {
-      badges.push(getOptionLabel(CATEGORIES, cat, lang as Language))
+      const catOption = CATEGORIES.find(c => c.value === cat)
+      badges.push({
+        label: getOptionLabel(CATEGORIES, cat, lang as Language),
+        gem: (catOption?.gem as GemColor) || 'sage',
+      })
     })
 
+    // Themes — sky
+    const themes = filters.themes as string[] | undefined
+    themes?.forEach(theme => {
+      badges.push({ label: getOptionLabel(THEMES, theme, lang as Language), gem: 'sky' })
+    })
+
+    // Competences — rose
+    const competences = filters.competences as string[] | undefined
+    competences?.forEach(comp => {
+      badges.push({ label: getOptionLabel(COMPETENCES, comp, lang as Language), gem: 'rose' })
+    })
+
+    // Materials — amber
+    const materials = filters.materials as string[] | undefined
+    materials?.forEach(mat => {
+      badges.push({ label: getOptionLabel(MATERIALS, mat, lang as Language), gem: 'amber' })
+    })
+
+    // Age — neutral
     const ageMin = filters.ageMin as number | null
     const ageMax = filters.ageMax as number | null
     if (ageMin !== null || ageMax !== null) {
       const min = ageMin ?? 0
       const max = ageMax ?? 72
-      badges.push(t.ageRange.replace('{min}', String(min)).replace('{max}', String(max)))
+      badges.push({
+        label: t.ageRange.replace('{min}', String(min)).replace('{max}', String(max)),
+        gem: 'neutral',
+      })
     }
 
-    const themes = filters.themes as string[] | undefined
-    themes?.slice(0, 2).forEach(theme => {
-      badges.push(getOptionLabel(THEMES, theme, lang as Language))
-    })
+    // Duration — sky
+    const duration = filters.duration as number | null
+    if (duration !== null && duration !== undefined) {
+      const preset = DURATION_PRESETS.find(p => parseInt(p.value) === duration)
+      badges.push({ label: preset ? preset.label[lang as Language] : `< ${duration} min`, gem: 'sky' })
+    }
 
-    const competences = filters.competences as string[] | undefined
-    competences?.slice(0, 2).forEach(comp => {
-      badges.push(getOptionLabel(COMPETENCES, comp, lang as Language))
-    })
+    // Prep time — terracotta
+    const prepTime = filters.prepTime as number | null
+    if (prepTime !== null && prepTime !== undefined) {
+      const preset = PREP_TIME_PRESETS.find(p => parseInt(p.value) === prepTime)
+      badges.push({ label: preset ? preset.label[lang as Language] : `< ${prepTime} min`, gem: 'terracotta' })
+    }
 
+    // Difficulty — amber
     const difficulty = filters.difficulty as string | null
     if (difficulty) {
-      badges.push(getOptionLabel(DIFFICULTY_OPTIONS, difficulty, lang as Language))
+      badges.push({ label: getOptionLabel(DIFFICULTY_OPTIONS, difficulty, lang as Language), gem: 'amber' })
     }
 
+    // Intensity — rose
+    const intensity = filters.intensity as string | null
+    if (intensity) {
+      badges.push({ label: getOptionLabel(INTENSITY_OPTIONS, intensity, lang as Language), gem: 'rose' })
+    }
+
+    // Free/Paid — mauve
     const isFree = filters.isFree as boolean | null
     if (isFree !== null && isFree !== undefined) {
-      badges.push(isFree ? t.free : t.paid)
+      badges.push({ label: isFree ? t.free : t.paid, gem: 'mauve' })
     }
 
     return badges
@@ -346,7 +400,7 @@ export default function AlertesPage({ params }: PageProps) {
             {t.loginMessage}
           </p>
           <Link href={`/${lang}/connexion`}>
-            <Button className="bg-sage hover:bg-sage/90 text-white">
+            <Button gem="sage">
               {t.login}
             </Button>
           </Link>
@@ -360,13 +414,10 @@ export default function AlertesPage({ params }: PageProps) {
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-1 text-sm text-foreground-secondary hover:text-foreground mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
+          <Button variant="outline" gem="neutral" size="sm" onClick={() => router.back()} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-1" />
             {t.back}
-          </button>
+          </Button>
           <h1 className="text-2xl font-bold text-foreground dark:text-foreground-dark">
             {t.title}
           </h1>
@@ -380,7 +431,7 @@ export default function AlertesPage({ params }: PageProps) {
               {t.savedSearches}
             </h2>
             {alerts.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge gem="terracotta" className="text-xs">
                 {alerts.length}
               </Badge>
             )}
@@ -408,33 +459,74 @@ export default function AlertesPage({ params }: PageProps) {
                           {alert.name}
                         </span>
                         <Badge
-                          variant={alert.is_active ? 'default' : 'secondary'}
+                          gem={alert.is_active ? 'sage' : 'neutral'}
                           className="text-xs"
                         >
                           {alert.is_active ? t.active : t.paused}
                         </Badge>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {getFilterBadges(alert.filters).map((badge, i) => (
-                          <Badge key={i} variant="outline" className="text-xs">
-                            {badge}
-                          </Badge>
-                        ))}
+                        {getFilterBadges(alert.filters).map((badge, i) => {
+                          const g = GEMS[badge.gem]
+                          const rgb = hexToRgb(isDark ? g.dark : g.light)
+                          const glowRGB = isDark ? g.glowDark : g.glow
+                          return (
+                            <span
+                              key={i}
+                              className="inline-flex items-center text-xs font-semibold"
+                              style={{
+                                borderRadius: 20,
+                                padding: 1.5,
+                                background: `linear-gradient(135deg, rgba(${glowRGB},0.6) 0%, rgba(${glowRGB},0.35) 50%, rgba(${glowRGB},0.5) 100%)`,
+                                boxShadow: `0 0 10px rgba(${glowRGB},${isDark ? 0.35 : 0.20}), 0 1px 4px rgba(0,0,0,${isDark ? 0.2 : 0.06}), inset 0 0.5px 0 rgba(255,255,255,${isDark ? 0.12 : 0.4})`,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  padding: '5px 10px',
+                                  borderRadius: 18.5,
+                                  color: isDark ? g.textDark : g.text,
+                                  background: `linear-gradient(170deg, rgba(${rgb.r},${rgb.g},${rgb.b},${isDark ? 0.24 : 0.32}) 0%, rgba(${rgb.r},${rgb.g},${rgb.b},${isDark ? 0.18 : 0.26}) 100%)`,
+                                  backdropFilter: 'blur(8px) saturate(130%)',
+                                  WebkitBackdropFilter: 'blur(8px) saturate(130%)',
+                                  position: 'relative',
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                <span
+                                  aria-hidden
+                                  style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    pointerEvents: 'none',
+                                    background: isDark
+                                      ? 'linear-gradient(170deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)'
+                                      : 'linear-gradient(170deg, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.36) 100%)',
+                                    borderRadius: 18.5,
+                                  }}
+                                />
+                                <span style={{ position: 'relative', zIndex: 2 }}>{badge.label}</span>
+                              </span>
+                            </span>
+                          )
+                        })}
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <Link href={buildFilterUrl(alert.filters)}>
-                        <Button variant="outline" size="sm" className="gap-1">
+                        <Button gem="sage" size="sm" className="gap-1">
                           <ExternalLink className="w-3.5 h-3.5" />
                           {t.applyFilters}
                         </Button>
                       </Link>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        gem="destructive"
+                        variant="outline"
+                        size="icon"
                         onClick={() => handleDeleteAlert(alert.id)}
                         disabled={deletingId === alert.id}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                       >
                         {deletingId === alert.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -458,7 +550,7 @@ export default function AlertesPage({ params }: PageProps) {
               {t.followedCreators}
             </h2>
             {follows.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge gem="terracotta" className="text-xs">
                 {follows.length}
               </Badge>
             )}
@@ -502,17 +594,17 @@ export default function AlertesPage({ params }: PageProps) {
                     </div>
                     <div className="flex gap-2">
                       <Link href={`/${lang}/createurs/${follow.creator.slug}`}>
-                        <Button variant="outline" size="sm" className="gap-1">
+                        <Button gem="sky" size="sm" className="gap-1">
                           <ExternalLink className="w-3.5 h-3.5" />
                           {t.viewProfile}
                         </Button>
                       </Link>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        gem="terracotta"
+                        variant="outline"
+                        size="icon"
                         onClick={() => handleUnfollow(follow.id, follow.creator_id)}
                         disabled={unfollowingId === follow.id}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                       >
                         {unfollowingId === follow.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -537,7 +629,7 @@ export default function AlertesPage({ params }: PageProps) {
                 {t.recentNotifications}
               </h2>
               {unreadCount > 0 && (
-                <Badge className="bg-red-500 text-white text-xs">
+                <Badge gem="destructive" className="text-xs">
                   {unreadCount}
                 </Badge>
               )}

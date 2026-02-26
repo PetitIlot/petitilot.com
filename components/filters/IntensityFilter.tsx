@@ -1,7 +1,10 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import type { Language } from '@/lib/types'
 import { INTENSITY_OPTIONS } from '@/lib/constants/filters'
+import { gemSegmentStyle } from './gemFilterStyle'
+import { FilterIcon } from '@/lib/constants/resourceIcons'
 
 interface IntensityFilterProps {
   selected: string | null
@@ -9,31 +12,32 @@ interface IntensityFilterProps {
   lang: Language
 }
 
-/**
- * 3 boutons pour sélectionner l'intensité (calme/modéré/actif)
- */
 export default function IntensityFilter({ selected, onChange, lang }: IntensityFilterProps) {
-  const handleClick = (value: string) => {
-    onChange(selected === value ? null : value)
-  }
+  const [isDark, setIsDark] = useState(false)
+  useEffect(() => {
+    const check = () => setIsDark(document.documentElement.classList.contains('dark'))
+    check()
+    const obs = new MutationObserver(check)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+
+  const GEM = 'rose' as const
 
   return (
     <div className="flex gap-2">
       {INTENSITY_OPTIONS.map(opt => {
         const isSelected = selected === opt.value
+        const s = gemSegmentStyle(GEM, isSelected, isDark)
         return (
           <button
             key={opt.value}
             type="button"
-            onClick={() => handleClick(opt.value)}
-            className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
-              isSelected
-                ? 'bg-[#A8B5A0] text-white'
-                : 'bg-surface-secondary dark:bg-surface-dark text-foreground-secondary dark:text-foreground-dark-secondary hover:bg-[#A8B5A0]/20'
-            }`}
-            style={!isSelected ? { border: '1px solid var(--border)' } : undefined}
+            onClick={() => onChange(isSelected ? null : opt.value)}
+            className={`flex-1 px-3 py-2 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-[0.97] ${!isSelected ? 'hover:bg-black/[0.03] dark:hover:bg-white/[0.05]' : ''}`}
+            style={{ ...s, border: !isSelected ? '1px solid var(--border)' : 'none' }}
           >
-            <span>{opt.emoji}</span>
+            <FilterIcon value={opt.value} size={16} />
             <span>{opt.label[lang]}</span>
           </button>
         )

@@ -170,9 +170,9 @@ export default function StepReview({ formData, lang }: StepReviewProps) {
 
   // Helper components
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="bg-white rounded-xl p-4 border border-[#E5E7EB]">
-      <h3 className="font-medium text-[#5D5A4E] text-sm mb-3 flex items-center gap-2">
-        <Check className="w-4 h-4 text-[#A8B5A0]" />
+    <div className="bg-white dark:bg-white/5 rounded-xl p-4 border border-[#E5E7EB] dark:border-white/10">
+      <h3 className="font-medium text-[#5D5A4E] dark:text-white text-sm mb-3 flex items-center gap-2">
+        <Check className="w-4 h-4 text-[#A8B5A0] dark:text-[#6EE8A0]" />
         {title}
       </h3>
       <div className="space-y-2 text-sm">{children}</div>
@@ -181,20 +181,20 @@ export default function StepReview({ formData, lang }: StepReviewProps) {
 
   const Field = ({ label, value }: { label: string; value: string | React.ReactNode }) => (
     <div className="flex justify-between items-start gap-4">
-      <span className="text-[#5D5A4E]/60 text-xs">{label}</span>
-      <span className="text-[#5D5A4E] font-medium text-right text-xs">{value}</span>
+      <span className="text-[#5D5A4E]/60 dark:text-white/40 text-xs">{label}</span>
+      <span className="text-[#5D5A4E] dark:text-white font-medium text-right text-xs">{value}</span>
     </div>
   )
 
   const TagList = ({ items, color }: { items: string[]; color: string }) => (
     <div className="flex flex-wrap gap-1 justify-end max-w-[200px]">
       {items.slice(0, 5).map((item, i) => (
-        <span key={i} className={`px-2 py-0.5 rounded-full text-xs ${color} text-[#5D5A4E]`}>
+        <span key={i} className={`px-2 py-0.5 rounded-full text-xs ${color} text-[#5D5A4E] dark:text-white/80`}>
           {item}
         </span>
       ))}
       {items.length > 5 && (
-        <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-[#5D5A4E]/60">
+        <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-white/10 text-[#5D5A4E]/60 dark:text-white/40">
           +{items.length - 5}
         </span>
       )}
@@ -207,8 +207,8 @@ export default function StepReview({ formData, lang }: StepReviewProps) {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-quicksand text-2xl font-bold text-[#5D5A4E]">{t.title}</h2>
-        <p className="text-[#5D5A4E]/60 mt-1">{t.subtitle}</p>
+        <h2 className="font-quicksand text-2xl font-bold text-[#5D5A4E] dark:text-white">{t.title}</h2>
+        <p className="text-[#5D5A4E]/60 dark:text-white/50 mt-1">{t.subtitle}</p>
       </div>
 
       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
@@ -222,8 +222,8 @@ export default function StepReview({ formData, lang }: StepReviewProps) {
                   <img src={formData.vignette_url} alt="Vignette" className="w-full h-full object-cover" />
                 </div>
               ) : (
-                <div className="w-16 h-16 rounded-xl bg-[#F5E6D3] flex items-center justify-center">
-                  <ImageIcon className="w-6 h-6 text-[#5D5A4E]/30" />
+                <div className="w-16 h-16 rounded-xl bg-[#F5E6D3] dark:bg-white/10 flex items-center justify-center">
+                  <ImageIcon className="w-6 h-6 text-[#5D5A4E]/30 dark:text-white/20" />
                 </div>
               )}
             </div>
@@ -272,19 +272,19 @@ export default function StepReview({ formData, lang }: StepReviewProps) {
         <Section title={t.categorization}>
           {formData.categories.length > 0 && (
             <div className="flex justify-between items-start gap-4">
-              <span className="text-[#5D5A4E]/60 text-xs">{t.categories}</span>
+              <span className="text-[#5D5A4E]/60 dark:text-white/40 text-xs">{t.categories}</span>
               <TagList items={formData.categories} color="bg-[#A8B5A0]/20" />
             </div>
           )}
           {formData.themes.length > 0 && (
             <div className="flex justify-between items-start gap-4">
-              <span className="text-[#5D5A4E]/60 text-xs">{t.themes}</span>
+              <span className="text-[#5D5A4E]/60 dark:text-white/40 text-xs">{t.themes}</span>
               <TagList items={formData.themes} color="bg-[#C8D8E4]/50" />
             </div>
           )}
           {formData.competences.length > 0 && (
             <div className="flex justify-between items-start gap-4">
-              <span className="text-[#5D5A4E]/60 text-xs">{t.competences}</span>
+              <span className="text-[#5D5A4E]/60 dark:text-white/40 text-xs">{t.competences}</span>
               <TagList items={formData.competences} color="bg-[#D4A59A]/20" />
             </div>
           )}
@@ -298,22 +298,22 @@ export default function StepReview({ formData, lang }: StepReviewProps) {
           <Section title={t.materials}>
             {formData.materials.length > 0 && (
               <div className="flex justify-between items-start gap-4">
-                <span className="text-[#5D5A4E]/60 text-xs">{t.budgetType}</span>
+                <span className="text-[#5D5A4E]/60 dark:text-white/40 text-xs">{t.budgetType}</span>
                 <TagList items={formData.materials} color="bg-[#F5E6D3]" />
               </div>
             )}
             {formData.materiel_json.length > 0 && (
               <div>
-                <span className="text-[#5D5A4E]/60 text-xs">{t.materialsList}:</span>
+                <span className="text-[#5D5A4E]/60 dark:text-white/40 text-xs">{t.materialsList}:</span>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {formData.materiel_json.slice(0, 8).map((item, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#F5E6D3]/50 rounded-full text-xs text-[#5D5A4E]">
+                    <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#F5E6D3]/50 dark:bg-white/10 rounded-full text-xs text-[#5D5A4E] dark:text-white/80">
                       {item.recup && <Recycle className="w-3 h-3 text-green-600" />}
                       {item.item}
                     </span>
                   ))}
                   {formData.materiel_json.length > 8 && (
-                    <span className="px-2 py-0.5 text-xs text-[#5D5A4E]/60">
+                    <span className="px-2 py-0.5 text-xs text-[#5D5A4E]/60 dark:text-white/40">
                       +{formData.materiel_json.length - 8}
                     </span>
                   )}
@@ -327,7 +327,7 @@ export default function StepReview({ formData, lang }: StepReviewProps) {
         <Section title={t.canvas}>
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              blockCount > 0 ? 'bg-[#A8B5A0]/20' : 'bg-amber-50'
+              blockCount > 0 ? 'bg-[#A8B5A0]/20 dark:bg-[#6EE8A0]/15' : 'bg-amber-50 dark:bg-amber-900/20'
             }`}>
               {blockCount > 0 ? (
                 <Paintbrush className="w-6 h-6 text-[#A8B5A0]" />

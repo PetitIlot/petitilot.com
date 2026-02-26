@@ -1,6 +1,6 @@
 # Journal de Développement Petit Ilot
 
-> Dernière mise à jour : 30 janvier 2025 - Phase 4 Crédits v2 complétée
+> Dernière mise à jour : 10 février 2025 - Phase 6 Canvas Refonte v3 complétée
 
 ---
 
@@ -55,14 +55,120 @@
 | 5.3 | Dashboard stats | ⬜ TODO | KPIs, graphiques |
 | 5.4 | Admin codes promo/grant crédits/Bonus inscription/Bonus achat
 
+### Phase 6 : Canvas Refonte v3 ✅ COMPLÉTÉ
+
+| # | Tâche | Statut | Notes |
+|---|-------|--------|-------|
+| 6.1 | Composants éditeur réutilisables | ✅ OK | EditorSection, ColorPicker, SliderControl, SelectControl, ToggleControl, FontPicker |
+| 6.2 | Réécriture BlockEditor | ✅ OK | 14 types de blocs, thèmes one-click, typography, styles v3 |
+| 6.3 | Enrichissement types v3 | ✅ OK | material, image-grid, faq + BlockStyle gradients/glass/shadows |
+| 6.4 | Refonte FreeformCanvas | ✅ OK | Toolbar glass, menu catégorisé, onUpdateStyle, rendu v3 |
+| 6.5 | Intégration Tiptap | ✅ OK | Rich text editor complet (toolbar, couleurs, alignement, listes) |
+| 6.6 | Previews nouveaux blocs | ✅ OK | ImageGridPreview, FAQPreview, MaterialPreview |
+| 6.7 | Templates v3 | ✅ OK | 9 templates réécrits (800px, glass, gradients, nouveaux blocs) |
+| 6.8 | Upload Cloudinary | ✅ OK | CloudinaryUploader drag-and-drop, intégré dans Image/Carousel/ImageGrid |
+
 ---
 
 ## État Actuel
 
 Site en mode "Coming Soon" sur petitilot.com. Code secret dans env var `NEXT_PUBLIC_SITE_ACCESS_CODE`.
-Sprints 1-3 complétés. Phase 4 Crédits v2 complétée. Migrations SQL prêtes à exécuter.
+Sprints 1-3 complétés. Phase 4 Crédits v2 complétée. Phase 6 Canvas Refonte v3 complétée. Migrations SQL prêtes à exécuter.
 
-### Dernière Session - Phase 4 Crédits v2
+### Dernière Session - Phase 6 Canvas Refonte v3
+- **Date** : 10 février 2025
+- **Objectif** : Refonte complète du système canvas de création de ressources — blocs v3, éditeurs modulaires, rich text, upload Cloudinary, templates réécrits
+- **Complété** :
+
+**6.1 Composants éditeur réutilisables** :
+- `EditorSection` : sections pliables avec header + contenu
+- `ColorPicker` : sélecteur couleur avec presets + champ hex + transparence
+- `SliderControl` : slider avec label, min/max, unité
+- `SelectControl` : select avec label et options typées
+- `ToggleControl` : switch on/off avec label et description
+- `FontPicker` : sélecteur de polices Google Fonts avec preview live
+
+**6.2 Réécriture BlockEditor** :
+- 14 types de blocs supportés : title, text, image, tip, separator, list, list-links, carousel, creator, purchase, video, image-grid, faq, material
+- Thèmes one-click : nature, minimal, playful, elegant, glass (appliqués via `blockThemes.ts`)
+- Contrôles typography complets : police, taille, poids, alignement, couleur, espacement
+- Contrôles styles v3 : backgrounds (solid/gradient), bordures (width/style/radius/color), ombres (presets apple/lg/md/sm), glass effect
+- `onUpdateStyle` prop : séparation données bloc vs styles communs
+
+**6.3 Enrichissement types v3** :
+- `MaterialBlockData` : layout (list/grid/two-columns), showQuantity, showLinks, showRecupBadge, typography/colors
+- `ImageGridBlockData` : layout (2/3/masonry), gap, borderRadius, images array avec caption/alt
+- `FAQBlockData` : style (minimal/bordered/filled), iconStyle (chevron/plus/arrow), items array Q&A, typography/colors
+- `BlockStyle` enrichi : gradient (from/to/direction), glass (enabled/blur/opacity), borderWidth/borderStyle, shadowPreset
+
+**6.4 Refonte FreeformCanvas** :
+- Toolbar en glassmorphism (var(--glass-bg), backdrop-filter blur)
+- Menu ajout blocs catégorisé : Contenu (title, text, list, list-links) / Média (image, video, carousel, image-grid) / Composants (tip, faq, material, separator, creator, purchase)
+- Traductions FR/EN/ES pour tous les nouveaux blocs
+- `handleBlockStyleUpdate` callback pour propager les updates de style
+- Rendu v3 des blocs : gradient backgrounds, glass effects, border-width/style, shadow presets (apple/lg/md/sm)
+- Canvas background et états vides en CSS variables
+
+**6.5 Intégration Tiptap rich text** :
+- Packages installés : @tiptap/react, @tiptap/starter-kit, @tiptap/extension-text-align, @tiptap/extension-color, @tiptap/extension-highlight, @tiptap/extension-underline, @tiptap/extension-placeholder, @tiptap/extension-text-style
+- `TiptapEditor` component avec toolbar complète : Bold, Italic, Underline, Strikethrough, H1-H3, Alignement, Listes, Blockquote, Highlight, Undo/Redo
+- CSS global pour le rendu tiptap-content (headings, listes, blockquote, mark)
+- Remplace le textarea dans TextContentEditor
+- TextPreview mis à jour pour rendre le HTML via dangerouslySetInnerHTML
+
+**6.6 Previews nouveaux blocs** :
+- `ImageGridPreview` : grille adaptative selon layout (2 cols, 3 cols, masonry) avec captions
+- `FAQPreview` : accordéon interactif expand/collapse, 3 styles d'icônes (chevron/plus/arrow), 3 styles visuels (minimal/bordered/filled)
+- `MaterialPreview` : rendu materiel_json du wizard, 3 layouts (list/grid/two-columns), badges "récup", liens affiliés, données placeholder si vide
+
+**6.7 Templates v3** :
+- 9 templates au total (7 réécrits + 2 nouveaux)
+- Tous en 800px canvas (était 1200px) pour cohérence avec DEFAULT_CANVAS_CONFIG
+- Templates réécrits : activité, recette, DIY, lecture, éveil, musique, sortie
+- Nouveaux templates : atelier créatif, guide nature
+- Tous utilisent les blocs v3 : material, faq, image-grid, styles glass, gradients, ombres apple
+
+**6.8 Upload Cloudinary** :
+- `CloudinaryUploader` component avec drag-and-drop, barre de progression, gestion d'erreurs
+- Deux modes : full (zone de drop) et compact (petit bouton)
+- Fallback gracieux si Cloudinary non configuré (affiche avertissement)
+- URLs optimisées automatiques via `getCloudinaryUrl` après upload (1200px, quality 85, format auto)
+- Intégré dans : ImageContentEditor, CarouselContentEditor (multiple), ImageGridContentEditor
+- `lib/cloudinary.ts` : ajout `uploadToCloudinary()`, `isCloudinaryConfigured()`, `CloudinaryUploadResult`
+
+**Fichiers créés** :
+- `components/canvas/editor/EditorSection.tsx`
+- `components/canvas/editor/ColorPicker.tsx`
+- `components/canvas/editor/SliderControl.tsx`
+- `components/canvas/editor/SelectControl.tsx`
+- `components/canvas/editor/ToggleControl.tsx`
+- `components/canvas/editor/FontPicker.tsx`
+- `components/canvas/editor/TiptapEditor.tsx`
+- `components/canvas/editor/CloudinaryUploader.tsx`
+- `components/canvas/editor/index.ts`
+- `lib/blocks/blockThemes.ts`
+- `lib/googleFonts.ts`
+
+**Fichiers modifiés** :
+- `components/canvas/BlockEditor.tsx` - Réécriture complète avec 14 éditeurs de blocs + thèmes + CloudinaryUploader + TiptapEditor
+- `components/canvas/BlockPreview.tsx` - 3 nouveaux previews (ImageGrid, FAQ, Material) + rendu HTML Tiptap
+- `components/canvas/FreeformCanvas.tsx` - Toolbar glass, menu catégorisé, onUpdateStyle, rendu v3
+- `lib/blocks/types.ts` - Nouveaux types MaterialBlockData, ImageGridBlockData, FAQBlockData, BlockStyle enrichi
+- `lib/blocks/templates.ts` - Réécriture complète 9 templates v3
+- `lib/blocks/presetTemplates.ts` - Ajout TemplateId atelier/nature-guide
+- `lib/cloudinary.ts` - Ajout uploadToCloudinary, isCloudinaryConfigured
+- `app/globals.css` - Styles Tiptap (.tiptap-content)
+- `package.json` - 9 dépendances Tiptap ajoutées
+
+**Prochaines étapes** :
+1. Configurer `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` dans Vercel pour activer l'upload en prod
+2. Ajouter support upload vidéo dans CloudinaryUploader (actuellement images uniquement)
+3. Tester les templates v3 en créant une ressource complète
+4. Phase 2 : créer les templates de fiches spécialisées (recette, sport/motricité)
+
+---
+
+### Session Précédente - Phase 4 Crédits v2
 - **Date** : 30 janvier 2025
 - **Objectif** : Implémenter le système de crédits à deux types (gratuits/payants) avec outils admin
 - **Complété** :

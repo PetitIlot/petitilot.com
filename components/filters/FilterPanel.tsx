@@ -70,7 +70,6 @@ export default function FilterPanel({
                          (filters.intensity !== null ? 1 : 0) +
                          (filters.autonomy !== null ? 1 : 0)
   const countPrice = (filters.isFree !== null ? 1 : 0) +
-                     (filters.hasDownload !== null ? 1 : 0) +
                      (filters.priceMin !== null || filters.priceMax !== null ? 1 : 0)
 
   return (
@@ -127,6 +126,7 @@ export default function FilterPanel({
               onToggle={(v) => toggleArrayValue('themes', v)}
               lang={lang}
               placeholder={lang === 'fr' ? 'Rechercher un thème...' : 'Search theme...'}
+              gem="sky"
             />
           </FilterSection>
 
@@ -139,6 +139,7 @@ export default function FilterPanel({
               onToggle={(v) => toggleArrayValue('competences', v)}
               lang={lang}
               placeholder={lang === 'fr' ? 'Rechercher une compétence...' : 'Search skill...'}
+              gem="rose"
             />
           </FilterSection>
 
@@ -222,13 +223,10 @@ export default function FilterPanel({
           <FilterSection title={t.price} count={countPrice}>
             <PriceFilter
               isFree={filters.isFree}
-              hasDownload={filters.hasDownload}
               priceMin={filters.priceMin}
               priceMax={filters.priceMax}
               onFreeChange={(v) => setFilters({ isFree: v })}
-              onDownloadChange={(v) => setFilters({ hasDownload: v })}
               onPriceRangeChange={(min, max) => setFilters({ priceMin: min, priceMax: max })}
-              onBatchChange={(changes) => setFilters(changes)}
               lang={lang}
             />
           </FilterSection>
@@ -253,7 +251,7 @@ export default function FilterPanel({
           <div className="flex gap-3">
             {activeFiltersCount > 0 && (
               <Button
-                variant="outline"
+                gem="destructive"
                 onClick={clearFilters}
                 className="flex-1"
               >
@@ -261,8 +259,9 @@ export default function FilterPanel({
               </Button>
             )}
             <Button
+              gem="sky"
               onClick={onClose}
-              className="flex-1 bg-[#A8B5A0] hover:bg-[#A8B5A0]/90 text-white"
+              className="flex-1"
             >
               {t.showResults.replace('{count}', String(resultCount))}
             </Button>

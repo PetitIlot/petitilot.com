@@ -107,10 +107,8 @@ export default function EditResourcePage() {
       // Mapper les données DB vers ResourceFormData
       setInitialData({
         title: resource.title || '',
-        subtitle: resource.subtitle || '',
-        description: resource.description || '',
         price_credits: resource.price_credits || 0,
-        astuces: resource.astuces || '',
+        accept_free_credits: resource.accept_free_credits ?? true,
         age_min: resource.age_min,
         age_max: resource.age_max,
         duration: resource.duration,
@@ -124,14 +122,12 @@ export default function EditResourcePage() {
         keywords: resource.keywords || [],
         customThemes: [],
         customCompetences: [],
+        collaborators: [],
+        owner_revenue_share: 100,
         materials: resource.materials || [],
         materiel_json: resource.materiel_json || [],
         vignette_url: resource.vignette_url || '',
-        images_urls: resource.images_urls || [],
-        gallery_urls: resource.gallery_urls || [],
-        video_url: resource.video_url || '',
-        pdf_url: resource.pdf_url || '',
-        meta_seo: resource.meta_seo?.description || ''
+        content_blocks: resource.content_blocks || null
       })
 
       setResourceStatus(resource.status || 'draft')
@@ -194,16 +190,15 @@ export default function EditResourcePage() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 pt-24 pb-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <Link
-              href={`/${lang}/createur/ressources`}
-              className="inline-flex items-center text-sm text-foreground-secondary dark:text-foreground-dark-secondary hover:text-foreground dark:hover:text-foreground-dark mb-2"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              {t.back}
+            <Link href={`/${lang}/createur/ressources`}>
+              <Button variant="outline" gem="neutral" size="sm" className="mb-2">
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                {t.back}
+              </Button>
             </Link>
             <h1 className="font-quicksand text-3xl font-bold text-foreground dark:text-foreground-dark">{t.title}</h1>
           </div>
@@ -231,8 +226,8 @@ export default function EditResourcePage() {
             </p>
             <Button
               variant="outline"
+              gem="destructive"
               onClick={handleDelete}
-              className="border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               {t.delete}

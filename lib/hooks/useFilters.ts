@@ -26,8 +26,7 @@ export interface FilterState {
   materials: string[]
   materialMode: 'filter' | 'match'
 
-  // Prix et téléchargement
-  hasDownload: boolean | null
+  // Prix
   isFree: boolean | null
   priceMin: number | null
   priceMax: number | null
@@ -57,7 +56,6 @@ export const INITIAL_FILTER_STATE: FilterState = {
   autonomy: null,
   materials: [],
   materialMode: 'filter',
-  hasDownload: null,
   isFree: null,
   priceMin: null,
   priceMax: null,
@@ -81,7 +79,6 @@ const URL_PARAM_MAP: Record<keyof FilterState, string> = {
   autonomy: 'auto',
   materials: 'mat',
   materialMode: 'matmode',
-  hasDownload: 'dl',
   isFree: 'free',
   priceMin: 'price_min',
   priceMax: 'price_max',
@@ -147,7 +144,6 @@ export function useFilters() {
     autonomy: parseBooleanParam(searchParams.get(URL_PARAM_MAP.autonomy)),
     materials: parseArrayParam(searchParams.get(URL_PARAM_MAP.materials)),
     materialMode: (searchParams.get(URL_PARAM_MAP.materialMode) as 'filter' | 'match') || 'filter',
-    hasDownload: parseBooleanParam(searchParams.get(URL_PARAM_MAP.hasDownload)),
     isFree: parseBooleanParam(searchParams.get(URL_PARAM_MAP.isFree)),
     priceMin: parseNumberParam(searchParams.get(URL_PARAM_MAP.priceMin)),
     priceMax: parseNumberParam(searchParams.get(URL_PARAM_MAP.priceMax)),
@@ -191,8 +187,7 @@ export function useFilters() {
     matsVal ? params.set(URL_PARAM_MAP.materials, matsVal) : params.delete(URL_PARAM_MAP.materials)
     merged.materialMode !== 'filter' ? params.set(URL_PARAM_MAP.materialMode, merged.materialMode) : params.delete(URL_PARAM_MAP.materialMode)
 
-    // Prix et téléchargement
-    merged.hasDownload !== null ? params.set(URL_PARAM_MAP.hasDownload, merged.hasDownload ? '1' : '0') : params.delete(URL_PARAM_MAP.hasDownload)
+    // Prix
     merged.isFree !== null ? params.set(URL_PARAM_MAP.isFree, merged.isFree ? '1' : '0') : params.delete(URL_PARAM_MAP.isFree)
     merged.priceMin !== null ? params.set(URL_PARAM_MAP.priceMin, String(merged.priceMin)) : params.delete(URL_PARAM_MAP.priceMin)
     merged.priceMax !== null ? params.set(URL_PARAM_MAP.priceMax, String(merged.priceMax)) : params.delete(URL_PARAM_MAP.priceMax)
@@ -243,7 +238,6 @@ export function useFilters() {
     if (filters.difficulty) count += 1
     if (filters.intensity) count += 1
     if (filters.autonomy !== null) count += 1
-    if (filters.hasDownload !== null) count += 1
     if (filters.isFree !== null) count += 1
     if (filters.priceMin !== null || filters.priceMax !== null) count += 1
     if (filters.creatorSlug) count += 1
@@ -263,7 +257,6 @@ export function useFilters() {
     prepTime: filters.prepTime,
     difficulty: filters.difficulty,
     autonomy: filters.autonomy,
-    hasDownload: filters.hasDownload,
     isFree: filters.isFree,
     priceMin: filters.priceMin,
     priceMax: filters.priceMax,

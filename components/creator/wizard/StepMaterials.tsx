@@ -1,9 +1,12 @@
 'use client'
 
-import { X, Recycle, Sparkles } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, Recycle, Sparkles, Link2, Check } from 'lucide-react'
 import type { Language } from '@/lib/types'
 import type { ResourceFormData, MaterielItem } from '../ResourceWizard'
 import AutocompleteTag, { TagItem } from './AutocompleteTag'
+import { gemPillStyle } from '@/components/filters/gemFilterStyle'
+import { FilterIcon } from '@/lib/constants/resourceIcons'
 
 const translations = {
   fr: {
@@ -19,7 +22,9 @@ const translations = {
     recup: 'Récup',
     recupHelp: 'Peut être récupéré/recyclé',
     noItems: 'Aucun matériel ajouté',
-    customItem: 'Suggestion (sera validée)'
+    customItem: 'Suggestion (sera validée)',
+    linkPlaceholder: 'https://lien-affilié...',
+    linkHelp: 'Lien d\'achat'
   },
   en: {
     title: 'Required materials',
@@ -34,7 +39,9 @@ const translations = {
     recup: 'Recycled',
     recupHelp: 'Can be recovered/recycled',
     noItems: 'No materials added',
-    customItem: 'Suggestion (will be reviewed)'
+    customItem: 'Suggestion (will be reviewed)',
+    linkPlaceholder: 'https://affiliate-link...',
+    linkHelp: 'Purchase link'
   },
   es: {
     title: 'Material necesario',
@@ -49,7 +56,9 @@ const translations = {
     recup: 'Reciclado',
     recupHelp: 'Puede ser recuperado/reciclado',
     noItems: 'Sin materiales agregados',
-    customItem: 'Sugerencia (será revisada)'
+    customItem: 'Sugerencia (será revisada)',
+    linkPlaceholder: 'https://enlace-afiliado...',
+    linkHelp: 'Enlace de compra'
   }
 }
 
@@ -181,6 +190,16 @@ interface StepMaterialsProps {
 
 export default function StepMaterials({ formData, updateFormData, lang }: StepMaterialsProps) {
   const t = translations[lang]
+  const [isDark, setIsDark] = useState(false)
+  useEffect(() => {
+    const check = () => setIsDark(document.documentElement.classList.contains('dark'))
+    check()
+    const obs = new MutationObserver(check)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+
+  const BUDGET_GEM = 'amber' as const
   // v2: URL supprimées (liens affiliés gérés via bloc list-links dans le canvas)
 
   const toggleMaterial = (value: string) => {
@@ -219,7 +238,26 @@ export default function StepMaterials({ formData, updateFormData, lang }: StepMa
     updateFormData({ materiel_json: updated })
   }
 
-  // v2: saveUrl supprimé - URLs gérées via bloc list-links dans le canvas
+  const [editingUrlIndex, setEditingUrlIndex] = useState<number | null>(null)
+  const [urlDraft, setUrlDraft] = useState('')
+
+  const toggleUrlEdit = (index: number) => {
+    if (editingUrlIndex === index) {
+      setEditingUrlIndex(null)
+      setUrlDraft('')
+    } else {
+      setEditingUrlIndex(index)
+      setUrlDraft(formData.materiel_json[index].url || '')
+    }
+  }
+
+  const saveUrl = (index: number) => {
+    const updated = [...formData.materiel_json]
+    updated[index] = { ...updated[index], url: urlDraft.trim() || undefined }
+    updateFormData({ materiel_json: updated })
+    setEditingUrlIndex(null)
+    setUrlDraft('')
+  }
 
   const getLabel = (item: string): string => {
     const predefined = predefinedMaterials.find(m => m.value === item)
@@ -234,41 +272,46 @@ export default function StepMaterials({ formData, updateFormData, lang }: StepMa
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="font-quicksand text-2xl font-bold text-[#5D5A4E]">{t.title}</h2>
-        <p className="text-[#5D5A4E]/60 mt-1">{t.subtitle}</p>
+        <h2 className="font-quicksand text-2xl font-bold text-[#5D5A4E] dark:text-white">{t.title}</h2>
+        <p className="text-[#5D5A4E]/60 dark:text-white/50 mt-1">{t.subtitle}</p>
       </div>
 
       {/* Budget Type */}
       <div>
-        <label className="block text-sm font-medium text-[#5D5A4E] mb-2">
+        <label className="block text-sm font-medium text-[#5D5A4E] dark:text-white/80 mb-2">
           {t.budgetType}
         </label>
-        <p className="text-xs text-[#5D5A4E]/50 mb-3">{t.budgetTypeHelp}</p>
+        <p className="text-xs text-[#5D5A4E]/50 dark:text-white/40 mb-3">{t.budgetTypeHelp}</p>
         <div className="flex flex-wrap gap-2">
-          {budgetOptions.map(opt => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => toggleMaterial(opt.value)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
-                formData.materials.includes(opt.value)
-                  ? 'bg-[#A8B5A0] text-white'
-                  : 'bg-white border border-[#E5E7EB] text-[#5D5A4E]/70 hover:border-[#A8B5A0]'
-              }`}
-            >
-              <span>{opt.emoji}</span>
-              <span>{opt.label[lang]}</span>
-            </button>
-          ))}
+          {budgetOptions.map(opt => {
+            const isSelected = formData.materials.includes(opt.value)
+            const s = gemPillStyle(BUDGET_GEM, isSelected, isDark)
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => toggleMaterial(opt.value)}
+                className="transition-all duration-300 active:scale-[0.97]"
+                style={s.wrapper}
+              >
+                <div className="flex items-center gap-1.5" style={{ ...s.inner, padding: '6px 14px', fontSize: 13 }}>
+                  {isSelected && <span aria-hidden style={s.frost} />}
+                  {isSelected && <span aria-hidden style={s.shine} />}
+                  <span style={{ position: 'relative', zIndex: 2 }}><FilterIcon value={opt.value} size={16} /></span>
+                  <span style={{ position: 'relative', zIndex: 2 }}>{opt.label[lang]}</span>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* Materials List with Autocomplete */}
       <div>
-        <label className="block text-sm font-medium text-[#5D5A4E] mb-2">
+        <label className="block text-sm font-medium text-[#5D5A4E] dark:text-white/80 mb-2">
           {t.materialsList}
         </label>
-        <p className="text-xs text-[#5D5A4E]/50 mb-3">{t.materialsListHelp}</p>
+        <p className="text-xs text-[#5D5A4E]/50 dark:text-white/40 mb-3">{t.materialsListHelp}</p>
 
         <AutocompleteTag
           lang={lang}
@@ -279,60 +322,102 @@ export default function StepMaterials({ formData, updateFormData, lang }: StepMa
           placeholder={t.searchPlaceholder}
           allowCustom={true}
           colorClass="bg-[#F5E6D3]"
+          hideTags
         />
 
         {/* Liste détaillée avec options URL et Récup */}
         {formData.materiel_json.length > 0 && (
           <div className="mt-4 space-y-2">
             {formData.materiel_json.map((item, index) => (
-              <div
-                key={item.item}
-                className="flex items-center gap-2 p-3 bg-white rounded-xl border border-[#E5E7EB] group"
-              >
-                {/* Emoji + Label */}
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  {getEmoji(item.item) && <span>{getEmoji(item.item)}</span>}
-                  <span className="text-sm font-medium text-[#5D5A4E] truncate">
-                    {getLabel(item.item)}
-                  </span>
-                  {item.isCustom && (
-                    <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">
-                      <Sparkles className="w-3 h-3" />
+              <div key={item.item} className="rounded-xl border border-[#E5E7EB] dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
+                <div className="flex items-center gap-2 p-3">
+                  {/* Emoji + Label */}
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <FilterIcon value={item.item} size={16} />
+                    <span className="text-sm font-medium text-[#5D5A4E] dark:text-white truncate">
+                      {getLabel(item.item)}
                     </span>
-                  )}
+                    {item.isCustom && (
+                      <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">
+                        <Sparkles className="w-3 h-3" />
+                      </span>
+                    )}
+                    {item.url && editingUrlIndex !== index && (
+                      <span className="text-xs text-[#A8B5A0] dark:text-[#6EE8A0]/60 truncate max-w-[120px]" title={item.url}>
+                        <Link2 className="w-3 h-3 inline mr-0.5" />
+                        lien
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Lien affilié toggle */}
+                  <button
+                    type="button"
+                    onClick={() => toggleUrlEdit(index)}
+                    className={`p-1.5 rounded-lg transition-all ${
+                      item.url
+                        ? 'bg-blue-50 text-blue-500 dark:bg-blue-500/15 dark:text-blue-300'
+                        : editingUrlIndex === index
+                          ? 'bg-blue-50 text-blue-500 dark:bg-blue-500/15 dark:text-blue-300'
+                          : 'text-[#5D5A4E]/30 hover:text-blue-500 hover:bg-blue-50 dark:text-white/20 dark:hover:text-blue-300 dark:hover:bg-blue-500/10'
+                    }`}
+                    title={t.linkHelp}
+                  >
+                    <Link2 className="w-4 h-4" />
+                  </button>
+
+                  {/* Récup toggle */}
+                  <button
+                    type="button"
+                    onClick={() => toggleRecup(index)}
+                    className={`p-1.5 rounded-lg transition-all ${
+                      item.recup
+                        ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400'
+                        : 'text-[#5D5A4E]/30 hover:text-green-500 hover:bg-green-50 dark:text-white/20 dark:hover:bg-green-900/20'
+                    }`}
+                    title={t.recupHelp}
+                  >
+                    <Recycle className="w-4 h-4" />
+                  </button>
+
+                  {/* Remove */}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveMaterial(item.item)}
+                    className="p-1.5 text-[#5D5A4E]/30 hover:text-red-500 hover:bg-red-50 dark:text-white/20 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* v2: URL section supprimée - liens affiliés gérés via bloc list-links dans le canvas */}
-
-                {/* Récup toggle */}
-                <button
-                  type="button"
-                  onClick={() => toggleRecup(index)}
-                  className={`p-1.5 rounded-lg transition-all ${
-                    item.recup
-                      ? 'bg-green-100 text-green-600'
-                      : 'text-[#5D5A4E]/30 hover:text-green-500 hover:bg-green-50'
-                  }`}
-                  title={t.recupHelp}
-                >
-                  <Recycle className="w-4 h-4" />
-                </button>
-
-                {/* Remove */}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveMaterial(item.item)}
-                  className="p-1.5 text-[#5D5A4E]/30 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {/* URL input row */}
+                {editingUrlIndex === index && (
+                  <div className="flex items-center gap-2 px-3 pb-3 pt-0">
+                    <input
+                      type="url"
+                      value={urlDraft}
+                      onChange={(e) => setUrlDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveUrl(index) } }}
+                      placeholder={t.linkPlaceholder}
+                      className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-[#A8B5A0]/30 dark:border-white/10 bg-transparent dark:bg-white/5 focus:border-blue-400 dark:focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/20 outline-none transition-all dark:text-white dark:placeholder:text-white/30"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => saveUrl(index)}
+                      className="p-1.5 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
 
         {formData.materiel_json.length === 0 && (
-          <p className="text-sm text-[#5D5A4E]/50 text-center py-4 mt-4">{t.noItems}</p>
+          <p className="text-sm text-[#5D5A4E]/50 dark:text-white/40 text-center py-4 mt-4">{t.noItems}</p>
         )}
       </div>
     </div>

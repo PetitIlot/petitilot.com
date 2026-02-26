@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
+import { Button } from '@/components/ui/button'
 import ResourceWizard from '@/components/creator/ResourceWizard'
 import type { Language } from '@/lib/types'
 
@@ -93,7 +94,7 @@ export default function NewResourcePage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center">
-        <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-8 text-center max-w-md" style={{ border: '1px solid var(--border)' }}>
+        <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-elevation-1 p-8 text-center max-w-md" style={{ border: '1px solid var(--border)' }}>
           <p className="text-foreground dark:text-foreground-dark mb-4">{error}</p>
           <Link
             href={`/${lang}/createur`}
@@ -108,17 +109,16 @@ export default function NewResourcePage() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 pt-24 pb-8">
         {/* Header */}
         <div className="mb-8">
-          <Link
-            href={`/${lang}/createur/ressources`}
-            className="inline-flex items-center text-sm text-foreground-secondary dark:text-foreground-dark-secondary hover:text-foreground dark:hover:text-foreground-dark mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            {t.back}
+          <Link href={`/${lang}/createur/ressources`}>
+            <Button variant="outline" gem="neutral" size="sm">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              {t.back}
+            </Button>
           </Link>
-          <h1 className="font-quicksand text-3xl font-bold text-foreground dark:text-foreground-dark">{t.title}</h1>
+          <h1 className="font-quicksand text-3xl font-bold text-foreground dark:text-foreground-dark mt-4">{t.title}</h1>
         </div>
 
         {/* Wizard */}

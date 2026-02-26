@@ -1,9 +1,19 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import localFont from 'next/font/local'
+import Header from '@/components/Header'
 import './globals.css'
 
-const inter = Inter({
-  subsets: ['latin'],
+const inter = localFont({
+  src: [
+    {
+      path: '../public/fonts/inter-latin.woff2',
+      style: 'normal',
+    },
+    {
+      path: '../public/fonts/inter-latin-ext.woff2',
+      style: 'normal',
+    },
+  ],
   variable: '--font-inter',
   display: 'swap',
 })
@@ -21,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
+        <Header />
         {children}
       </body>
     </html>

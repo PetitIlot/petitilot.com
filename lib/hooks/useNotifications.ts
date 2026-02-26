@@ -35,12 +35,11 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   const [error, setError] = useState<string | null>(null)
 
   // Fetch notifications
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch('/api/notifications?limit=10')
+      const res = await fetch('/api/notifications?limit=10', { signal })
       if (!res.ok) {
         if (res.status === 401) {
-          // Non connecté, pas d'erreur
           setNotifications([])
           return
         }
@@ -50,19 +49,21 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
       setNotifications(data.notifications || [])
       setError(null)
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       console.error('Erreur notifications:', err)
       setError('Impossible de charger les notifications')
     }
   }, [])
 
   // Fetch unread count
-  const fetchUnreadCount = useCallback(async () => {
+  const fetchUnreadCount = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch('/api/notifications/unread-count')
+      const res = await fetch('/api/notifications/unread-count', { signal })
       if (!res.ok) return
       const data = await res.json()
       setUnreadCount(data.count || 0)
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       console.error('Erreur unread count:', err)
     }
   }, [])
@@ -71,13 +72,20 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   useEffect(() => {
     if (!enabled) return
 
+    const controller = new AbortController()
+
     setIsLoading(true)
-    Promise.all([fetchNotifications(), fetchUnreadCount()])
-      .finally(() => setIsLoading(false))
+    Promise.all([
+      fetchNotifications(controller.signal),
+      fetchUnreadCount(controller.signal),
+    ]).finally(() => setIsLoading(false))
 
     // Polling du compteur uniquement (léger)
-    const interval = setInterval(fetchUnreadCount, pollInterval)
-    return () => clearInterval(interval)
+    const interval = setInterval(() => fetchUnreadCount(controller.signal), pollInterval)
+    return () => {
+      controller.abort()
+      clearInterval(interval)
+    }
   }, [enabled, pollInterval, fetchNotifications, fetchUnreadCount])
 
   // Mark single as read

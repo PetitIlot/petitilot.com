@@ -235,7 +235,7 @@ function ConnexionContent({ lang }: { lang: Language }) {
         </Link>
 
         {/* Card */}
-        <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-8" style={{ border: '1px solid var(--border)' }}>
+        <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-elevation-1 p-8" style={{ border: '1px solid var(--border)' }}>
           {/* Logo */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 rounded-full bg-sage flex items-center justify-center mx-auto mb-4">
@@ -362,7 +362,8 @@ function ConnexionContent({ lang }: { lang: Language }) {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-sage hover:bg-sage-light text-white py-3 rounded-xl font-semibold"
+              gem="sage"
+              className="w-full"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -383,9 +384,9 @@ function ConnexionContent({ lang }: { lang: Language }) {
           <Button
             type="button"
             onClick={handleGoogleLogin}
+            gem="neutral"
             variant="outline"
-            className="w-full text-foreground dark:text-foreground-dark hover:bg-black/[0.05] dark:hover:bg-white/[0.08] py-3 rounded-xl font-semibold"
-            style={{ border: '1px solid var(--border)' }}
+            className="w-full"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path

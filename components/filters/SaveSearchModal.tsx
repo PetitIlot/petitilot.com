@@ -171,7 +171,7 @@ export default function SaveSearchModal({ open, onClose, filters, lang }: SaveSe
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-surface dark:bg-surface-dark rounded-apple-xl shadow-apple-elevated animate-scale-in">
+      <div className="relative w-full max-w-md bg-surface dark:bg-surface-dark rounded-apple-xl shadow-elevation-3 animate-scale-in">
         {/* Header */}
         <div className="flex items-start justify-between p-5 border-b border-[var(--border)]">
           <div className="flex items-center gap-3">
@@ -221,7 +221,7 @@ export default function SaveSearchModal({ open, onClose, filters, lang }: SaveSe
               </p>
               <div className="flex flex-wrap gap-2">
                 {filterBadges.map(({ key, label }) => (
-                  <Badge key={key} variant="secondary" className="text-xs">
+                  <Badge key={key} gem="terracotta" className="text-xs">
                     {label}
                   </Badge>
                 ))}
@@ -243,7 +243,7 @@ export default function SaveSearchModal({ open, onClose, filters, lang }: SaveSe
           <div className="flex gap-3 pt-2">
             <Button
               type="button"
-              variant="outline"
+              gem="terracotta"
               onClick={onClose}
               className="flex-1"
               disabled={isLoading}
@@ -252,8 +252,9 @@ export default function SaveSearchModal({ open, onClose, filters, lang }: SaveSe
             </Button>
             <Button
               type="submit"
+              gem="sage"
               disabled={!name.trim() || isLoading || success}
-              className="flex-1 bg-sage hover:bg-sage/90 text-white"
+              className="flex-1"
             >
               {isLoading ? (
                 <>

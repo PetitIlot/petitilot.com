@@ -40,7 +40,19 @@ next-env.d.ts
 .idea
 
 # Claude Code
-.claude/settings.local.json
+.claude/
+
+# Workspace privé (notes, plans, docs de travail)
+_workspace/
 
 # Prototype local (référence uniquement)
 PROTOTYPEBASE44
+
+# Outils de design (artefacts auto-générés)
+.kombai/
+
+# Fichiers temporaires
+tmp/
+
+# Dossier inspiration (images de référence, non nécessaires au build)
+inspiration /

@@ -7,7 +7,8 @@ import {
   Type, Image as ImageIcon, Video, List, ShoppingCart,
   Minus, User, Images, Users, Film,
   Grid, HelpCircle, Package, ChevronDown, ChevronRight, Plus, Recycle, ExternalLink,
-  Download, PlayCircle, Lock
+  Download, PlayCircle, Lock,
+  Instagram, Youtube, Facebook, Globe, Star, Mail, ShoppingBag, UserCircle,
 } from 'lucide-react'
 import type { Language } from '@/lib/types'
 import { getFontFamily, loadGoogleFont } from '@/lib/googleFonts'
@@ -16,12 +17,16 @@ import type {
   CarouselBlockData, CarouselVideoBlockData, VideoBlockData, ListBlockData, ListLinksBlockData,
   PurchaseBlockData, SeparatorBlockData, CreatorBlockData,
   ImageGridBlockData, FAQBlockData, MaterialBlockData,
-  DownloadBlockData, PaidVideoBlockData, PaywallBlockData,
-  SocialPlatform
+  DownloadBlockData, PaywallBlockData, ActivityCardsBlockData,
+  SocialPlatform,
+  ProfileHeroBlockData, CreatorResourcesBlockData, CreatorFeaturedBlockData, SocialWidgetBlockData,
+  SocialWidgetPlatform
 } from '@/lib/blocks/types'
 import { Button, GEMS } from '@/components/ui/button'
 import type { GemColor } from '@/lib/blocks/types'
 import { TitlePreview as TitlePreviewV4 } from './title'
+import RealFollowButton from '@/components/FollowButton'
+import ActivityCardsPreview from './ActivityCardsPreview'
 
 // Form data type for real data preview
 interface FormDataPreview {
@@ -41,17 +46,36 @@ interface FormDataPreview {
   competences?: string[] | null     // Compétences développées
   categories?: string[] | null      // Catégories (pour sous-type)
   ressourceId?: string              // ID for functional social components (published mode)
-  // Infos créateur pour le bloc Creator
+  // Infos créateur pour le bloc Creator (et blocs pages créateur)
   creator?: {
+    id?: string
     slug?: string
     display_name?: string
     avatar_url?: string | null
+    bio?: string | null
+    instagram_handle?: string | null
+    youtube_handle?: string | null
+    tiktok_handle?: string | null
+    facebook_url?: string | null
+    pinterest_handle?: string | null
+    website_url?: string | null
+    total_resources?: number
+    followers_count?: number
+    themes?: string[] | null
   } | null
   // Matériel pour le bloc Material
   materiel_json?: Array<{
     item: string
     url?: string | null
     recup?: boolean
+  }> | null
+  // Ressources du créateur (pour creator-resources et creator-featured)
+  creatorResources?: Array<{
+    id: string
+    title: string
+    type?: string | null
+    vignette_url?: string | null
+    price_credits?: number | null
   }> | null
 }
 
@@ -98,8 +122,6 @@ export function BlockPreview({ block, lang, formData }: BlockPreviewProps) {
       return <MaterialPreview data={block.data as MaterialBlockData} formData={formData} />
     case 'download':
       return <DownloadPreview data={block.data as DownloadBlockData} />
-    case 'paid-video':
-      return <PaidVideoPreview data={block.data as PaidVideoBlockData} />
     case 'paywall':
       // Legacy: paywall blocks are now handled as canvas-level overlay
       return (
@@ -107,6 +129,28 @@ export function BlockPreview({ block, lang, formData }: BlockPreviewProps) {
           Rideau obsolète — supprimez ce bloc
         </div>
       )
+    case 'activity-cards':
+      return (
+        <ActivityCardsPreview
+          data={block.data as ActivityCardsBlockData}
+          lang={lang}
+          isEditing={true}
+          formData={{
+            ressourceId: formData?.ressourceId,
+            type: formData?.type,
+            themes: formData?.themes,
+            competences: formData?.competences,
+          }}
+        />
+      )
+    case 'profile-hero':
+      return <ProfileHeroPreview data={block.data as ProfileHeroBlockData} formData={formData} lang={lang} />
+    case 'creator-resources':
+      return <CreatorResourcesPreview data={block.data as CreatorResourcesBlockData} formData={formData} lang={lang} />
+    case 'creator-featured':
+      return <CreatorFeaturedPreview data={block.data as CreatorFeaturedBlockData} formData={formData} lang={lang} />
+    case 'social-widget':
+      return <SocialWidgetPreview data={block.data as SocialWidgetBlockData} formData={formData} />
     default:
       return <div className="text-gray-400 text-sm">Type inconnu</div>
   }
@@ -177,10 +221,12 @@ function ImagePreview({ data }: { data: ImageBlockData }) {
   )
 }
 
-// Carousel Preview - v2.1 avec type de carousel
+// Carousel Preview - v3 real scroll-snap carousel
 function CarouselPreview({ data }: { data: CarouselBlockData }) {
   const borderRadius = data.borderRadius === 'square' ? '0px' : '12px'
   const carouselType = data.carouselType || 'slide'
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [activeIndex, setActiveIndex] = useState(0)
 
   const typeLabels: Record<string, string> = {
     slide: 'Défilement',
@@ -203,30 +249,86 @@ function CarouselPreview({ data }: { data: CarouselBlockData }) {
     )
   }
 
+  // Single image — full cover (no carousel needed)
+  if (data.images.length === 1) {
+    return (
+      <div className="relative w-full h-full min-h-[150px] overflow-hidden bg-gray-100" style={{ borderRadius }}>
+        <img src={data.images[0].url} alt={data.images[0].alt || ''} className="w-full h-full object-cover" />
+        <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded-full">
+          {typeLabels[carouselType]}
+        </div>
+      </div>
+    )
+  }
+
+  // Cards/coverflow layout: show overlapping cards
+  if (carouselType === 'cards' || carouselType === 'coverflow') {
+    return (
+      <div className="relative w-full h-full min-h-[150px] overflow-hidden" style={{ borderRadius }}>
+        <img src={data.images[activeIndex]?.url || data.images[0].url} alt="" className="w-full h-full object-cover" />
+        {/* Type badge */}
+        <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded-full">
+          {typeLabels[carouselType]}
+        </div>
+        {/* Navigation dots */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {data.images.slice(0, 7).map((_, i) => (
+            <button key={i} onClick={() => setActiveIndex(i)}
+              className="rounded-full transition-all"
+              style={{ width: i === activeIndex ? 14 : 6, height: 6, backgroundColor: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.5)' }}
+            />
+          ))}
+        </div>
+        {/* Count badge */}
+        <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded-full">
+          {data.images.length} images
+        </div>
+      </div>
+    )
+  }
+
+  // Slide/fade layout: real scroll-snap horizontal carousel
   return (
-    <div className="relative w-full h-full min-h-[150px] overflow-hidden bg-gray-100" style={{ borderRadius }}>
-      {/* First image preview */}
-      <img
-        src={data.images[0].url}
-        alt={data.images[0].alt || ''}
-        className="w-full h-full object-cover"
-      />
+    <div className="relative w-full h-full min-h-[150px] overflow-hidden" style={{ borderRadius }}>
+      <div
+        ref={scrollRef}
+        className="flex w-full h-full overflow-x-auto"
+        style={{
+          scrollSnapType: 'x mandatory',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+        onScroll={() => {
+          const el = scrollRef.current
+          if (!el) return
+          const idx = Math.round(el.scrollLeft / el.clientWidth)
+          setActiveIndex(idx)
+        }}
+      >
+        {data.images.map((img, i) => (
+          <div key={i} className="flex-shrink-0 w-full h-full" style={{ scrollSnapAlign: 'start' }}>
+            <img src={img.url} alt={img.alt || ''} className="w-full h-full object-cover" />
+          </div>
+        ))}
+      </div>
       {/* Type badge */}
-      <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded-full">
+      <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded-full pointer-events-none">
         {typeLabels[carouselType]}
       </div>
-      {/* Image count badge */}
-      <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded-full">
-        {data.images.length} images
-      </div>
       {/* Navigation dots */}
-      {data.showDots && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-          {data.images.slice(0, 5).map((_, i) => (
-            <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-white' : 'bg-white/50'}`} />
+      {data.showDots !== false && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-none">
+          {data.images.slice(0, 7).map((_, i) => (
+            <div key={i} className="rounded-full transition-all"
+              style={{ width: i === activeIndex ? 14 : 6, height: 6, backgroundColor: i === activeIndex ? '#fff' : 'rgba(255,255,255,0.5)' }}
+            />
           ))}
         </div>
       )}
+      {/* Count badge */}
+      <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded-full pointer-events-none">
+        {data.images.length} images
+      </div>
     </div>
   )
 }
@@ -433,6 +535,401 @@ function ListLinksPreview({ data }: { data: ListLinksBlockData }) {
           * Liens affiliés
         </p>
       )}
+    </div>
+  )
+}
+
+// ============================================
+// PROFILE HERO PREVIEW
+// ============================================
+function ProfileHeroPreview({ data, formData, lang }: {
+  data: ProfileHeroBlockData
+  formData?: FormDataPreview
+  lang: Language
+}) {
+  const creator = formData?.creator
+  const { layout = 'horizontal', avatarSize = 'lg', elements, variant = 'full' } = data
+  const el = elements ?? {
+    showAvatar: true, showName: true, showBio: true,
+    showThemes: true, showStats: true, showSocials: true, showFollowButton: true
+  }
+
+  const avatarPx = avatarSize === 'lg' ? 80 : avatarSize === 'md' ? 56 : 40
+  const isCentered = layout === 'centered'
+  const isHorizontal = layout === 'horizontal'
+
+  const socialLinks = [
+    creator?.instagram_handle && { label: 'Instagram', icon: Instagram, color: '#E1306C', url: `https://instagram.com/${creator.instagram_handle.replace('@', '')}` },
+    creator?.youtube_handle && { label: 'YouTube', icon: Youtube, color: '#FF0000', url: `https://youtube.com/@${creator.youtube_handle.replace('@', '')}` },
+    creator?.website_url && { label: 'Site web', icon: Globe, color: 'var(--sage)', url: creator.website_url },
+  ].filter(Boolean) as Array<{ label: string; icon: React.ElementType; color: string; url: string }>
+
+  if (variant === 'mini') {
+    return (
+      <div className={`flex ${isCentered ? 'flex-col items-center' : 'items-center'} gap-3`}>
+        {el.showAvatar && (
+          <div className="rounded-full overflow-hidden bg-surface-secondary flex-shrink-0"
+            style={{ width: 36, height: 36, border: '2px solid var(--border)' }}>
+            {creator?.avatar_url
+              ? <img src={creator.avatar_url} alt={creator.display_name} className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center text-sm font-bold" style={{ color: 'var(--sage)' }}>
+                  {creator?.display_name?.charAt(0).toUpperCase() ?? 'C'}
+                </div>
+            }
+          </div>
+        )}
+        {el.showName && (
+          <span className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>
+            {creator?.display_name ?? 'Nom du créateur'}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className={`flex ${isCentered ? 'flex-col items-center text-center' : isHorizontal ? 'flex-row items-start' : 'flex-col'} gap-4`}>
+      {el.showAvatar && (
+        <div className="rounded-full overflow-hidden bg-surface-secondary flex-shrink-0"
+          style={{ width: avatarPx, height: avatarPx, border: '3px solid var(--border)' }}>
+          {creator?.avatar_url
+            ? <img src={creator.avatar_url} alt={creator.display_name} className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center text-2xl font-bold" style={{ color: 'var(--sage)' }}>
+                {creator?.display_name?.charAt(0).toUpperCase() ?? 'C'}
+              </div>
+          }
+        </div>
+      )}
+      <div className={`flex-1 flex flex-col gap-2 ${isCentered ? 'items-center' : ''}`}>
+        {el.showName && (
+          <h2 className="font-quicksand font-bold text-xl leading-tight" style={{ color: 'var(--foreground)' }}>
+            {creator?.display_name ?? 'Nom du créateur'}
+          </h2>
+        )}
+        {el.showBio && variant !== 'compact' && creator?.bio && (
+          <p className="text-sm leading-relaxed line-clamp-3" style={{ color: 'var(--foreground-secondary)' }}>
+            {creator.bio}
+          </p>
+        )}
+        {el.showThemes && creator?.themes && creator.themes.length > 0 && (
+          <div className={`flex flex-wrap gap-1.5 ${isCentered ? 'justify-center' : ''}`}>
+            {creator.themes.slice(0, 3).map(theme => (
+              <span key={theme} className="px-2 py-0.5 rounded-full text-xs font-medium"
+                style={{ backgroundColor: 'var(--sage-light, #d4e0cd)', color: 'var(--sage)' }}>
+                {theme}
+              </span>
+            ))}
+          </div>
+        )}
+        {el.showStats && (
+          <div className="flex gap-4 text-sm" style={{ color: 'var(--foreground-secondary)' }}>
+            <span><strong style={{ color: 'var(--foreground)' }}>{creator?.total_resources ?? 0}</strong> ressources</span>
+            <span><strong style={{ color: 'var(--foreground)' }}>{creator?.followers_count ?? 0}</strong> abonnés</span>
+          </div>
+        )}
+        {el.showSocials && socialLinks.length > 0 && (
+          <div className={`flex flex-wrap gap-2 ${isCentered ? 'justify-center' : ''}`}>
+            {socialLinks.slice(0, 3).map((link, i) => {
+              const Icon = link.icon
+              return (
+                <span key={i} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
+                  style={{ backgroundColor: 'var(--surface-secondary)', border: '1px solid var(--border)', color: 'var(--foreground)' }}>
+                  <Icon className="w-3 h-3" style={{ color: link.color }} />
+                  <span>{link.label}</span>
+                </span>
+              )
+            })}
+          </div>
+        )}
+        {el.showFollowButton && (
+          <button className="self-start px-4 py-1.5 rounded-full text-sm font-medium text-white"
+            style={{ backgroundColor: 'var(--sage)', ...(isCentered ? { alignSelf: 'center' } : {}) }}>
+            Suivre
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// CREATOR RESOURCES PREVIEW
+// ============================================
+function CreatorResourcesPreview({ data, formData, lang }: {
+  data: CreatorResourcesBlockData
+  formData?: FormDataPreview
+  lang: Language
+}) {
+  const { layout = 'grid', columns = 3, maxItems = 6, title, showTitle = true } = data
+  const resources = formData?.creatorResources?.slice(0, maxItems) ?? []
+  const placeholder = Array.from({ length: Math.min(maxItems, 6) }, (_, i) => ({
+    id: `p${i}`, title: `Ressource ${i + 1}`, type: null, vignette_url: null, price_credits: null
+  }))
+  const items = resources.length > 0 ? resources : placeholder
+
+  const gridCols = columns === 2 ? 'grid-cols-2' : columns === 3 ? 'grid-cols-3' : 'grid-cols-4'
+
+  return (
+    <div>
+      {showTitle && (
+        <h3 className="font-quicksand font-bold text-base mb-3" style={{ color: 'var(--foreground)' }}>
+          {title || 'Mes ressources'}
+        </h3>
+      )}
+      {layout === 'grid' ? (
+        <div className={`grid ${gridCols} gap-2`}>
+          {items.map(r => (
+            <div key={r.id} className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)', aspectRatio: '3/4' }}>
+              {r.vignette_url
+                ? <img src={r.vignette_url} alt={r.title} className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2"
+                    style={{ backgroundColor: 'var(--surface-secondary)' }}>
+                    <Package className="w-5 h-5" style={{ color: 'var(--foreground-secondary)', opacity: 0.4 }} />
+                    <span className="text-[9px] text-center line-clamp-2" style={{ color: 'var(--foreground-secondary)' }}>{r.title}</span>
+                  </div>
+              }
+            </div>
+          ))}
+        </div>
+      ) : layout === 'list' ? (
+        <div className="flex flex-col gap-2">
+          {items.slice(0, 4).map(r => (
+            <div key={r.id} className="flex gap-2 items-center p-2 rounded-lg"
+              style={{ border: '1px solid var(--border)', backgroundColor: 'var(--surface-secondary)' }}>
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0" style={{ backgroundColor: 'var(--surface)' }}>
+                {r.vignette_url
+                  ? <img src={r.vignette_url} alt={r.title} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center">
+                      <Package className="w-4 h-4" style={{ color: 'var(--foreground-secondary)', opacity: 0.4 }} />
+                    </div>
+                }
+              </div>
+              <span className="text-xs font-medium line-clamp-1" style={{ color: 'var(--foreground)' }}>{r.title}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        // carousel
+        <div className="flex gap-2 overflow-hidden">
+          {items.slice(0, 4).map(r => (
+            <div key={r.id} className="rounded-xl overflow-hidden flex-shrink-0" style={{ width: 100, height: 130, border: '1px solid var(--border)' }}>
+              {r.vignette_url
+                ? <img src={r.vignette_url} alt={r.title} className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'var(--surface-secondary)' }}>
+                    <Package className="w-5 h-5" style={{ color: 'var(--foreground-secondary)', opacity: 0.4 }} />
+                  </div>
+              }
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// CREATOR FEATURED PREVIEW
+// ============================================
+function CreatorFeaturedPreview({ data, formData, lang }: {
+  data: CreatorFeaturedBlockData
+  formData?: FormDataPreview
+  lang: Language
+}) {
+  const { style = 'card', showDescription = true, showPrice = true, showCta = true, ctaText = 'Voir la ressource' } = data
+  const resources = formData?.creatorResources ?? []
+  const featured = data.resourceId ? resources.find(r => r.id === data.resourceId) : resources[0]
+
+  if (style === 'banner') {
+    return (
+      <div className="relative rounded-xl overflow-hidden" style={{ minHeight: 160 }}>
+        {featured?.vignette_url
+          ? <img src={featured.vignette_url} alt={featured.title} className="w-full h-full object-cover absolute inset-0" />
+          : <div className="absolute inset-0" style={{ backgroundColor: 'var(--sage)', opacity: 0.15 }} />
+        }
+        <div className="absolute inset-0 flex flex-col justify-end p-4" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)' }}>
+          <h3 className="font-bold text-white text-base line-clamp-2">{featured?.title ?? 'Titre de la ressource'}</h3>
+          {showCta && (
+            <button className="mt-2 self-start px-3 py-1 rounded-full text-xs font-medium text-white"
+              style={{ backgroundColor: 'var(--sage)' }}>
+              {ctaText}
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (style === 'minimal') {
+    return (
+      <div className="flex items-center gap-3 p-3 rounded-xl" style={{ border: '1px solid var(--border)' }}>
+        {featured?.vignette_url && (
+          <img src={featured.vignette_url} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm line-clamp-1" style={{ color: 'var(--foreground)' }}>
+            {featured?.title ?? 'Ressource mise en avant'}
+          </p>
+          {showPrice && featured?.price_credits != null && (
+            <p className="text-xs mt-0.5" style={{ color: 'var(--sage)' }}>{featured.price_credits} crédits</p>
+          )}
+        </div>
+        {showCta && (
+          <button className="px-3 py-1.5 rounded-lg text-xs font-medium text-white flex-shrink-0"
+            style={{ backgroundColor: 'var(--sage)' }}>
+            {ctaText}
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  // card (default)
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+      <div className="aspect-video bg-surface-secondary overflow-hidden">
+        {featured?.vignette_url
+          ? <img src={featured.vignette_url} alt={featured.title} className="w-full h-full object-cover" />
+          : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'var(--surface-secondary)' }}>
+              <Star className="w-8 h-8" style={{ color: 'var(--sage)', opacity: 0.4 }} />
+            </div>
+        }
+      </div>
+      <div className="p-4">
+        <h3 className="font-semibold text-base mb-1 line-clamp-2" style={{ color: 'var(--foreground)' }}>
+          {featured?.title ?? 'Ressource mise en avant'}
+        </h3>
+        {showPrice && featured?.price_credits != null && (
+          <p className="text-sm mb-3" style={{ color: 'var(--sage)' }}>{featured.price_credits} crédits</p>
+        )}
+        {showCta && (
+          <button className="w-full py-2 rounded-xl text-sm font-medium text-white"
+            style={{ backgroundColor: 'var(--sage)' }}>
+            {ctaText}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// SOCIAL WIDGET PREVIEW
+// ============================================
+
+// Icône TikTok SVG
+function TikTokIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return (
+    <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+    </svg>
+  )
+}
+
+// Icône Pinterest SVG
+function PinterestIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return (
+    <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/>
+    </svg>
+  )
+}
+
+const SOCIAL_PLATFORM_CONFIG: Record<SocialWidgetPlatform, {
+  label: string
+  color: string
+  bgColor: string
+  Icon: React.ElementType
+  urlPrefix?: string
+}> = {
+  instagram: { label: 'Instagram', color: '#E1306C', bgColor: '#fce4ec', Icon: Instagram },
+  youtube: { label: 'YouTube', color: '#FF0000', bgColor: '#ffebee', Icon: Youtube },
+  tiktok: { label: 'TikTok', color: '#000000', bgColor: '#f5f5f5', Icon: TikTokIcon },
+  facebook: { label: 'Facebook', color: '#1877F2', bgColor: '#e3f2fd', Icon: Facebook },
+  amazon: { label: 'Amazon', color: '#FF9900', bgColor: '#fff3e0', Icon: ShoppingBag },
+  pinterest: { label: 'Pinterest', color: '#E60023', bgColor: '#ffebee', Icon: PinterestIcon },
+  website: { label: 'Site web', color: '#7A8B6F', bgColor: '#e8f5e9', Icon: Globe },
+  newsletter: { label: 'Newsletter', color: '#6B46C1', bgColor: '#f3e8ff', Icon: Mail },
+}
+
+function SocialWidgetPreview({ data, formData }: {
+  data: SocialWidgetBlockData
+  formData?: FormDataPreview
+}) {
+  const {
+    platform = 'instagram', variant = 'compact',
+    handle, followerCount, description, buttonText = 'Suivre',
+    customColor, showFollowerCount = true,
+  } = data
+
+  const cfg = SOCIAL_PLATFORM_CONFIG[platform]
+  const color = customColor || cfg.color
+  const Icon = cfg.Icon
+  const displayHandle = handle || (formData?.creator?.instagram_handle) || `@${platform}`
+
+  const formatCount = (n?: number) => {
+    if (!n) return '0'
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
+    return String(n)
+  }
+
+  if (variant === 'mini') {
+    return (
+      <div className="flex items-center gap-2 py-1">
+        <Icon className="w-5 h-5 flex-shrink-0" style={{ color }} />
+        <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{displayHandle}</span>
+        <ExternalLink className="w-3.5 h-3.5 ml-auto flex-shrink-0" style={{ color: 'var(--foreground-secondary)' }} />
+      </div>
+    )
+  }
+
+  if (variant === 'full') {
+    return (
+      <div className="rounded-2xl overflow-hidden" style={{ border: `2px solid ${color}20` }}>
+        {/* Header with color band */}
+        <div className="px-4 py-3 flex items-center gap-3" style={{ backgroundColor: `${color}12` }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}20` }}>
+            <Icon className="w-5 h-5" style={{ color }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>{displayHandle}</p>
+            <p className="text-xs" style={{ color: 'var(--foreground-secondary)' }}>{cfg.label}</p>
+          </div>
+        </div>
+        {description && (
+          <p className="px-4 pt-3 pb-1 text-sm" style={{ color: 'var(--foreground-secondary)' }}>{description}</p>
+        )}
+        {showFollowerCount && followerCount != null && (
+          <div className="px-4 py-2">
+            <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{formatCount(followerCount)}</span>
+            <span className="text-sm ml-1" style={{ color: 'var(--foreground-secondary)' }}>abonnés</span>
+          </div>
+        )}
+        <div className="px-4 pb-4 pt-2">
+          <button className="w-full py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: color }}>
+            {buttonText}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // compact (default)
+  return (
+    <div className="flex items-center gap-3 py-1">
+      <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}15` }}>
+        <Icon className="w-4.5 h-4.5" style={{ color, width: '18px', height: '18px' }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium leading-tight line-clamp-1" style={{ color: 'var(--foreground)' }}>{displayHandle}</p>
+        {showFollowerCount && followerCount != null && (
+          <p className="text-xs" style={{ color: 'var(--foreground-secondary)' }}>{formatCount(followerCount)} abonnés</p>
+        )}
+      </div>
+      <button className="px-3 py-1 rounded-full text-xs font-medium text-white flex-shrink-0"
+        style={{ backgroundColor: color }}>
+        {buttonText}
+      </button>
     </div>
   )
 }
@@ -968,18 +1465,56 @@ function formatCount(n: number): string {
 
 function CreatorPreview({ data, formData, lang }: {
   data: CreatorBlockData
-  formData?: { creator?: { slug?: string; display_name?: string; avatar_url?: string | null } | null }
+  formData?: {
+    creator?: {
+      id?: string
+      slug?: string
+      display_name?: string
+      avatar_url?: string | null
+      bio?: string | null
+      instagram_handle?: string | null
+      youtube_handle?: string | null
+      tiktok_handle?: string | null
+      website_url?: string | null
+      total_resources?: number
+      followers_count?: number
+    } | null
+  }
   lang: Language
 }) {
   // Données créateur réelles ou placeholder
   const creator = formData?.creator
+  const creatorId = creator?.id
   const creatorName = creator?.display_name || 'Nom du créateur'
   const creatorSlug = creator?.slug
   const avatarUrl = creator?.avatar_url
+  const creatorBio = creator?.bio
   const creatorLink = creatorSlug ? `/${lang}/createurs/${creatorSlug}` : null
+  const totalResources = creator?.total_resources ?? null
+  const followersCount = creator?.followers_count ?? null
+  const resourcesLabel = totalResources !== null ? formatCount(totalResources) : '—'
+  const followersLabel = followersCount !== null ? formatCount(followersCount) : '—'
 
-  // Réseaux activés seulement
-  const enabledSocials = (data.socialLinks || []).filter(s => s.enabled && s.url)
+  // URLs construites depuis le profil créateur
+  const profileUrls: Partial<Record<SocialPlatform, string>> = {
+    instagram: creator?.instagram_handle
+      ? `https://instagram.com/${creator.instagram_handle.replace('@', '')}`
+      : undefined,
+    youtube: creator?.youtube_handle
+      ? `https://youtube.com/@${creator.youtube_handle.replace('@', '')}`
+      : undefined,
+    tiktok: creator?.tiktok_handle
+      ? `https://tiktok.com/@${creator.tiktok_handle.replace('@', '')}`
+      : undefined,
+    website: creator?.website_url
+      ? (creator.website_url.startsWith('http') ? creator.website_url : `https://${creator.website_url}`)
+      : undefined,
+  }
+
+  // Réseaux activés par le toggle ET configurés sur le profil
+  const enabledSocials = (data.socialLinks || [])
+    .filter(s => s.enabled && profileUrls[s.platform])
+    .map(s => ({ ...s, url: profileUrls[s.platform]! }))
 
   const baseStyle: React.CSSProperties = {
     color: data.textColor || 'var(--foreground)',
@@ -989,13 +1524,14 @@ function CreatorPreview({ data, formData, lang }: {
   }
 
   // ── Avatar ──────────────────────────────────────────────────────────────────
-  const Avatar = ({ size }: { size: 'md' | 'lg' | 'xl' }) => {
+  const Avatar = ({ size }: { size: 'md' | 'lg' | 'xl' | '2xl' }) => {
     const dims: Record<string, string> = {
-      md:  'w-10 h-10',
-      lg:  'w-14 h-14',
-      xl:  'w-20 h-20',
+      md:   'w-10 h-10',
+      lg:   'w-14 h-14',
+      xl:   'w-20 h-20',
+      '2xl':'w-24 h-24',
     }
-    const textSize: Record<string, string> = { md: 'text-base', lg: 'text-xl', xl: 'text-3xl' }
+    const textSize: Record<string, string> = { md: 'text-base', lg: 'text-xl', xl: 'text-3xl', '2xl': 'text-4xl' }
     const cls = `${dims[size]} rounded-full object-cover flex-shrink-0`
     const inner = avatarUrl ? (
       <img src={avatarUrl} alt={creatorName} className={cls} />
@@ -1020,14 +1556,27 @@ function CreatorPreview({ data, formData, lang }: {
   }
 
   // ── Bouton Suivre ────────────────────────────────────────────────────────────
-  const FollowButton = ({ className = '' }: { className?: string }) => (
-    <Button gem="sky" variant="default" size="sm" className={`flex-shrink-0 ${className}`}>
-      Suivre
-    </Button>
-  )
+  // En aperçu (pas de creatorId) : bouton décoratif. En rendu réel : vrai composant fonctionnel.
+  const FollowButton = ({ className = '' }: { className?: string }) => {
+    if (creatorId) {
+      return (
+        <RealFollowButton
+          creatorId={creatorId}
+          lang={lang}
+          variant="button"
+          socialStyle="gem"
+        />
+      )
+    }
+    return (
+      <Button gem="sky" variant="default" size="sm" className={`flex-shrink-0 ${className}`}>
+        Suivre
+      </Button>
+    )
+  }
 
   // ── Badge stat (icône + chiffre) ─────────────────────────────────────────────
-  const StatBadge = ({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) => (
+  const StatBadge = ({ icon, value, label }: { icon?: React.ReactNode; value: string; label: string }) => (
     <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] text-[11px] font-medium" style={{ color: data.textColor || 'var(--foreground-secondary)' }}>
       {icon}
       <span>{value}</span>
@@ -1036,17 +1585,55 @@ function CreatorPreview({ data, formData, lang }: {
   )
 
   // ── Icône réseau social ──────────────────────────────────────────────────────
+  // Couleurs officielles de chaque réseau
+  // Couleur texte au hover — compact (une teinte représentative par réseau)
+  const SOCIAL_HOVER_COLORS: Record<SocialPlatform, string> = {
+    instagram: '#C13584',  // violet-rose Instagram
+    pinterest: '#E60023',  // rouge Pinterest
+    youtube:   '#FF0000',  // rouge YouTube
+    facebook:  '#1877F2',  // bleu Facebook
+    tiktok:    '#FE2C55',  // rouge-rose TikTok
+    website:   '#7A8B6F',  // sage
+  }
+
+  // Background app icon — complet (gradient pour Instagram, noir pour TikTok)
+  const SOCIAL_APP_BG: Record<SocialPlatform, string> = {
+    instagram: 'linear-gradient(135deg, #FCAF45 0%, #F77737 20%, #F56040 35%, #FD1D1D 55%, #E1306C 70%, #C13584 85%, #833AB4 100%)',
+    pinterest: '#E60023',
+    youtube:   '#FF0000',
+    facebook:  '#1877F2',
+    tiktok:    '#010101',  // fond noir officiel TikTok
+    website:   '#7A8B6F',
+  }
+
   const SocialIcon = ({ platform, followerCount, showCount }: { platform: SocialPlatform; followerCount?: number; showCount?: boolean }) => {
+    const [hovered, setHovered] = useState(false)
+    const color = hovered ? SOCIAL_HOVER_COLORS[platform] : (data.textColor || 'var(--foreground)')
+
     const icon = (
-      <div className="w-4 h-4 opacity-60 hover:opacity-100 transition-opacity" style={{ color: data.textColor || 'var(--foreground)' }}>
+      <div
+        className="w-4 h-4 transition-all duration-150 cursor-pointer flex-shrink-0"
+        style={{ color, opacity: hovered ? 1 : 0.55 }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
         {SOCIAL_SVG[platform]}
       </div>
     )
+
     if (showCount && followerCount) {
       return (
-        <div className="flex items-center gap-1">
-          {icon}
-          <span className="text-[10px] font-medium opacity-60">{formatCount(followerCount)}</span>
+        <div
+          className="flex items-center gap-1 cursor-pointer"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <div className="w-4 h-4 transition-all duration-150 flex-shrink-0" style={{ color, opacity: hovered ? 1 : 0.55 }}>
+            {SOCIAL_SVG[platform]}
+          </div>
+          <span className="text-[10px] font-medium transition-colors duration-150" style={{ color, opacity: hovered ? 1 : 0.6 }}>
+            {formatCount(followerCount)}
+          </span>
         </div>
       )
     }
@@ -1107,8 +1694,8 @@ function CreatorPreview({ data, formData, lang }: {
         <p className="font-semibold text-sm text-center"><CreatorName /></p>
         {data.showStats && (
           <div className="flex items-center gap-2 flex-wrap justify-center">
-            <StatBadge icon={<Package className="w-3 h-3" />} value="12" label="ressources" />
-            <StatBadge icon={<Users className="w-3 h-3" />} value="45" label="abonnés" />
+            <StatBadge value={resourcesLabel} label="ressources" />
+            <StatBadge value={followersLabel} label="abonnés" />
           </div>
         )}
         {data.showFollowButton && <FollowButton />}
@@ -1122,26 +1709,25 @@ function CreatorPreview({ data, formData, lang }: {
   if (data.variant === 'compact') {
     return (
       <div style={{ ...baseStyle, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px', padding: '12px 14px', minHeight: '80px' }}>
-        <Avatar size="lg" />
+        <Avatar size="xl" />
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          {/* Nom + bouton Suivre */}
-          <div className="flex items-center justify-between gap-2">
-            <p className="font-semibold text-sm truncate"><CreatorName /></p>
+          {/* Nom + icônes réseaux + bouton Suivre sur la même ligne */}
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-base truncate flex-1"><CreatorName /></p>
+            {enabledSocials.length > 0 && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {enabledSocials.map(s => (
+                  <SocialIcon key={s.platform} platform={s.platform} />
+                ))}
+              </div>
+            )}
             {data.showFollowButton && <FollowButton />}
           </div>
           {/* Badges stats */}
           {data.showStats && (
             <div className="flex items-center gap-1.5 flex-wrap">
-              <StatBadge icon={<Package className="w-3 h-3" />} value="12" label="ressources" />
-              <StatBadge icon={<Users className="w-3 h-3" />} value="45" label="abonnés" />
-            </div>
-          )}
-          {/* Icônes réseaux sociaux */}
-          {enabledSocials.length > 0 && (
-            <div className="flex items-center gap-2.5 mt-0.5">
-              {enabledSocials.map(s => (
-                <SocialIcon key={s.platform} platform={s.platform} />
-              ))}
+              <StatBadge icon={<Package className="w-3 h-3" />} value={resourcesLabel} label="ressources" />
+              <StatBadge icon={<Users className="w-3 h-3" />} value={followersLabel} label="abonnés" />
             </div>
           )}
         </div>
@@ -1150,36 +1736,95 @@ function CreatorPreview({ data, formData, lang }: {
   }
 
   // ============================================================
-  // VARIANTE COMPLET — colonne centrée, avatar xl, bio, stats, réseaux + compteurs, follow
+  // VARIANTE COMPLET — avatar 2xl + nom/bio à droite, puis barre badges+réseaux+follow
   // ============================================================
-  return (
-    <div style={{ ...baseStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '20px 16px', minHeight: '160px' }}>
-      <Avatar size="xl" />
-      <p className="font-semibold text-base text-center"><CreatorName /></p>
-      {data.bio && (
-        <p className="text-xs text-center text-[var(--foreground-secondary)] leading-relaxed max-w-xs" style={{
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
+
+  // Badge GEM pour la variante complet
+  const GemBadge = ({ gemKey, icon, value, label }: { gemKey: GemColor; icon: React.ReactNode; value: string; label: string }) => {
+    const g = GEMS[gemKey]
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '6px',
+        padding: '5px 10px', borderRadius: '9999px',
+        background: `rgba(${g.glow}, 0.12)`,
+        border: `1px solid rgba(${g.glow}, 0.3)`,
+        color: g.text,
+      }}>
+        <span style={{ color: g.deep, display: 'flex' }}>{icon}</span>
+        <span style={{ fontSize: '12px', fontWeight: 600 }}>{value}</span>
+        <span style={{ fontSize: '11px', fontWeight: 400, opacity: 0.75 }}>{label}</span>
+      </div>
+    )
+  }
+
+  // Icône réseau style "app" — fond coloré officiel + icône blanche, taille lg
+  const SocialAppIcon = ({ platform, followerCount }: { platform: SocialPlatform; followerCount?: number }) => {
+    const [hovered, setHovered] = useState(false)
+    const bg = SOCIAL_APP_BG[platform]
+    return (
+      <div
+        className="flex items-center gap-1.5 cursor-pointer"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{ opacity: hovered ? 1 : 0.85, transition: 'opacity 0.15s' }}
+      >
+        <div style={{
+          width: 28, height: 28,
+          borderRadius: 8,
+          background: bg,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'white',
+          flexShrink: 0,
+          boxShadow: hovered ? `0 2px 8px rgba(0,0,0,0.18)` : 'none',
+          transition: 'box-shadow 0.15s',
         }}>
-          {data.bio}
-        </p>
-      )}
-      {data.showStats && (
-        <div className="flex items-center gap-2 flex-wrap justify-center">
-          <StatBadge icon={<Package className="w-3 h-3" />} value="12" label="ressources" />
-          <StatBadge icon={<Users className="w-3 h-3" />} value="45" label="abonnés" />
+          <div style={{ width: 16, height: 16 }}>{SOCIAL_SVG[platform]}</div>
         </div>
-      )}
-      {enabledSocials.length > 0 && (
-        <div className="flex items-center gap-3 flex-wrap justify-center">
+        {followerCount && (
+          <span style={{ fontSize: '11px', fontWeight: 500, color: data.textColor || 'var(--foreground-secondary)', opacity: 0.7 }}>
+            {formatCount(followerCount)}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ ...baseStyle, display: 'flex', flexDirection: 'column', gap: '12px', padding: '20px 16px', minHeight: '160px' }}>
+      {/* Ligne haute : avatar + nom/bio */}
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '14px' }}>
+        <Avatar size="2xl" />
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '5px', paddingTop: '4px' }}>
+          <p className="font-bold text-lg leading-tight"><CreatorName /></p>
+          {creatorBio && (
+            <p className="text-xs text-[var(--foreground-secondary)] leading-relaxed" style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 6,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              whiteSpace: 'pre-wrap',
+            }}>
+              {creatorBio}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Ligne basse : badges GEM + icônes app + bouton Suivre */}
+      {(data.showStats || enabledSocials.length > 0 || data.showFollowButton) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {data.showStats && (
+            <>
+              <GemBadge gemKey="sage" icon={<Package style={{ width: 13, height: 13 }} />} value={resourcesLabel} label="ressources" />
+              <GemBadge gemKey="sky"  icon={<Users  style={{ width: 13, height: 13 }} />} value={followersLabel} label="abonnés" />
+            </>
+          )}
           {enabledSocials.map(s => (
-            <SocialIcon key={s.platform} platform={s.platform} followerCount={s.followerCount} showCount />
+            <SocialAppIcon key={s.platform} platform={s.platform} followerCount={s.followerCount} />
           ))}
+          {data.showFollowButton && <FollowButton />}
         </div>
       )}
-      {data.showFollowButton && <FollowButton />}
     </div>
   )
 }
@@ -1189,6 +1834,28 @@ function ImageGridPreview({ data }: { data: ImageGridBlockData }) {
   const gap = data.gap || 8
   const borderRadius = data.borderRadius === 'square' ? '0px' : '8px'
   const images = data.images || []
+  const gridRef = useRef<HTMLDivElement>(null)
+  const [cols, setCols] = useState(2)
+
+  // Responsive columns: adapt grid columns based on actual container width
+  useEffect(() => {
+    const el = gridRef.current
+    if (!el) return
+
+    const targetCols = getTargetCols(data.layout)
+
+    const observer = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width || 0
+      // Responsive breakpoints — reduce columns when container is small
+      if (width < 150) setCols(1)
+      else if (width < 280) setCols(Math.min(2, targetCols))
+      else if (width < 420) setCols(Math.min(3, targetCols))
+      else setCols(targetCols)
+    })
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [data.layout])
 
   if (images.length === 0) {
     return (
@@ -1201,20 +1868,15 @@ function ImageGridPreview({ data }: { data: ImageGridBlockData }) {
     )
   }
 
-  // Determine grid classes based on layout
-  const layoutClasses: Record<string, string> = {
-    'grid-2': 'grid-cols-2',
-    'grid-3': 'grid-cols-3',
-    'grid-4': 'grid-cols-4',
-    'grid-2x2': 'grid-cols-2',
-    'grid-2x3': 'grid-cols-3',
-    'masonry': 'grid-cols-2',
-  }
-
-  const gridClass = layoutClasses[data.layout] || 'grid-cols-2'
-
   return (
-    <div className={`grid ${gridClass}`} style={{ gap }}>
+    <div
+      ref={gridRef}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        gap,
+      }}
+    >
       {images.map((img, i) => (
         <div key={i} className="relative overflow-hidden" style={{ borderRadius }}>
           {img.url ? (
@@ -1236,6 +1898,17 @@ function ImageGridPreview({ data }: { data: ImageGridBlockData }) {
       ))}
     </div>
   )
+}
+
+/** Get the target number of columns for a given grid layout */
+function getTargetCols(layout: string): number {
+  switch (layout) {
+    case 'grid-2': case 'grid-2x2': return 2
+    case 'grid-3': case 'grid-2x3': return 3
+    case 'grid-4': return 4
+    case 'masonry': return 2
+    default: return 2
+  }
 }
 
 // FAQ Preview - NEW v3
@@ -1458,74 +2131,6 @@ function DownloadPreview({ data }: { data: DownloadBlockData }) {
 // ============================================
 // PAID VIDEO PREVIEW (NOUVEAU v4)
 // ============================================
-function PaidVideoPreview({ data }: { data: PaidVideoBlockData }) {
-  const aspectClasses: Record<string, string> = {
-    '16:9': 'aspect-video',
-    '9:16': 'aspect-[9/16]',
-    '1:1': 'aspect-square',
-    '4:5': 'aspect-[4/5]',
-  }
-  const aspect = aspectClasses[data.aspectRatio || '16:9'] || 'aspect-video'
-  const radius = data.borderRadius === 'square' ? 0 : 12
-
-  return (
-    <div className="relative w-full overflow-hidden" style={{ borderRadius: radius }}>
-      {/* Video layer (visible but blurred) */}
-      <div className={`relative w-full ${aspect} bg-gray-900 overflow-hidden`}>
-        {data.thumbnailUrl ? (
-          <img
-            src={data.thumbnailUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ filter: 'blur(20px) brightness(0.7)', transform: 'scale(1.1)' }}
-          />
-        ) : data.videoUrl ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Video className="w-16 h-16 text-white/20" style={{ filter: 'blur(4px)' }} />
-          </div>
-        ) : null}
-
-        {/* Play button underneath (blurred, decorative) */}
-        {(data.videoUrl || data.thumbnailUrl) && (
-          <div className="absolute inset-0 flex items-center justify-center" style={{ filter: 'blur(6px)', opacity: 0.4 }}>
-            <div className="w-16 h-16 rounded-full bg-white/30 flex items-center justify-center">
-              <div className="w-0 h-0 border-l-[20px] border-l-white border-y-[12px] border-y-transparent ml-1" />
-            </div>
-          </div>
-        )}
-
-        {/* Glass blur overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-            backdropFilter: 'blur(24px) saturate(1.2)',
-            WebkitBackdropFilter: 'blur(24px) saturate(1.2)',
-            background: 'rgba(255,255,255,0.08)',
-          }}
-        />
-
-        {/* Purchase CTA on top — always visible */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
-          <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
-            <Lock className="w-6 h-6 text-white/80" />
-          </div>
-          <GemButtonPreview
-            text={data.buttonText || 'Débloquer la vidéo'}
-            style={data.buttonStyle}
-            shape={data.buttonShape}
-            color={data.buttonColor}
-            gem={data.buttonGem}
-            icon={<PlayCircle className="w-3 h-3" />}
-          />
-          {!data.videoUrl && !data.thumbnailUrl && (
-            <p className="text-[10px] text-white/40">Aucune vidéo uploadée</p>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ============================================
 // PAYWALL PREVIEW (NOUVEAU v4)
 // ============================================

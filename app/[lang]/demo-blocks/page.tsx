@@ -195,7 +195,7 @@ export default function DemoBlocksPage({
 
         {/* Canvas */}
         <div
-          className="bg-surface dark:bg-surface-dark rounded-2xl shadow-apple overflow-hidden"
+          className="bg-surface dark:bg-surface-dark rounded-2xl shadow-elevation-1 overflow-hidden"
           style={{ border: '1px solid var(--border)' }}
         >
           <div className="p-6">

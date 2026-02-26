@@ -1,46 +1,53 @@
 'use client'
 
 import Link from 'next/link'
-import { Search, Menu, User, LogIn } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Search, User, LogIn, Home, BookOpen, Mail, Palette, X, LayoutDashboard, LogOut } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 import NotificationBell from '@/components/notifications/NotificationBell'
 import type { Language } from '@/lib/types'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 
 const translations = {
   fr: {
     home: 'Accueil',
     resources: 'Ressources',
-    books: 'Livres',
-    games: 'Jeux',
     about: 'À propos',
     contact: 'Contact',
   },
   en: {
     home: 'Home',
     resources: 'Resources',
-    books: 'Books',
-    games: 'Games',
     about: 'About',
     contact: 'Contact',
   },
   es: {
     home: 'Inicio',
     resources: 'Recursos',
-    books: 'Libros',
-    games: 'Juegos',
     about: 'Acerca de',
     contact: 'Contacto',
   },
 }
 
-export default function Header({ lang }: { lang: string }) {
-  const [mobileOpen, setMobileOpen] = useState(false)
+const LOCALES = ['fr', 'en', 'es']
+
+export default function Header() {
+  const pathname = usePathname()
+  const router = useRouter()
   const [langOpen, setLangOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isCreator, setIsCreator] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchValue, setSearchValue] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const searchDropdownRef = useRef<HTMLDivElement>(null)
+  const profileDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Derive lang from URL path
+  const segments = pathname.split('/')
+  const lang = LOCALES.includes(segments[1]) ? segments[1] : 'fr'
   const t = translations[lang as keyof typeof translations] || translations.fr
 
   useEffect(() => {
@@ -52,86 +59,226 @@ export default function Header({ lang }: { lang: string }) {
   }, [langOpen])
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      setIsLoggedIn(!!user)
+    if (searchOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 50)
+    } else {
+      setSearchValue('')
     }
-    checkAuth()
+  }, [searchOpen])
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchDropdownRef.current && !searchDropdownRef.current.contains(e.target as Node)) {
+        setSearchOpen(false)
+      }
+    }
+    if (searchOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [searchOpen])
+
+  function handleSearchSubmit(e?: React.FormEvent) {
+    e?.preventDefault()
+    const q = searchValue.trim()
+    if (q) {
+      router.push(`/${lang}/recherche?q=${encodeURIComponent(q)}`)
+    }
+    setSearchOpen(false)
+  }
+
+  useEffect(() => {
     const supabase = createClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsLoggedIn(!!session?.user)
-    })
 
+    const checkUser = async (userId?: string) => {
+      if (!userId) {
+        setIsLoggedIn(false)
+        setIsCreator(false)
+        return
+      }
+      setIsLoggedIn(true)
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single()
+      setIsCreator(data?.role === 'creator' || data?.role === 'admin')
+    }
+
+    supabase.auth.getUser().then(({ data: { user } }) => checkUser(user?.id))
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      checkUser(session?.user?.id)
+    })
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(e.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+    if (profileOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [profileOpen])
+
   const navLinks = [
-    { label: t.home, href: `/${lang}` },
-    { label: t.resources, href: `/${lang}/activites` },
-    // MASQUÉ TEMPORAIREMENT - Droits d'auteur à clarifier
-    // { label: t.books, href: `/${lang}/livres` },
-    // { label: t.games, href: `/${lang}/jeux` },
-    { label: t.about, href: `/${lang}/a-propos` },
-    { label: t.contact, href: `/${lang}/contact` },
+    { label: t.home, href: `/${lang}`, icon: Home },
+    { label: t.resources, href: `/${lang}/activites`, icon: Palette },
+    { label: t.about, href: `/${lang}/a-propos`, icon: BookOpen },
+    { label: t.contact, href: `/${lang}/contact`, icon: Mail },
   ]
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 liquid-glass">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="flex items-center justify-between h-14">
+    <header
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        padding: '12px 16px 0',
+        pointerEvents: 'none',
+      }}
+    >
+      <div style={{ maxWidth: 896, margin: '0 auto', pointerEvents: 'auto' }}>
+        <nav className="floating-glass-bar flex items-center justify-between h-12 px-2">
           {/* Logo */}
-          <Link href={`/${lang}`} className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-full bg-sage/80 backdrop-blur-sm flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-              <span className="text-white font-semibold text-sm">PI</span>
-            </div>
-            <span className="text-lg font-semibold text-foreground tracking-tight">
+          <Link
+            href={`/${lang}`}
+            className="flex items-center gap-2 pl-3 pr-3 py-1 rounded-full hover:bg-white/10 dark:hover:bg-white/5 transition-colors duration-200 group"
+          >
+            <span className="text-sm font-semibold text-foreground/90 dark:text-foreground-dark/90 tracking-tight hidden sm:inline">
               Petit Îlot
             </span>
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-foreground rounded-full hover:bg-white/10 dark:hover:bg-white/5 transition-colors duration-200"
+          <div className="hidden md:flex items-center gap-0.5">
+            {navLinks.map((link) => {
+              const Icon = link.icon
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground/70 dark:text-foreground-dark/70 hover:text-foreground dark:hover:text-foreground-dark rounded-full hover:bg-white/15 dark:hover:bg-white/8 transition-all duration-200"
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{link.label}</span>
+                </Link>
+              )
+            })}
+          </div>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-0.5">
+            {/* Search — dropdown bubble */}
+            <div className="relative" ref={searchDropdownRef}>
+              <button
+                onClick={() => setSearchOpen(!searchOpen)}
+                className="floating-glass-icon-btn"
+                aria-label="Rechercher"
               >
-                {link.label}
+                <Search className="w-4 h-4" />
+              </button>
+
+              {searchOpen && (
+                <div className="absolute right-0 mt-2 floating-glass-dropdown animate-scale-in z-50 p-3"
+                  style={{ width: 280 }}>
+                  <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+                    <Search className="w-4 h-4 flex-shrink-0 text-foreground/40 dark:text-foreground-dark/40" />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchValue}
+                      onChange={(e) => setSearchValue(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Escape' && setSearchOpen(false)}
+                      placeholder="Rechercher…"
+                      className="flex-1 bg-transparent text-sm text-foreground dark:text-foreground-dark placeholder:text-foreground/40 dark:placeholder:text-foreground-dark/40 outline-none"
+                    />
+                    {searchValue && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchValue('')}
+                        className="flex-shrink-0 text-foreground/40 dark:text-foreground-dark/40 hover:text-foreground dark:hover:text-foreground-dark"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </form>
+                </div>
+              )}
+            </div>
+
+            {/* Profile button */}
+            {!isLoggedIn ? (
+              <Link href={`/${lang}/connexion`}>
+                <button className="floating-glass-icon-btn" aria-label="Connexion">
+                  <LogIn className="w-4 h-4" />
+                </button>
               </Link>
-            ))}
-          </nav>
-
-          {/* Actions */}
-          <div className="flex items-center gap-1">
-            <Link href={`/${lang}/recherche`}>
-              <Button variant="ghost" size="icon" className="text-foreground/70 hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5">
-                <Search className="w-5 h-5" />
-              </Button>
-            </Link>
-
-            <Link href={isLoggedIn ? `/${lang}/profil` : `/${lang}/connexion`}>
-              <Button variant="ghost" size="icon" className="text-foreground/70 hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5">
-                {isLoggedIn ? <User className="w-5 h-5" /> : <LogIn className="w-5 h-5" />}
-              </Button>
-            </Link>
+            ) : (
+              <div className="relative" ref={profileDropdownRef} onClick={(e) => e.stopPropagation()}>
+                <button
+                  className="floating-glass-icon-btn"
+                  aria-label="Profil"
+                  onClick={() => setProfileOpen(!profileOpen)}
+                >
+                  <User className="w-4 h-4" />
+                </button>
+                {profileOpen && (
+                  <div className="absolute right-0 mt-2 floating-glass-dropdown min-w-[160px] animate-scale-in z-50">
+                    <Link
+                      href={`/${lang}/profil`}
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-foreground/70 dark:text-foreground-dark/70 hover:text-foreground dark:hover:text-foreground-dark hover:bg-white/10 dark:hover:bg-white/5 rounded-lg mx-1 my-0.5 transition-colors"
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      <span>Espace perso</span>
+                    </Link>
+                    {isCreator && (
+                      <Link
+                        href={`/${lang}/createur`}
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-foreground/70 dark:text-foreground-dark/70 hover:text-foreground dark:hover:text-foreground-dark hover:bg-white/10 dark:hover:bg-white/5 rounded-lg mx-1 my-0.5 transition-colors"
+                      >
+                        <LayoutDashboard className="w-3.5 h-3.5" />
+                        <span>Dashboard créateur</span>
+                      </Link>
+                    )}
+                    <hr className="my-1 mx-2 border-white/10 dark:border-white/5" />
+                    <button
+                      onClick={async () => {
+                        setProfileOpen(false)
+                        await createClient().auth.signOut()
+                        router.push(`/${lang}`)
+                      }}
+                      className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-red-400/80 hover:text-red-400 hover:bg-red-500/8 rounded-lg mx-1 my-0.5 transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Déconnexion</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             <NotificationBell lang={lang as Language} isLoggedIn={isLoggedIn} />
             <ThemeToggle />
 
+            {/* Language selector */}
             <div className="relative" onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={() => setLangOpen(!langOpen)}
-                className="text-foreground/70 hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5 font-medium px-3 text-sm"
+                className="floating-glass-icon-btn text-xs font-semibold w-auto px-2"
               >
                 {lang.toUpperCase()}
-              </Button>
+              </button>
               {langOpen && (
-                <div className="absolute right-0 mt-2 liquid-glass rounded-apple-lg shadow-apple-elevated overflow-hidden min-w-[100px] animate-scale-in">
+                <div className="absolute right-0 mt-2 floating-glass-dropdown min-w-[120px] animate-scale-in">
                   {[
                     { code: 'fr', label: 'Français' },
                     { code: 'en', label: 'English' },
@@ -141,10 +288,10 @@ export default function Header({ lang }: { lang: string }) {
                       key={l.code}
                       href={`/${l.code}`}
                       onClick={() => setLangOpen(false)}
-                      className={`flex items-center px-4 py-2.5 text-sm font-medium transition-colors ${
+                      className={`flex items-center px-3 py-2 text-xs font-medium transition-colors rounded-lg mx-1 my-0.5 ${
                         l.code === lang
-                          ? 'bg-white/20 text-foreground'
-                          : 'text-foreground/80 hover:bg-white/10'
+                          ? 'bg-white/20 dark:bg-white/10 text-foreground dark:text-foreground-dark'
+                          : 'text-foreground/70 dark:text-foreground-dark/70 hover:bg-white/10 dark:hover:bg-white/5'
                       }`}
                     >
                       {l.label}
@@ -154,30 +301,9 @@ export default function Header({ lang }: { lang: string }) {
               )}
             </div>
 
-            {/* Mobile Menu */}
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon" className="text-foreground/70 hover:text-foreground">
-                  <Menu className="w-5 h-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-72">
-                <nav className="flex flex-col gap-2 mt-8">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="text-lg font-medium text-foreground/80 hover:text-foreground py-3 px-5 rounded-[16px] hover:bg-white/15 transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </nav>
-              </SheetContent>
-            </Sheet>
           </div>
-        </div>
+        </nav>
+
       </div>
     </header>
   )

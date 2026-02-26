@@ -102,7 +102,7 @@ function SheetContent({
       />
       {/* Panel */}
       <div
-        className={`fixed z-[60] p-6 shadow-apple-elevated liquid-glass ${sideStyles[side]} ${className}`}
+        className={`fixed z-[60] p-6 shadow-elevation-3 liquid-glass ${sideStyles[side]} ${className}`}
       >
         {children}
       </div>

@@ -230,9 +230,10 @@ export default function CreditsSettingsPage() {
             </div>
 
             <Button
+              gem="sage"
               onClick={handleSaveRegBonus}
               disabled={saving}
-              className="w-full bg-sage hover:bg-sage/90 text-white"
+              className="w-full"
             >
               {saving ? (
                 <>

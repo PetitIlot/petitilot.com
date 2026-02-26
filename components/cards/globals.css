@@ -1,0 +1,640 @@
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+/* ========================================
+   APPLE-PROOF DESIGN SYSTEM
+   Petit Ilot × Apple Design Language
+   ======================================== */
+
+:root {
+  /* Background */
+  --background: #FAFAF8;
+  --surface: #FFFFFF;
+  --surface-secondary: #F5F5F7;
+
+  /* Foreground */
+  --foreground: #1D1D1F;
+  --foreground-secondary: #86868B;
+
+  /* Brand - Sublimated */
+  --sage: #7A8B6F;
+  --sage-light: #A8B5A0;
+  --terracotta: #C9A092;
+  --terracotta-light: #D4A59A;
+  --sky: #5AC8FA;
+  --sky-light: #C8D8E4;
+
+  /* Borders & Dividers */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.12);
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.5);
+
+  /* Icon Colors - Pastel */
+  --icon-sage: #A8B5A0;
+  --icon-sky: #C8D8E4;
+  --icon-terracotta: #D4A59A;
+  --icon-mauve: #CCA6C8;
+  --icon-neutral: #86868B;
+
+  /* Icon Backgrounds */
+  --icon-bg-sage: rgba(122, 139, 111, 0.15);
+  --icon-bg-sky: rgba(90, 200, 250, 0.15);
+  --icon-bg-terracotta: rgba(201, 160, 146, 0.15);
+  --icon-bg-mauve: rgba(204, 166, 200, 0.15);
+
+  /* ---- Elevation System (4 niveaux) ---- */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgba(122,139,111,0.06), 0 4px 8px rgba(122,139,111,0.04);
+  --elevation-2: 0 2px 4px rgba(122,139,111,0.08), 0 8px 16px rgba(122,139,111,0.06);
+  --elevation-3: 0 4px 8px rgba(122,139,111,0.1), 0 16px 32px rgba(122,139,111,0.08);
+
+  /* ---- Spring & Timing Tokens ---- */
+  --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+}
+
+.dark {
+  /* Background - Gris anthracite macOS */
+  --background: #1E1E1E;
+  --surface: #2D2D2D;
+  --surface-secondary: #3D3D3D;
+
+  /* Foreground */
+  --foreground: #F5F5F7;
+  --foreground-secondary: #A1A1A6;
+
+  /* Brand - Adjusted for dark */
+  --sage: #8FA382;
+  --sage-light: #A8B5A0;
+  --terracotta: #D4ADA0;
+  --terracotta-light: #E5BEB1;
+
+  /* Borders & Dividers */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.12);
+
+  /* Glass */
+  --glass-bg: rgba(28, 28, 30, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.1);
+
+  /* Icon Colors - Neon */
+  --icon-sage: #7FFF7F;
+  --icon-sky: #5AC8FA;
+  --icon-terracotta: #FF8A80;
+  --icon-mauve: #FF80EA;
+  --icon-neutral: #A1A1A6;
+
+  /* Icon Backgrounds - Darker */
+  --icon-bg-sage: rgba(127, 255, 127, 0.2);
+  --icon-bg-sky: rgba(90, 200, 250, 0.2);
+  --icon-bg-terracotta: rgba(255, 138, 128, 0.2);
+  --icon-bg-mauve: rgba(255, 128, 234, 0.2);
+
+  /* ---- Elevation System (dark mode) ---- */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgba(0,0,0,0.20), 0 4px 8px rgba(0,0,0,0.14);
+  --elevation-2: 0 2px 4px rgba(0,0,0,0.24), 0 8px 16px rgba(0,0,0,0.18);
+  --elevation-3: 0 4px 8px rgba(0,0,0,0.28), 0 16px 32px rgba(0,0,0,0.22);
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   TYPOGRAPHY - Apple Style
+   ======================================== */
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 56px;
+  line-height: 1.07;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 40px;
+  line-height: 1.1;
+}
+
+h3 {
+  font-size: 28px;
+  line-height: 1.14;
+}
+
+h4 {
+  font-size: 21px;
+  line-height: 1.19;
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 40px;
+    line-height: 1.1;
+  }
+
+  h2 {
+    font-size: 32px;
+    line-height: 1.125;
+  }
+
+  h3 {
+    font-size: 24px;
+    line-height: 1.17;
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Glass morphism */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+/* Liquid Glass - iOS 26 style */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.dark .liquid-glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Apple-style focus ring */
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 4px rgba(122, 139, 111, 0.4);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(122, 139, 111, 0.3);
+  color: inherit;
+}
+
+/* ========================================
+   ELEVATION UTILITY CLASSES
+   ======================================== */
+
+.elevation-0 { box-shadow: var(--elevation-0); }
+.elevation-1 { box-shadow: var(--elevation-1); }
+.elevation-2 { box-shadow: var(--elevation-2); }
+.elevation-3 { box-shadow: var(--elevation-3); }
+
+/* ========================================
+   GLASSMORPHISM CARD SYSTEM
+   Cartes en verre — éléments "posés" dessus
+   ======================================== */
+
+/* ---- Card Shell — surface en verre argenté/teinté ---- */
+.card-huly {
+  background: linear-gradient(
+    135deg,
+    rgba(190, 195, 205, 0.35) 0%,
+    rgba(175, 180, 195, 0.28) 50%,
+    rgba(195, 200, 210, 0.32) 100%
+  );
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.50);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: border-color 0.35s ease, box-shadow 0.4s ease, background 0.35s ease;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 8px 28px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+}
+
+.card-huly:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(190, 195, 205, 0.42) 0%,
+    rgba(175, 180, 195, 0.35) 50%,
+    rgba(195, 200, 210, 0.38) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+}
+
+.dark .card-huly {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.30),
+    0 8px 28px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+.dark .card-huly:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.35),
+    0 16px 40px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* ---- Vignette — l'image posée sur le verre ---- */
+.card-glass-vignette {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.10),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.dark .card-glass-vignette {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ---- Content zone — bloc blanc posé sur le verre ---- */
+.card-glass-body {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.70);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.dark .card-glass-body {
+  background: rgba(30, 30, 34, 0.70);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ---- Creator zone — pied blanc posé sur le verre ---- */
+.card-glass-creator {
+  background: rgba(255, 255, 255, 0.80);
+  border: 1px solid rgba(255, 255, 255, 0.60);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.dark .card-glass-creator {
+  background: rgba(30, 30, 34, 0.55);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ---- Chip — tag flottant sur l'image ---- */
+.card-huly-chip {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.dark .card-huly-chip {
+  background: rgba(0, 0, 0, 0.40);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ---- Meta pills ---- */
+.card-huly-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 450;
+  color: var(--foreground-secondary);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.dark .card-huly-meta {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.04);
+  color: var(--foreground-secondary);
+}
+
+/* ---- Tags — themed labels ---- */
+.card-huly-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.card-huly-tag--sage {
+  color: #2B8FBE;
+  background: rgba(43, 143, 190, 0.10);
+  border: 1px solid rgba(43, 143, 190, 0.12);
+}
+
+.dark .card-huly-tag--sage {
+  color: #5AC8FA;
+  background: rgba(90, 200, 250, 0.12);
+  border-color: rgba(90, 200, 250, 0.10);
+}
+
+.card-huly-tag--mauve {
+  color: #E75D98;
+  background: rgba(231, 93, 152, 0.10);
+  border: 1px solid rgba(231, 93, 152, 0.12);
+}
+
+.dark .card-huly-tag--mauve {
+  color: #FF7CB6;
+  background: rgba(255, 124, 182, 0.12);
+  border-color: rgba(255, 124, 182, 0.10);
+}
+
+/* ========================================
+   MICRO-ANIMATIONS
+   ======================================== */
+
+/* Button press — scale down on active */
+.btn-press {
+  transition: transform var(--duration-fast) var(--spring-smooth), box-shadow var(--duration-normal) var(--spring-smooth);
+}
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+/* Card hover lift — translateY + elevation change */
+.card-lift {
+  transition: transform var(--duration-normal) var(--spring-smooth),
+              box-shadow var(--duration-normal) var(--spring-smooth);
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elevation-2);
+}
+
+/* Card tilt on hover — CSS perspective 3D */
+.card-tilt {
+  transform-style: preserve-3d;
+  perspective: 800px;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-secondary) 25%,
+    rgba(122, 139, 111, 0.06) 50%,
+    var(--surface-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-secondary) 25%,
+    rgba(255, 255, 255, 0.06) 50%,
+    var(--surface-secondary) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* Input focus glow */
+.input-focus-glow {
+  transition: border-color var(--duration-normal) var(--spring-smooth),
+              box-shadow var(--duration-normal) var(--spring-smooth);
+}
+.input-focus-glow:focus {
+  border-color: var(--sage);
+  box-shadow: 0 0 0 3px rgba(122, 139, 111, 0.15);
+}
+
+/* Badge volume — subtle inner shadow for depth */
+.badge-volume {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.06);
+}
+
+/* Tooltip spring entrance */
+@keyframes tooltipIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tooltip-spring {
+  animation: tooltipIn var(--duration-normal) var(--spring-bounce) forwards;
+}
+
+/* ========================================
+   ANIMATIONS - Apple Spring Physics
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* Slide animations for Sheet */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* ========================================
+   BLOB ANIMATIONS - Coming Soon page
+   ======================================== */
+
+@keyframes blob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(20px, -30px) scale(1.05);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+  75% {
+    transform: translate(30px, 10px) scale(1.02);
+  }
+}
+
+.animate-blob {
+  animation: blob 15s ease-in-out infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+
+/* ========================================
+   SEPARATOR ANIMATIONS
+   ======================================== */
+
+@keyframes separator-animate {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes separator-wave {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50px);
+  }
+}
+
+@keyframes separator-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

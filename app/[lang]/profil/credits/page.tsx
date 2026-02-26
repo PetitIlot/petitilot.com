@@ -361,12 +361,11 @@ function CreditsContent() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Back Button */}
-        <Link
-          href={`/${lang}/profil`}
-          className="inline-flex items-center gap-2 text-foreground-secondary dark:text-foreground-dark-secondary hover:text-foreground dark:hover:text-foreground-dark transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.back}
+        <Link href={`/${lang}/profil`}>
+          <Button variant="outline" gem="neutral" size="sm" className="mb-6">
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            {t.back}
+          </Button>
         </Link>
 
         {/* Header */}
@@ -409,7 +408,7 @@ function CreditsContent() {
 
           {/* Total */}
           <div
-            className="bg-surface dark:bg-surface-dark rounded-2xl p-6 text-center shadow-apple"
+            className="bg-surface dark:bg-surface-dark rounded-2xl p-6 text-center shadow-elevation-1"
             style={{ border: '1px solid var(--border)' }}
           >
             <Sparkles className="w-8 h-8 mx-auto mb-2 text-sage" />
@@ -423,7 +422,7 @@ function CreditsContent() {
 
         {/* Promo Code Section */}
         <div
-          className="bg-surface dark:bg-surface-dark rounded-2xl p-6 mb-10 shadow-apple"
+          className="bg-surface dark:bg-surface-dark rounded-2xl p-6 mb-10 shadow-elevation-1"
           style={{ border: '1px solid var(--border)' }}
         >
           <h2 className="text-lg font-semibold text-foreground dark:text-foreground-dark mb-4 flex items-center gap-2">
@@ -443,7 +442,7 @@ function CreditsContent() {
             <Button
               onClick={handleApplyPromo}
               disabled={applyingPromo || !promoCode.trim()}
-              className="bg-terracotta hover:bg-terracotta/90 text-white px-6"
+              gem="amber"
             >
               {applyingPromo ? (
                 <>
@@ -470,7 +469,7 @@ function CreditsContent() {
             return (
               <div
                 key={pack.id}
-                className="relative bg-surface dark:bg-surface-dark rounded-2xl shadow-apple overflow-hidden"
+                className="relative bg-surface dark:bg-surface-dark rounded-2xl shadow-elevation-1 overflow-hidden"
                 style={{ border: '1px solid var(--border)' }}
               >
                 {pack.badge && (
@@ -497,7 +496,8 @@ function CreditsContent() {
                   <Button
                     onClick={() => handleBuyPack(pack.id)}
                     disabled={processingPack !== null}
-                    className="w-full bg-foreground dark:bg-foreground-dark hover:bg-foreground/90 dark:hover:bg-foreground-dark/90 text-surface dark:text-surface-dark"
+                    gem="amber"
+                    className="w-full"
                   >
                     {processingPack === pack.id ? (
                       <>
@@ -515,7 +515,7 @@ function CreditsContent() {
         </div>
 
         {/* Transaction History */}
-        <div className="bg-surface dark:bg-surface-dark rounded-2xl shadow-apple p-6" style={{ border: '1px solid var(--border)' }}>
+        <div className="bg-surface dark:bg-surface-dark rounded-2xl shadow-elevation-1 p-6" style={{ border: '1px solid var(--border)' }}>
           <h2 className="text-lg font-semibold text-foreground dark:text-foreground-dark mb-4 flex items-center gap-2">
             <History className="w-5 h-5" style={{ color: 'var(--icon-neutral)' }} />
             {t.history}

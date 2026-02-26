@@ -1,42 +1,29 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import Link from 'next/link'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Ressource, Language } from '@/lib/types'
+import FeaturedCarouselCard from './FeaturedCarouselCard'
 
-const translations = {
-  fr: {
-    featured: 'À découvrir',
-    discover: 'Découvrir',
-    new: 'Nouveau',
-  },
-  en: {
-    featured: 'Featured',
-    discover: 'Discover',
-    new: 'New',
-  },
-  es: {
-    featured: 'Destacado',
-    discover: 'Descubrir',
-    new: 'Nuevo',
-  },
-}
 
-const categoryLabels: Record<string, Record<Language, string>> = {
-  activite: { fr: 'Activité', en: 'Activity', es: 'Actividad' },
-  motricite: { fr: 'Motricité', en: 'Motor skills', es: 'Motricidad' },
-  alimentation: { fr: 'Alimentation', en: 'Food', es: 'Alimentación' },
+type DemoResource = Partial<Ressource> & {
+  creator?: { id: string; slug: string; display_name: string; avatar_url: string | null } | null
+  subtitle?: string
 }
 
 // Données de démonstration pour prévisualiser le carrousel
-const demoResources: Partial<Ressource>[] = [
+const demoResources: DemoResource[] = [
   {
     id: 'demo-1',
     title: 'Peinture sensorielle aux légumes',
     subtitle: 'Une activité créative et naturelle pour explorer les couleurs',
     type: 'activite',
     vignette_url: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=1200&h=800&fit=crop',
+    categories: ['sensoriel', 'art-plastique'],
+    themes: ['Nature', 'Printemps'],
+    competences: ['Créativité'],
+    age_min: 2, age_max: 6, duration: 30, difficulte: 'beginner',
+    is_premium: false, accept_free_credits: true,
+    creator: { id: 'c1', slug: 'marie-nature', display_name: 'Marie Nature', avatar_url: null } as any,
   },
   {
     id: 'demo-2',
@@ -44,6 +31,12 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Développer l\'équilibre et la coordination en pleine nature',
     type: 'motricite',
     vignette_url: 'https://images.unsplash.com/photo-1544776193-352d25ca82cd?w=1200&h=800&fit=crop',
+    categories: ['motricite-globale', 'nature-plein-air'],
+    themes: ['Forêt', 'Nature'],
+    competences: ['Coordination'],
+    age_min: 3, age_max: 6, duration: 45, difficulte: 'beginner',
+    is_premium: true, accept_free_credits: true,
+    creator: { id: 'c2', slug: 'julie-bois', display_name: 'Julie & les Bois', avatar_url: null } as any,
   },
   {
     id: 'demo-3',
@@ -51,6 +44,11 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Créez vos propres pâtes à modeler non toxiques',
     type: 'activite',
     vignette_url: 'https://images.unsplash.com/photo-1560421683-6856ea585c78?w=1200&h=800&fit=crop',
+    categories: ['diy-recup', 'sensoriel'],
+    themes: ['Maison'],
+    competences: ['Motricité fine'],
+    age_min: 1, age_max: 4, duration: 20, difficulte: 'beginner',
+    is_premium: false, accept_free_credits: false,
   },
   {
     id: 'demo-4',
@@ -58,6 +56,12 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Fabriquez des instruments avec des objets du quotidien',
     type: 'activite',
     vignette_url: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200&h=800&fit=crop',
+    categories: ['diy-recup', 'art-plastique'],
+    themes: ['Musique'],
+    competences: ['Créativité'],
+    age_min: 2, age_max: 5, duration: 40, difficulte: 'advanced',
+    is_premium: true, accept_free_credits: false,
+    creator: { id: 'c3', slug: 'lea-diy', display_name: 'Léa DIY', avatar_url: null } as any,
   },
   {
     id: 'demo-5',
@@ -65,6 +69,11 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Des activités rafraîchissantes pour les journées chaudes',
     type: 'motricite',
     vignette_url: 'https://images.unsplash.com/photo-1473492201326-7c01dd2e596b?w=1200&h=800&fit=crop',
+    categories: ['sensoriel', 'motricite-globale'],
+    themes: ['Été', 'Nature'],
+    competences: ['Coordination'],
+    age_min: 2, age_max: 6, duration: 30, difficulte: 'beginner',
+    is_premium: false, accept_free_credits: true,
   },
   {
     id: 'demo-6',
@@ -72,6 +81,12 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Plantez, arrosez et observez la nature grandir ensemble',
     type: 'activite',
     vignette_url: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200&h=800&fit=crop',
+    categories: ['nature-plein-air', 'cuisine'],
+    themes: ['Jardin & plantes', 'Nature'],
+    competences: ['Observation'],
+    age_min: 2, age_max: 5, duration: 60, difficulte: 'beginner',
+    is_premium: false, accept_free_credits: false,
+    creator: { id: 'c1', slug: 'marie-nature', display_name: 'Marie Nature', avatar_url: null } as any,
   },
   {
     id: 'demo-7',
@@ -79,6 +94,11 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Des postures amusantes pour se détendre et bouger',
     type: 'motricite',
     vignette_url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1200&h=800&fit=crop',
+    categories: ['motricite-globale'],
+    themes: ['Corps humain', 'Famille'],
+    competences: ['Équilibre'],
+    age_min: 3, age_max: 6, duration: 30, difficulte: 'beginner',
+    is_premium: true, accept_free_credits: true,
   },
   {
     id: 'demo-8',
@@ -86,6 +106,12 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Recettes saines et écologiques pour toute la famille',
     type: 'alimentation',
     vignette_url: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=1200&h=800&fit=crop',
+    categories: ['cuisine', 'diy-recup'],
+    themes: ['Alimentation', 'Maison'],
+    competences: ['Autonomie'],
+    age_min: 3, age_max: 6, duration: 45, difficulte: 'advanced',
+    is_premium: false, accept_free_credits: false,
+    creator: { id: 'c4', slug: 'sophie-cuisine', display_name: 'Sophie Cuisine', avatar_url: null } as any,
   },
   {
     id: 'demo-9',
@@ -93,6 +119,11 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Explorez le jardin ou le parc avec une mission ludique',
     type: 'activite',
     vignette_url: 'https://images.unsplash.com/photo-1476820865390-c52aeebb9891?w=1200&h=800&fit=crop',
+    categories: ['nature-plein-air', 'jeux-symboliques'],
+    themes: ['Forêt', 'Animaux'],
+    competences: ['Observation'],
+    age_min: 3, age_max: 6, duration: 60, difficulte: 'advanced',
+    is_premium: false, accept_free_credits: true,
   },
   {
     id: 'demo-10',
@@ -100,6 +131,12 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Créez des univers tactiles pour stimuler les sens',
     type: 'activite',
     vignette_url: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=1200&h=800&fit=crop',
+    categories: ['sensoriel', 'motricite-fine'],
+    themes: ['Nature'],
+    competences: ['Concentration'],
+    age_min: 1, age_max: 4, duration: 20, difficulte: 'beginner',
+    is_premium: false, accept_free_credits: false,
+    creator: { id: 'c2', slug: 'julie-bois', display_name: 'Julie & les Bois', avatar_url: null } as any,
   },
   {
     id: 'demo-11',
@@ -107,6 +144,12 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Transformez les fruits en animaux rigolos',
     type: 'alimentation',
     vignette_url: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=1200&h=800&fit=crop',
+    categories: ['cuisine', 'art-plastique'],
+    themes: ['Alimentation', 'Animaux'],
+    competences: ['Créativité'],
+    age_min: 2, age_max: 6, duration: 25, difficulte: 'beginner',
+    is_premium: true, accept_free_credits: true,
+    creator: { id: 'c4', slug: 'sophie-cuisine', display_name: 'Sophie Cuisine', avatar_url: null } as any,
   },
   {
     id: 'demo-12',
@@ -114,6 +157,12 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Recyclez les boîtes pour créer des mondes imaginaires',
     type: 'activite',
     vignette_url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&h=800&fit=crop',
+    categories: ['diy-recup', 'jeux-symboliques'],
+    themes: ['Maison', 'Contes & Histoires'],
+    competences: ['Créativité'],
+    age_min: 3, age_max: 6, duration: 50, difficulte: 'advanced',
+    is_premium: false, accept_free_credits: false,
+    creator: { id: 'c3', slug: 'lea-diy', display_name: 'Léa DIY', avatar_url: null } as any,
   },
   {
     id: 'demo-13',
@@ -121,6 +170,11 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Exercices ludiques pour développer la dextérité',
     type: 'motricite',
     vignette_url: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&h=800&fit=crop',
+    categories: ['motricite-fine'],
+    themes: ['École'],
+    competences: ['Motricité fine'],
+    age_min: 2, age_max: 5, duration: 15, difficulte: 'beginner',
+    is_premium: false, accept_free_credits: true,
   },
   {
     id: 'demo-14',
@@ -128,6 +182,12 @@ const demoResources: Partial<Ressource>[] = [
     subtitle: 'Créez des œuvres éphémères avec des éléments naturels',
     type: 'activite',
     vignette_url: 'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1200&h=800&fit=crop',
+    categories: ['nature-plein-air', 'art-plastique'],
+    themes: ['Nature', 'Forêt'],
+    competences: ['Créativité'],
+    age_min: 3, age_max: 6, duration: 45, difficulte: 'beginner',
+    is_premium: true, accept_free_credits: false,
+    creator: { id: 'c1', slug: 'marie-nature', display_name: 'Marie Nature', avatar_url: null } as any,
   },
 ]
 
@@ -142,10 +202,9 @@ export default function FeaturedCarousel({ resources, lang, showDemo = true }: F
   const scrollRef2 = useRef<HTMLDivElement>(null)
   const [isPaused1, setIsPaused1] = useState(false)
   const [isPaused2, setIsPaused2] = useState(false)
-  const t = translations[lang]
 
   // Utiliser les données de démo si pas assez de ressources réelles
-  const displayResources = resources.length >= 3 ? resources : (showDemo ? demoResources as Ressource[] : resources)
+  const displayResources = resources.length >= 3 ? resources : (showDemo ? demoResources as unknown as Ressource[] : resources)
 
   // Reprendre l'animation après un délai d'inactivité
   useEffect(() => {
@@ -171,78 +230,12 @@ export default function FeaturedCarousel({ resources, lang, showDemo = true }: F
   const firstRow = displayResources.slice(0, Math.ceil(displayResources.length / 2))
   const secondRow = displayResources.slice(Math.ceil(displayResources.length / 2))
 
-  const renderCard = (resource: Ressource, index: number, isSmall = false) => (
-    <Link
-      href={resource.id.startsWith('demo-') ? '#' : `/${lang}/activites/${resource.id}`}
-      className="group flex-shrink-0"
-    >
-      <div
-        className="relative overflow-hidden transition-all duration-500 group-hover:brightness-110"
-        style={{
-          width: isSmall ? '40vw' : '80vw',
-          maxWidth: isSmall ? '450px' : '900px',
-          height: isSmall ? '200px' : '350px'
-        }}
-      >
-        {/* Background Image */}
-        {resource.vignette_url ? (
-          <img
-            src={resource.vignette_url}
-            alt={resource.title}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-sage to-mauve" />
-        )}
-
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-        {/* Content */}
-        <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
-          {/* Badge */}
-          <div className="flex items-center gap-2 mb-2">
-            <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium">
-              {categoryLabels[resource.type]?.[lang] || resource.type}
-            </span>
-            {index === 0 && !isSmall && (
-              <span className="px-2 py-0.5 rounded-full bg-sage text-white text-xs font-medium">
-                {t.new}
-              </span>
-            )}
-          </div>
-
-          {/* Title */}
-          <h3 className={`font-bold text-white leading-tight ${isSmall ? 'text-lg md:text-xl' : 'text-xl md:text-2xl mb-1'}`}>
-            {resource.title}
-          </h3>
-
-          {/* Subtitle - only on large cards */}
-          {!isSmall && resource.subtitle && (
-            <p className="text-white/80 text-sm mb-4 line-clamp-1 max-w-lg">
-              {resource.subtitle}
-            </p>
-          )}
-
-          {/* CTA Button - only on large cards */}
-          {!isSmall && (
-            <div>
-              <span className="inline-flex items-center px-4 py-2 rounded-full bg-white/90 text-black text-sm font-semibold hover:bg-white transition-colors duration-200">
-                {t.discover}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-    </Link>
-  )
-
   // Dupliquer les ressources pour créer un défilement infini
   const duplicatedFirstRow = [...firstRow, ...firstRow]
   const duplicatedSecondRow = [...secondRow, ...secondRow]
 
   return (
-    <section className="relative bg-background overflow-hidden">
+    <section className="relative bg-background dark:bg-background-dark overflow-hidden">
       {/* CSS pour les animations */}
       <style jsx>{`
         @keyframes scrollRight {
@@ -279,7 +272,11 @@ export default function FeaturedCarousel({ resources, lang, showDemo = true }: F
         >
           {duplicatedFirstRow.map((resource, index) => (
             <div key={`first-${index}`}>
-              {renderCard(resource, index % firstRow.length, false)}
+              <FeaturedCarouselCard
+                activity={resource}
+                lang={lang}
+                variant="large"
+              />
             </div>
           ))}
         </div>
@@ -300,7 +297,11 @@ export default function FeaturedCarousel({ resources, lang, showDemo = true }: F
         >
           {duplicatedSecondRow.map((resource, index) => (
             <div key={`second-${index}`}>
-              {renderCard(resource, index % secondRow.length, true)}
+              <FeaturedCarouselCard
+                activity={resource}
+                lang={lang}
+                variant="small"
+              />
             </div>
           ))}
         </div>

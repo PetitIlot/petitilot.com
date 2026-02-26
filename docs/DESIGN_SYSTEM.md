@@ -547,6 +547,79 @@ export default function RootLayout({ children }) {
 
 ---
 
+## Gemstone Button System (Frozen Glass)
+
+Style visuel « verre givré teinté » appliqué à tous les filtres et tags actifs.
+Implémentation : `components/filters/gemFilterStyle.ts` (helpers `gemPillStyle`, `gemSegmentStyle`).
+Palette définie dans `components/ui/button.tsx` → export `GEMS`.
+
+### Palette GEMS (light / dark / text / glow)
+
+| Gem | Light | Dark | Text (light) | Text (dark) | Glow RGB | Usage |
+|-----|-------|------|-------------|-------------|----------|-------|
+| `sage` | `#7A8B6F` | `#8FA98C` | `#4A5D3E` | `#C8E6C0` | `110,139,100` | Nature, défaut, autonomie |
+| `mauve` | `#A892CB` | `#B39DDB` | `#6B4F8A` | `#DCC8F0` | `168,146,203` | Prix, PDF, gratuit/payant |
+| `terracotta` | `#C4836A` | `#D4A088` | `#7A3E28` | `#F0C8B8` | `196,131,106` | Cuisine, temps de prépa |
+| `rose` | `#D4A0A0` | `#E8B4B8` | `#8B4A50` | `#F8D0D4` | `212,160,160` | Sensoriel, intensité, compétences |
+| `sky` | `#7BA7C4` | `#90B8D4` | `#3A6B8C` | `#C0DCF0` | `123,167,196` | Motricité, durée, thèmes, imprimables |
+| `amber` | `#D4B870` | `#E0C880` | `#7A6420` | `#F0E0A8` | `212,184,112` | DIY, difficulté, matériaux |
+| `neutral` | `#8A8A8A` | `#A0A0A0` | `#4A4A4A` | `#D0D0D0` | `138,138,138` | Toutes, âge, rituels, créateur |
+| `destructive` | `#D46A6A` | `#E88080` | `#8B2020` | `#FFC0C0` | `212,106,106` | Suppression, tout effacer |
+
+### Attribution des couleurs par filtre
+
+| Filtre | Gem | Contexte |
+|--------|-----|----------|
+| **Catégories** | Chaque catégorie a sa propre gem (voir `lib/constants/filters.ts` → champ `gem`) | Pills + tags actifs |
+| Sensoriel | `rose` | Catégorie |
+| Motricité fine | `mauve` | Catégorie |
+| Motricité globale | `sky` | Catégorie |
+| Arts plastiques | `terracotta` | Catégorie |
+| Nature & plein air | `sage` | Catégorie |
+| DIY & récup | `amber` | Catégorie |
+| Cuisine | `terracotta` | Catégorie |
+| Jeux symboliques | `mauve` | Catégorie |
+| Rituels & routines | `neutral` | Catégorie |
+| Imprimables | `sky` | Catégorie |
+| **Bouton "Toutes"** | `neutral` | Pill catégorie (état actif quand aucune catégorie) |
+| **Thèmes** | `sky` | TagFilter + tags actifs |
+| **Compétences** | `rose` | TagFilter + tags actifs |
+| **Matériaux** | `amber` | TagFilter + tags actifs |
+| **Mode matériel** | `sage` | Segmenté (Contient / J'ai ce matériel) + tag actif |
+| **Âge** | `neutral` | Presets pill + tag actif |
+| **Durée** | `sky` | Presets pill + tag actif |
+| **Temps de prépa** | `terracotta` | Presets pill + tag actif |
+| **Difficulté** | `amber` | Segmenté 3 options + tag actif |
+| **Intensité** | `rose` | Segmenté 3 options + tag actif |
+| **Autonomie** | `sage` | Segmenté 3 options + tag actif |
+| **Gratuit / Payant** | `mauve` | Segmenté + tag actif |
+| **Prix (range)** | `mauve` | Inputs + tag actif |
+| **PDF téléchargeable** | `mauve` | Pill + tag actif |
+| **Créateur** | `neutral` | Tag actif |
+
+### Ajout d'un nouveau filtre
+
+1. Choisir une gem dans la palette ci-dessus (rester cohérent avec les groupes existants)
+2. Créer le composant avec `gemPillStyle(gem, isSelected, isDark)` ou `gemSegmentStyle(gem, isSelected, isDark)`
+3. Dans `ActiveFilters.tsx`, ajouter le badge avec `gem: 'chosen_gem'`
+4. Si c'est un TagFilter, passer `gem="chosen_gem"` en prop
+
+### Helpers disponibles
+
+```typescript
+import { gemPillStyle, gemSegmentStyle } from '@/components/filters/gemFilterStyle'
+
+// Bouton pill (arrondi, tags, presets)
+const s = gemPillStyle('sky', isSelected, isDark)
+// → { wrapper, inner, frost, shine } — styles inline
+
+// Bouton segmenté (toggle 2-3 options)
+const s = gemSegmentStyle('amber', isSelected, isDark)
+// → style plat { color, background, boxShadow }
+```
+
+---
+
 ## Checklist implémentation
 
 **Phase 1 (immédiat)** :

@@ -72,9 +72,9 @@ export default function NotificationBell({ lang, isLoggedIn }: NotificationBellP
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative text-foreground/70 hover:text-foreground hover:bg-white/10 dark:hover:bg-white/5"
+        className="relative text-foreground/70 dark:text-foreground-dark/70 hover:text-foreground dark:hover:text-foreground-dark hover:bg-black/[0.08] dark:hover:bg-white/5"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-4 h-4" />
 
         {/* Badge compteur */}
         {unreadCount > 0 && (
@@ -86,7 +86,7 @@ export default function NotificationBell({ lang, isLoggedIn }: NotificationBellP
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 max-h-[400px] overflow-hidden liquid-glass rounded-apple-lg shadow-apple-elevated animate-scale-in z-50">
+        <div className="absolute right-0 mt-2 w-80 max-h-[400px] overflow-hidden liquid-glass rounded-apple-lg shadow-elevation-3 animate-scale-in z-50">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
             <h3 className="font-semibold text-sm text-foreground dark:text-foreground-dark">

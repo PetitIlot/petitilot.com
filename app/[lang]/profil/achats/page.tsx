@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Download, Package, Calendar, CreditCard, ExternalLink, Loader2 } from 'lucide-react'
+import { Download, Package, Calendar, CreditCard, ExternalLink, Loader2, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
 import type { Language } from '@/lib/types'
@@ -20,6 +20,7 @@ const translations = {
     purchasedOn: 'Acheté le',
     credits: 'crédits',
     totalSpent: 'Total dépensé',
+    back: 'Retour',
     loading: 'Chargement...'
   },
   en: {
@@ -33,6 +34,7 @@ const translations = {
     purchasedOn: 'Purchased on',
     credits: 'credits',
     totalSpent: 'Total spent',
+    back: 'Back',
     loading: 'Loading...'
   },
   es: {
@@ -46,6 +48,7 @@ const translations = {
     purchasedOn: 'Comprado el',
     credits: 'créditos',
     totalSpent: 'Total gastado',
+    back: 'Volver',
     loading: 'Cargando...'
   }
 }
@@ -82,7 +85,7 @@ function DownloadButton({ ressourceId, label }: { ressourceId: string; label: st
       size="sm"
       onClick={handleDownload}
       disabled={loading}
-      className="bg-sage hover:bg-sage-light text-white"
+      gem="sage"
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
       {label}
@@ -134,6 +137,14 @@ export default function PurchasesPage() {
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark pt-16">
       <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Back button */}
+        <Link href={`/${lang}/profil`}>
+          <Button variant="outline" gem="neutral" size="sm" className="mb-6">
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            {t.back}
+          </Button>
+        </Link>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -141,7 +152,7 @@ export default function PurchasesPage() {
             <p className="text-foreground-secondary dark:text-foreground-dark-secondary mt-1">{t.subtitle}</p>
           </div>
           {purchases.length > 0 && (
-            <div className="bg-surface dark:bg-surface-dark rounded-2xl px-6 py-4 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+            <div className="bg-surface dark:bg-surface-dark rounded-2xl px-6 py-4 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
               <p className="text-xs text-foreground-secondary dark:text-foreground-dark-secondary uppercase tracking-wide">{t.totalSpent}</p>
               <p className="text-2xl font-bold text-foreground dark:text-foreground-dark">
                 {totalSpent} <span className="text-sm font-normal">{t.credits}</span>
@@ -152,14 +163,14 @@ export default function PurchasesPage() {
 
         {/* Purchases List */}
         {purchases.length === 0 ? (
-          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-12 text-center" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-elevation-1 p-12 text-center" style={{ border: '1px solid var(--border)' }}>
             <div className="w-16 h-16 bg-surface-secondary dark:bg-surface-dark rounded-full flex items-center justify-center mx-auto mb-4">
               <Package className="w-8 h-8 text-foreground/40 dark:text-foreground-dark/40" />
             </div>
             <h2 className="text-xl font-semibold text-foreground dark:text-foreground-dark mb-2">{t.noPurchases}</h2>
             <p className="text-foreground-secondary dark:text-foreground-dark-secondary mb-6">{t.noPurchasesDesc}</p>
             <Link href={`/${lang}/activites`}>
-              <Button className="bg-sage hover:bg-sage-light text-white">
+              <Button gem="sage">
                 {t.explore}
               </Button>
             </Link>
@@ -169,7 +180,7 @@ export default function PurchasesPage() {
             {purchases.map(purchase => (
               <div
                 key={purchase.purchase_id}
-                className="bg-surface dark:bg-surface-dark rounded-2xl shadow-apple p-4 flex items-center gap-4"
+                className="bg-surface dark:bg-surface-dark rounded-2xl shadow-elevation-1 p-4 flex items-center gap-4"
                 style={{ border: '1px solid var(--border)' }}
               >
                 {/* Thumbnail */}

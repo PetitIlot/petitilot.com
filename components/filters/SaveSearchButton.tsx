@@ -45,10 +45,9 @@ export default function SaveSearchButton({
   return (
     <>
       <Button
-        variant="outline"
+        gem="sage"
         size="sm"
         onClick={handleClick}
-        className="gap-2 text-sage hover:text-sage border-sage/30 hover:border-sage/50 hover:bg-sage/5"
       >
         <BookmarkPlus className="w-4 h-4" />
         <span className="hidden sm:inline">{t.save}</span>

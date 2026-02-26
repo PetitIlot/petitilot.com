@@ -9,9 +9,165 @@ import { Language, Ressource } from '@/lib/types'
 import { useFilters } from '@/lib/hooks/useFilters'
 import { useFilteredResources } from '@/lib/hooks/useFilteredResources'
 import { CATEGORIES, SORT_OPTIONS, FILTER_TRANSLATIONS } from '@/lib/constants/filters'
+import { Button, GEMS } from '@/components/ui/button'
+import type { GemColor } from '@/components/ui/button'
+import { gemPillStyle } from '@/components/filters/gemFilterStyle'
 import ActivityCard from '@/components/cards/ActivityCard'
 import { Input } from '@/components/ui/input'
 import { FilterPanel, ActiveFilters } from '@/components/filters'
+import { FilterIcon } from '@/lib/constants/resourceIcons'
+
+const DEMO_RESSOURCES: Ressource[] = [
+  {
+    id: 'demo-act-1', group_id: 'g1', lang: 'fr', type: 'activite',
+    title: 'Peinture sensorielle aux légumes',
+    vignette_url: 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&h=600&fit=crop',
+    categories: ['sensoriel', 'art-plastique'],
+    themes: ['Nature', 'Printemps'],
+    competences: ['Créativité'],
+    age_min: 2, age_max: 6, duration: 30, duration_max: null, duration_prep: 5,
+    difficulte: 'beginner', autonomie: false, intensity: 'leger',
+    is_premium: false, accept_free_credits: false,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-2', group_id: 'g2', lang: 'fr', type: 'motricite',
+    title: 'Parcours moteur en forêt',
+    vignette_url: 'https://images.unsplash.com/photo-1544776193-352d25ca82cd?w=800&h=600&fit=crop',
+    categories: ['motricite-globale', 'nature-plein-air'],
+    themes: ['Forêt', 'Nature'],
+    competences: ['Coordination'],
+    age_min: 3, age_max: 6, duration: 45, duration_max: null, duration_prep: 10,
+    difficulte: 'beginner', autonomie: true, intensity: 'moyen',
+    is_premium: true, accept_free_credits: true,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-3', group_id: 'g3', lang: 'fr', type: 'alimentation',
+    title: 'Mini-pizzas aux légumes du jardin',
+    vignette_url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=600&fit=crop',
+    categories: ['cuisine'],
+    themes: ['Alimentation', 'Jardin & plantes'],
+    competences: ['Autonomie'],
+    age_min: 3, age_max: 6, duration: 40, duration_max: null, duration_prep: 15,
+    difficulte: 'advanced', autonomie: false, intensity: 'leger',
+    is_premium: true, accept_free_credits: true,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-4', group_id: 'g4', lang: 'fr', type: 'activite',
+    title: 'Bac sensoriel forêt enchantée',
+    vignette_url: 'https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=800&h=600&fit=crop',
+    categories: ['sensoriel', 'jeux-symboliques'],
+    themes: ['Forêt', 'Animaux'],
+    competences: ['Concentration'],
+    age_min: 1, age_max: 4, duration: 20, duration_max: null, duration_prep: 15,
+    difficulte: 'beginner', autonomie: true, intensity: 'leger',
+    is_premium: false, accept_free_credits: false,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-5', group_id: 'g5', lang: 'fr', type: 'activite',
+    title: 'Récup créative : robots en carton',
+    vignette_url: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop',
+    categories: ['diy-recup', 'art-plastique'],
+    themes: ['Maison', 'Contes & Histoires'],
+    competences: ['Créativité'],
+    age_min: 3, age_max: 6, duration: 50, duration_max: null, duration_prep: 10,
+    difficulte: 'advanced', autonomie: false, intensity: 'leger',
+    is_premium: true, accept_free_credits: false,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-6', group_id: 'g6', lang: 'fr', type: 'motricite',
+    title: 'Yoga des animaux de la forêt',
+    vignette_url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=600&fit=crop',
+    categories: ['motricite-globale'],
+    themes: ['Animaux', 'Corps humain'],
+    competences: ['Équilibre'],
+    age_min: 3, age_max: 6, duration: 30, duration_max: null, duration_prep: 0,
+    difficulte: 'beginner', autonomie: true, intensity: 'leger',
+    is_premium: false, accept_free_credits: true,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-7', group_id: 'g7', lang: 'fr', type: 'activite',
+    title: 'Impressions nature avec feuilles',
+    vignette_url: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800&h=600&fit=crop',
+    categories: ['nature-plein-air', 'art-plastique'],
+    themes: ['Nature', 'Automne'],
+    competences: ['Observation'],
+    age_min: 2, age_max: 6, duration: 30, duration_max: null, duration_prep: 5,
+    difficulte: 'beginner', autonomie: false, intensity: 'leger',
+    is_premium: false, accept_free_credits: false,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-8', group_id: 'g8', lang: 'fr', type: 'alimentation',
+    title: 'Cuisine zéro déchet en famille',
+    vignette_url: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=800&h=600&fit=crop',
+    categories: ['cuisine', 'diy-recup'],
+    themes: ['Alimentation', 'Maison'],
+    competences: ['Autonomie'],
+    age_min: 3, age_max: 6, duration: 45, duration_max: null, duration_prep: 20,
+    difficulte: 'advanced', autonomie: false, intensity: 'moyen',
+    is_premium: false, accept_free_credits: false,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-9', group_id: 'g9', lang: 'fr', type: 'activite',
+    title: 'Chasse au trésor nature',
+    vignette_url: 'https://images.unsplash.com/photo-1476820865390-c52aeebb9891?w=800&h=600&fit=crop',
+    categories: ['nature-plein-air', 'jeux-symboliques'],
+    themes: ['Forêt', 'Animaux'],
+    competences: ['Observation'],
+    age_min: 3, age_max: 6, duration: 60, duration_max: null, duration_prep: 15,
+    difficulte: 'advanced', autonomie: false, intensity: 'intense',
+    is_premium: false, accept_free_credits: true,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-10', group_id: 'g10', lang: 'fr', type: 'activite',
+    title: 'Pâtes à modeler maison à la farine',
+    vignette_url: 'https://images.unsplash.com/photo-1560421683-6856ea585c78?w=800&h=600&fit=crop',
+    categories: ['diy-recup', 'sensoriel', 'motricite-fine'],
+    themes: ['Maison'],
+    competences: ['Motricité fine'],
+    age_min: 1, age_max: 4, duration: 20, duration_max: null, duration_prep: 10,
+    difficulte: 'beginner', autonomie: true, intensity: 'leger',
+    is_premium: false, accept_free_credits: false,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-11', group_id: 'g11', lang: 'fr', type: 'motricite',
+    title: 'Parcours d\'équilibre avec coussins',
+    vignette_url: 'https://images.unsplash.com/photo-1551966775-a4ddc8df052b?w=800&h=600&fit=crop',
+    categories: ['motricite-globale'],
+    themes: ['Maison', 'Corps humain'],
+    competences: ['Équilibre', 'Coordination'],
+    age_min: 2, age_max: 5, duration: 20, duration_max: 30, duration_prep: 5,
+    difficulte: 'beginner', autonomie: true, intensity: 'moyen',
+    is_premium: false, accept_free_credits: false,
+    materiel_json: null,
+  } as Ressource,
+  {
+    id: 'demo-act-12', group_id: 'g12', lang: 'fr', type: 'activite',
+    title: 'Tri sensoriel de graines et légumineuses',
+    vignette_url: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&h=600&fit=crop',
+    categories: ['motricite-fine', 'sensoriel'],
+    themes: ['Jardin & plantes'],
+    competences: ['Motricité fine', 'Concentration'],
+    age_min: 2, age_max: 5, duration: 15, duration_max: null, duration_prep: 5,
+    difficulte: 'beginner', autonomie: true, intensity: 'leger',
+    is_premium: false, accept_free_credits: false,
+    materiel_json: null,
+  } as Ressource,
+]
+
+function hexToRgb(hex: string) {
+  const n = parseInt(hex.replace("#", ""), 16)
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
+}
 
 const translations = {
   fr: {
@@ -67,6 +223,16 @@ function ActivitesContent({ lang }: { lang: Language }) {
     clientFilters,
   } = useFilters()
 
+  // Dark mode detection
+  const [isDark, setIsDark] = useState(false)
+  useEffect(() => {
+    const check = () => setIsDark(document.documentElement.classList.contains('dark'))
+    check()
+    const obs = new MutationObserver(check)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+
   // États locaux
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
   const [activites, setActivites] = useState<Ressource[]>([])
@@ -105,7 +271,7 @@ function ActivitesContent({ lang }: { lang: Language }) {
         types: ['activite', 'motricite', 'alimentation']
       })
 
-      setActivites(data)
+      setActivites(data.length > 0 ? data : DEMO_RESSOURCES)
       setIsLoading(false)
     }
 
@@ -129,40 +295,111 @@ function ActivitesContent({ lang }: { lang: Language }) {
   }, [filters.search])
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark pt-8">
+    <div className="min-h-screen bg-background dark:bg-background-dark pt-15">
       {/* Header */}
       <div className="bg-surface dark:bg-surface-dark" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Category Pills */}
-          <div className="flex justify-center gap-2 mb-6 flex-wrap">
-            {/* Bouton "Toutes" */}
-            <button
-              onClick={() => setFilters({ categories: [] })}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                filters.categories.length === 0
-                  ? 'bg-[#5D5A4E] text-white shadow-apple'
-                  : 'bg-surface-secondary dark:bg-surface-dark text-foreground-secondary dark:text-foreground-dark-secondary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
-              }`}
-              style={filters.categories.length !== 0 ? { border: '1px solid var(--border)' } : undefined}
-            >
-              {t.all}
-            </button>
-            {/* Catégories */}
+          {/* Category Pills — Gemstone style */}
+          <div className="flex justify-center gap-2.5 mb-6 flex-wrap">
+            {/* Bouton "Toutes" — neutral gem */}
+            {(() => {
+              const isAllActive = filters.categories.length === 0
+              const s = gemPillStyle('neutral', isAllActive, isDark)
+              return (
+                <button
+                  onClick={() => setFilters({ categories: [] })}
+                  className="transition-all duration-300 active:scale-[0.97]"
+                  style={s.wrapper}
+                >
+                  <div
+                    style={{ ...s.inner, padding: '8px 18px' }}
+                  >
+                    {isAllActive && <span aria-hidden style={s.frost} />}
+                    {isAllActive && <span aria-hidden style={s.shine} />}
+                    <span style={{ position: 'relative', zIndex: 2 }}>{t.all}</span>
+                  </div>
+                </button>
+              )
+            })()}
+            {/* Catégories avec couleurs gemme */}
             {CATEGORIES.map((cat) => {
               const isActive = filters.categories.includes(cat.value)
+              const gem = cat.gem || 'sage'
+              const g = GEMS[gem as GemColor]
+              const rgb = hexToRgb(isDark ? g.dark : g.light)
+              const glowRGB = isDark ? g.glowDark : g.glow
+
               return (
                 <button
                   key={cat.value}
                   onClick={() => toggleArrayValue('categories', cat.value)}
-                  className={`px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-                    isActive
-                      ? 'bg-[#A8B5A0] text-white shadow-apple'
-                      : 'bg-surface-secondary dark:bg-surface-dark text-foreground-secondary dark:text-foreground-dark-secondary hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
-                  }`}
-                  style={!isActive ? { border: '1px solid var(--border)' } : undefined}
+                  className="transition-all duration-300 active:scale-[0.97]"
+                  style={{
+                    borderRadius: 20,
+                    padding: 1.5,
+                    background: isActive
+                      ? `linear-gradient(135deg, rgba(${glowRGB},0.7) 0%, rgba(${glowRGB},0.4) 50%, rgba(${glowRGB},0.6) 100%)`
+                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(200,205,215,0.45)'),
+                    boxShadow: isActive
+                      ? `0 0 14px rgba(${glowRGB},${isDark ? 0.45 : 0.30}), 0 2px 8px rgba(0,0,0,${isDark ? 0.2 : 0.06}), inset 0 0.5px 0 rgba(255,255,255,${isDark ? 0.15 : 0.45})`
+                      : `0 1px 4px rgba(0,0,0,${isDark ? 0.15 : 0.04}), inset 0 0.5px 0 rgba(255,255,255,${isDark ? 0.06 : 0.45})`,
+                  }}
                 >
-                  <span>{cat.emoji}</span>
-                  <span className="hidden sm:inline">{cat.label[lang]}</span>
+                  <div
+                    className="flex items-center gap-1.5"
+                    style={{
+                      position: 'relative',
+                      padding: '8px 14px',
+                      borderRadius: 18.5,
+                      fontSize: 13,
+                      fontWeight: 650,
+                      letterSpacing: '-0.01em',
+                      overflow: 'hidden',
+                      color: isActive
+                        ? (isDark ? g.textDark : g.text)
+                        : (isDark ? '#C8CED6' : '#5D5A4E'),
+                      background: isActive
+                        ? `linear-gradient(170deg, rgba(${rgb.r},${rgb.g},${rgb.b},${isDark ? 0.26 : 0.34}) 0%, rgba(${rgb.r},${rgb.g},${rgb.b},${isDark ? 0.20 : 0.28}) 50%, rgba(${rgb.r},${rgb.g},${rgb.b},${isDark ? 0.24 : 0.32}) 100%)`
+                        : (isDark ? 'rgba(30,30,34,0.80)' : 'rgba(255,255,255,0.88)'),
+                      backdropFilter: isActive ? 'blur(12px) saturate(140%)' : 'none',
+                      WebkitBackdropFilter: isActive ? 'blur(12px) saturate(140%)' : 'none',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    {/* Frost overlay for active state */}
+                    {isActive && (
+                      <span
+                        aria-hidden
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          pointerEvents: 'none',
+                          background: isDark
+                            ? 'linear-gradient(170deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.04) 100%)'
+                            : 'linear-gradient(170deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.38) 45%, rgba(255,255,255,0.42) 100%)',
+                          borderRadius: 18.5,
+                        }}
+                      />
+                    )}
+                    {/* Glass shine */}
+                    {isActive && (
+                      <span
+                        aria-hidden
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: '8%',
+                          right: '8%',
+                          height: '45%',
+                          pointerEvents: 'none',
+                          background: `linear-gradient(180deg, rgba(255,255,255,${isDark ? 0.10 : 0.28}) 0%, rgba(255,255,255,${isDark ? 0.02 : 0.05}) 50%, transparent 100%)`,
+                          borderRadius: '18.5px 18.5px 50% 50%',
+                        }}
+                      />
+                    )}
+                    <span style={{ position: 'relative', zIndex: 2 }}><FilterIcon value={cat.value} size={16} /></span>
+                    <span className="hidden sm:inline" style={{ position: 'relative', zIndex: 2 }}>{cat.label[lang]}</span>
+                  </div>
                 </button>
               )
             })}
@@ -213,7 +450,7 @@ function ActivitesContent({ lang }: { lang: Language }) {
 
           {/* Active filters badges */}
           {hasActiveFilters && (
-            <div className="max-w-xl mx-auto">
+            <div className="max-w-4xl mx-auto">
               <ActiveFilters
                 filters={filters}
                 toggleArrayValue={toggleArrayValue}
@@ -276,12 +513,14 @@ function ActivitesContent({ lang }: { lang: Language }) {
               {t.noResultsHelp}
             </p>
             {hasActiveFilters && (
-              <button
+              <Button
+                gem="terracotta"
+                size="sm"
                 onClick={clearFilters}
-                className="mt-4 px-4 py-2 rounded-full text-sm font-medium bg-[#A8B5A0] text-white hover:bg-[#A8B5A0]/90 transition-colors"
+                className="mt-4"
               >
                 {FILTER_TRANSLATIONS[lang].clearAll}
-              </button>
+              </Button>
             )}
           </div>
         ) : (

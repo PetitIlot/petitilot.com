@@ -211,7 +211,7 @@ export default function AdminResourcesPage() {
 
         {/* Resources List */}
         {resources.length === 0 ? (
-          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-12 text-center" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-elevation-1 p-12 text-center" style={{ border: '1px solid var(--border)' }}>
             <div className="w-16 h-16 bg-sage/20 dark:bg-sage/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8" style={{ color: 'var(--icon-sage)' }} />
             </div>
@@ -221,7 +221,7 @@ export default function AdminResourcesPage() {
         ) : (
           <div className="space-y-6">
             {resources.map(resource => (
-              <div key={resource.id} className="bg-surface dark:bg-surface-dark rounded-2xl shadow-apple overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+              <div key={resource.id} className="bg-surface dark:bg-surface-dark rounded-2xl shadow-elevation-1 overflow-hidden" style={{ border: '1px solid var(--border)' }}>
                 <div className="p-6">
                   <div className="flex gap-6">
                     {/* Preview Image */}
@@ -241,12 +241,9 @@ export default function AdminResourcesPage() {
 
                     {/* Content */}
                     <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-foreground dark:text-foreground-dark mb-2">
+                      <h3 className="text-xl font-semibold text-foreground dark:text-foreground-dark mb-4">
                         {resource.title}
                       </h3>
-                      <p className="text-sm text-foreground-secondary dark:text-foreground-dark-secondary line-clamp-2 mb-4">
-                        {resource.description}
-                      </p>
 
                       <div className="flex flex-wrap gap-4 text-sm">
                         <span className="flex items-center gap-1 text-foreground-secondary dark:text-foreground-dark-secondary">
@@ -294,18 +291,18 @@ export default function AdminResourcesPage() {
 
                   <div className="flex gap-3">
                     <Button
+                      gem="destructive"
                       variant="outline"
                       onClick={() => setRejectModal({ resourceId: resource.id, open: true })}
                       disabled={processingId === resource.id}
-                      className="border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
                     >
                       <XCircle className="w-4 h-4 mr-1" />
                       {t.reject}
                     </Button>
                     <Button
+                      gem="sage"
                       onClick={() => handleApprove(resource.id)}
                       disabled={processingId === resource.id}
-                      className="bg-sage hover:bg-sage-light text-white"
                     >
                       {processingId === resource.id ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
@@ -341,15 +338,14 @@ export default function AdminResourcesPage() {
                     setRejectModal({ resourceId: '', open: false })
                     setRejectReason('')
                   }}
-                  className="text-foreground dark:text-foreground-dark"
                   style={{ border: '1px solid var(--border)' }}
                 >
                   {t.cancel}
                 </Button>
                 <Button
+                  gem="destructive"
                   onClick={handleReject}
                   disabled={!rejectReason.trim() || processingId === rejectModal.resourceId}
-                  className="bg-red-500 hover:bg-red-600 text-white"
                 >
                   {t.confirmReject}
                 </Button>

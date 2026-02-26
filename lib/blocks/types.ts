@@ -11,23 +11,28 @@
 
 // Types de blocs disponibles (v3)
 export type BlockType =
-  | 'title'          // Bloc titre complet avec badges, tags, âge, durée, difficulté
-  | 'image'          // Image unique (URL saisie directement)
-  | 'carousel'       // Galerie/carrousel d'images (URLs saisies)
-  | 'carousel-video' // Galerie/carrousel de vidéos
-  | 'creator'        // Widget créateur
-  | 'text'           // Zone de texte riche (Tiptap)
-  | 'list'           // Liste simple (items custom)
-  | 'list-links'     // Liste avec liens (items + URLs)
-  | 'purchase'       // Bouton achat/téléchargement + upload fichier
-  | 'video'          // Lecteur vidéo embed (URL saisie)
-  | 'separator'      // Séparateur visuel
-  | 'image-grid'     // Grille d'images (2-6 images)
-  | 'faq'            // FAQ / Accordéon
-  | 'material'       // Liste matériel (depuis materiel_json du wizard)
-  | 'download'       // Téléchargement gratuit (fichier + bouton download)
-  | 'paid-video'     // Vidéo payante (lecteur caché derrière achat)
-  | 'paywall'        // Rideau payant (voile flou pleine largeur)
+  | 'title'            // Bloc titre complet avec badges, tags, âge, durée, difficulté
+  | 'image'            // Image unique (URL saisie directement)
+  | 'carousel'         // Galerie/carrousel d'images (URLs saisies)
+  | 'carousel-video'   // Galerie/carrousel de vidéos
+  | 'creator'          // Widget créateur
+  | 'text'             // Zone de texte riche (Tiptap)
+  | 'list'             // Liste simple (items custom)
+  | 'list-links'       // Liste avec liens (items + URLs)
+  | 'purchase'         // Bouton achat/téléchargement + upload fichier
+  | 'video'            // Lecteur vidéo embed (URL saisie)
+  | 'separator'        // Séparateur visuel
+  | 'image-grid'       // Grille d'images (2-6 images)
+  | 'faq'              // FAQ / Accordéon
+  | 'material'         // Liste matériel (depuis materiel_json du wizard)
+  | 'download'         // Téléchargement gratuit (fichier + bouton download)
+  | 'paywall'          // Rideau payant (voile flou pleine largeur)
+  | 'activity-cards'   // Carrousel de cartes activités (vitrine dynamique)
+  // ── Blocs pages créateur ──────────────────────────────────────────────────
+  | 'profile-hero'     // Carte profil créateur (avatar, nom, bio, socials, follow)
+  | 'creator-resources'// Grille dynamique des ressources du créateur
+  | 'creator-featured' // Mise en avant éditoriale d'une ressource
+  | 'social-widget'    // Widget réseau social (Instagram, YouTube, TikTok, etc.)
 
 // ============================================
 // Position libre sur canvas (en pixels)
@@ -39,6 +44,7 @@ export interface BlockPosition {
   width: number       // Largeur en pixels
   height: number | 'auto'  // Hauteur en pixels ou 'auto'
   zIndex: number      // Ordre d'empilement (z-index)
+  scale?: number      // Échelle du contenu (1 = normal). Tab+resize pour changer.
 }
 
 // Style personnalisable d'un bloc (v3 — enrichi)
@@ -90,6 +96,9 @@ export type TitleTagsStyle = 'gem' | 'gem-outline' | 'classic'
 export type TitleTagsShape = 'pill' | 'square'
 export type TitleTagsAlignment = 'left' | 'center' | 'right'
 export type BorderAnimationType = 'none' | 'traveling-light' | 'pulsating-shine' | 'gradient-spin'
+export type TitleShareVariant = 'classic' | 'compact'
+export type TitleShareStyle = 'gem' | 'gem-outline' | 'classic'
+export type TitleShareShape = 'square' | 'round'
 
 // Import GemColor type (sage, mauve, rose, sky, etc.)
 export type GemColor = 'sage' | 'mauve' | 'terracotta' | 'rose' | 'sky' | 'amber' | 'neutral' | 'destructive' | 'gold'
@@ -115,8 +124,8 @@ export interface TitleBlockData {
   // Bordure
   borderRadius?: 'rounded' | 'square'  // Type de coins
 
-  // === v4: Visibilité des 3 éléments ===
-  elements?: { showTitle: boolean; showSocial: boolean; showTags: boolean }
+  // === v4: Visibilité des éléments ===
+  elements?: { showTitle: boolean; showSocial: boolean; showTags: boolean; showShare?: boolean }
 
   // === v4: Config bordure titre ===
   titleBorder?: { enabled: boolean; color?: string; width?: number; animation?: TitleBorderAnimation }
@@ -146,10 +155,21 @@ export interface TitleBlockData {
     color?: string
   }
 
+  // === v4: Config partage ===
+  share?: {
+    variant: TitleShareVariant
+    style: TitleShareStyle
+    shape: TitleShareShape
+    text?: string        // Texte du bouton (défaut: 'Partager')
+    gem?: GemColor       // Couleur gem (si style gem/gem-outline)
+    classicColor?: string
+  }
+
   // === v4: Style par élément (quand widget divisé) ===
   titleElementStyle?: TitleElementStyle
   socialElementStyle?: TitleElementStyle
   tagsElementStyle?: TitleElementStyle
+  shareElementStyle?: TitleElementStyle
 
   // DEPRECATED v2.1 fields (kept for backwards compat, ignored)
   showBadges?: boolean
@@ -208,7 +228,6 @@ export interface CreatorBlockData {
   variant: 'full' | 'compact' | 'minimal' | 'collaborators'  // Style d'affichage
   showFollowButton: boolean
   showStats: boolean         // Badges ressources + abonnés
-  bio?: string               // Biographie courte (variantes compact + complet)
   socialLinks?: SocialLink[] // Liens réseaux sociaux avec toggle individuel
   // Couleurs
   textColor?: string
@@ -450,27 +469,6 @@ export interface DownloadBlockData {
 }
 
 // ============================================
-// Bloc Vidéo payante (NOUVEAU v4)
-// ============================================
-
-export interface PaidVideoBlockData {
-  videoUrl?: string             // URL Cloudinary après upload
-  videoPublicId?: string        // Public ID Cloudinary
-  thumbnailUrl?: string         // Thumbnail auto ou custom
-  // Style bouton
-  buttonText?: string           // "Débloquer la vidéo"
-  buttonStyle?: MonetizationButtonStyle
-  buttonShape?: MonetizationButtonShape
-  buttonColor?: string
-  buttonGem?: GemColor
-  // Style bloc
-  backgroundColor?: string
-  borderColor?: string
-  borderRadius?: 'rounded' | 'square'
-  aspectRatio?: '16:9' | '9:16' | '1:1' | '4:5'
-}
-
-// ============================================
 // Bloc Paywall / Rideau payant (NOUVEAU v4)
 // ============================================
 
@@ -486,6 +484,103 @@ export interface PaywallBlockData {
   overlayColor?: string         // Couleur overlay semi-transparent
   overlayOpacity?: number       // 0-100, défaut 60
   message?: string              // Message affiché ("Contenu premium")
+}
+
+// ============================================
+// Bloc Carrousel de cartes activités (v4)
+// ============================================
+
+export type ActivityCardsPresetType =
+  | 'random-all'        // Aléatoire parmi toutes les ressources
+  | 'most-viewed'       // + de vues
+  | 'top-rated'         // Mieux notés
+  | 'most-purchased'    // + acheté / téléchargé
+  | 'same-type'         // Même type que la ressource courante
+  | 'same-theme'        // Même thème (intersection tableau)
+  | 'same-competence'   // Même compétence
+
+export type ActivityCardStyle = 'classic' | 'landscape-large' | 'landscape-small'
+// classic           = ActivityCard (vertical, page ressources)
+// landscape-large   = FeaturedCarouselCard variant="large" (portrait 450px)
+// landscape-small   = FeaturedCarouselCard variant="small" (immersif overlay 200px)
+
+export type ActivityCardsLayout = 'scroll-compact' | 'scroll-wide' | 'spotlight' | 'vertical-stack'
+// scroll-compact    = style Hero (cartes étroites, défilement dense)
+// scroll-wide       = style FeaturedCarousel (larges cartes, espace généreux)
+// spotlight         = focus centré (carte active plein size, voisines réduites)
+// vertical-stack    = empilage vertical (liste scrollable, full width)
+
+export interface ActivityCardsBlockData {
+  cardStyle: ActivityCardStyle
+  layout: ActivityCardsLayout
+  selectionMode: 'preset' | 'manual'
+  preset?: ActivityCardsPresetType
+  manualIds?: string[]         // IDs ressources en mode manuel
+  limit: number                // 2–12, défaut 4
+  showArrows: boolean
+  showDots: boolean            // uniquement layout spotlight (index)
+  title?: string               // Titre de section optionnel
+}
+
+// ============================================
+// Blocs pages créateur (v4)
+// ============================================
+
+// Bloc Profil Héro — éléments détachables, données auto depuis le profil créateur
+export interface ProfileHeroBlockData {
+  layout: 'horizontal' | 'vertical' | 'centered'
+  avatarSize: 'sm' | 'md' | 'lg'
+  variant: 'full' | 'compact' | 'mini'
+  elements: {
+    showAvatar: boolean
+    showName: boolean
+    showBio: boolean
+    showThemes: boolean
+    showStats: boolean
+    showSocials: boolean
+    showFollowButton: boolean
+  }
+  titleColor?: string
+  backgroundColor?: string
+  borderRadius?: 'rounded' | 'square'
+}
+
+// Bloc Ressources Créateur — grille dynamique Supabase
+export interface CreatorResourcesBlockData {
+  layout: 'grid' | 'carousel' | 'list'
+  columns: 2 | 3 | 4
+  maxItems: 4 | 6 | 8 | 12
+  filterType?: string[]   // Vide = tous les types
+  title?: string
+  showTitle: boolean
+  borderRadius?: 'rounded' | 'square'
+}
+
+// Bloc Ressource Mise en Avant — éditoriale
+export interface CreatorFeaturedBlockData {
+  resourceId?: string
+  style: 'card' | 'banner' | 'minimal'
+  showDescription: boolean
+  showPrice: boolean
+  showCta: boolean
+  ctaText?: string
+  borderRadius?: 'rounded' | 'square'
+}
+
+// Bloc Widget Social — 3 variantes mini/compact/full
+export type SocialWidgetPlatform = 'instagram' | 'youtube' | 'tiktok' | 'facebook' | 'amazon' | 'pinterest' | 'website' | 'newsletter'
+export type SocialWidgetVariant = 'mini' | 'compact' | 'full'
+
+export interface SocialWidgetBlockData {
+  platform: SocialWidgetPlatform
+  variant: SocialWidgetVariant
+  handle?: string
+  followerCount?: number
+  description?: string
+  buttonText?: string
+  customColor?: string
+  showFollowerCount?: boolean
+  linkUrl?: string
 }
 
 // ============================================
@@ -508,8 +603,12 @@ export type BlockData =
   | { type: 'faq'; data: FAQBlockData }
   | { type: 'material'; data: MaterialBlockData }
   | { type: 'download'; data: DownloadBlockData }
-  | { type: 'paid-video'; data: PaidVideoBlockData }
   | { type: 'paywall'; data: PaywallBlockData }
+  | { type: 'activity-cards'; data: ActivityCardsBlockData }
+  | { type: 'profile-hero'; data: ProfileHeroBlockData }
+  | { type: 'creator-resources'; data: CreatorResourcesBlockData }
+  | { type: 'creator-featured'; data: CreatorFeaturedBlockData }
+  | { type: 'social-widget'; data: SocialWidgetBlockData }
 
 // ============================================
 // Structure complète d'un bloc
@@ -657,8 +756,9 @@ export const BLOCK_PRESETS: Record<BlockType, Partial<ContentBlock>> = {
       titleSize: 32,
       alignment: 'left',
       borderRadius: 'rounded',
-      elements: { showTitle: true, showSocial: true, showTags: true },
+      elements: { showTitle: true, showSocial: true, showTags: true, showShare: true },
       social: { variant: 'classic', style: 'gem' },
+      share: { variant: 'classic', style: 'gem', shape: 'square', text: 'Partager', gem: 'sage' },
       tags: {
         variant: 'classic',
         alignment: 'left',
@@ -823,17 +923,6 @@ export const BLOCK_PRESETS: Record<BlockType, Partial<ContentBlock>> = {
       borderRadius: 'rounded'
     } as DownloadBlockData
   },
-  'paid-video': {
-    position: { x: 20, y: 20, width: 560, height: 315, zIndex: 1 },
-    data: {
-      buttonText: 'Débloquer la vidéo',
-      buttonStyle: 'gem',
-      buttonShape: 'rounded',
-      buttonGem: 'gold',
-      borderRadius: 'rounded',
-      aspectRatio: '16:9'
-    } as PaidVideoBlockData
-  },
   // paywall: supprimé — maintenant géré comme overlay canvas-level via CanvasConfig.paywall
   paywall: {
     position: { x: 0, y: 400, width: 800, height: 80, zIndex: 99 },
@@ -846,8 +935,93 @@ export const BLOCK_PRESETS: Record<BlockType, Partial<ContentBlock>> = {
       overlayOpacity: 60,
       message: 'Contenu premium'
     } as PaywallBlockData
-  }
+  },
+  'activity-cards': {
+    position: { x: 20, y: 20, width: 760, height: 'auto', zIndex: 1 },
+    data: {
+      cardStyle: 'landscape-large',
+      layout: 'scroll-wide',
+      selectionMode: 'preset',
+      preset: 'same-type',
+      limit: 4,
+      showArrows: true,
+      showDots: false,
+      title: ''
+    } as ActivityCardsBlockData
+  },
+  'profile-hero': {
+    position: { x: 20, y: 20, width: 760, height: 'auto', zIndex: 10 },
+    style: { backgroundPreset: 'transparent', borderRadius: 20, padding: 32 },
+    data: {
+      layout: 'horizontal',
+      avatarSize: 'lg',
+      variant: 'full',
+      elements: {
+        showAvatar: true,
+        showName: true,
+        showBio: true,
+        showThemes: true,
+        showStats: true,
+        showSocials: true,
+        showFollowButton: true,
+      },
+      borderRadius: 'rounded',
+    } as ProfileHeroBlockData
+  },
+  'creator-resources': {
+    position: { x: 20, y: 20, width: 760, height: 'auto', zIndex: 1 },
+    data: {
+      layout: 'grid',
+      columns: 3,
+      maxItems: 6,
+      showTitle: true,
+      title: 'Mes ressources',
+      borderRadius: 'rounded',
+    } as CreatorResourcesBlockData
+  },
+  'creator-featured': {
+    position: { x: 20, y: 20, width: 500, height: 'auto', zIndex: 1 },
+    style: { backgroundPreset: 'surface', borderRadius: 16, padding: 24, border: true },
+    data: {
+      style: 'card',
+      showDescription: true,
+      showPrice: true,
+      showCta: true,
+      ctaText: 'Voir la ressource',
+      borderRadius: 'rounded',
+    } as CreatorFeaturedBlockData
+  },
+  'social-widget': {
+    position: { x: 20, y: 20, width: 300, height: 'auto', zIndex: 1 },
+    style: { backgroundPreset: 'surface', borderRadius: 16, padding: 20, border: true },
+    data: {
+      platform: 'instagram',
+      variant: 'compact',
+      showFollowerCount: true,
+      buttonText: 'Suivre',
+    } as SocialWidgetBlockData
+  },
 }
+
+// ============================================
+// Blocs disponibles sur les pages créateur
+// ============================================
+
+export const CREATOR_PAGE_BLOCK_TYPES: BlockType[] = [
+  'profile-hero',
+  'creator-resources',
+  'creator-featured',
+  'social-widget',
+  'text',
+  'image',
+  'carousel',
+  'image-grid',
+  'video',
+  'separator',
+  'list',
+  'list-links',
+  'faq',
+]
 
 // ============================================
 // Helpers pour l'historique (Undo/Redo)

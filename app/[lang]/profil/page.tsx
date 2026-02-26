@@ -10,8 +10,6 @@ import { getBookmarkedRessources, getBookmarkCountByType } from '@/lib/bookmarks
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import ActivityCard from '@/components/cards/ActivityCard'
-import BookCard from '@/components/cards/BookCard'
-import GameCard from '@/components/cards/GameCard'
 import Link from 'next/link'
 
 const translations = {
@@ -148,8 +146,6 @@ export default function ProfilPage({
   const [profile, setProfile] = useState<Profile | null>(null)
   const [activeTab, setActiveTab] = useState<'activities' | 'newsletter'>('activities')
   const [activities, setActivities] = useState<Ressource[]>([])
-  const [books, setBooks] = useState<Ressource[]>([])
-  const [games, setGames] = useState<Ressource[]>([])
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [freeCredits, setFreeCredits] = useState(0)
   const [paidCredits, setPaidCredits] = useState(0)
@@ -206,16 +202,12 @@ export default function ProfilPage({
       }
 
       // Fetch bookmarked ressources
-      const [activitiesData, booksData, gamesData, countsData] = await Promise.all([
+      const [activitiesData, countsData] = await Promise.all([
         getBookmarkedRessources(authUser.id, 'activite'),
-        getBookmarkedRessources(authUser.id, 'livre'),
-        getBookmarkedRessources(authUser.id, 'jeu'),
         getBookmarkCountByType(authUser.id)
       ])
 
       setActivities(activitiesData)
-      setBooks(booksData)
-      setGames(gamesData)
       setCounts(countsData)
       setIsLoading(false)
     }
@@ -249,8 +241,6 @@ export default function ProfilPage({
   }
 
   const activitiesCount = (counts.activite || 0) + (counts.motricite || 0) + (counts.alimentation || 0)
-  const booksCount = counts.livre || 0
-  const gamesCount = counts.jeu || 0
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark py-12 md:py-16 pt-16">
@@ -275,9 +265,8 @@ export default function ProfilPage({
             </div>
             <Button
               onClick={handleLogout}
+              gem="neutral"
               variant="outline"
-              className="text-foreground dark:text-foreground-dark hover:bg-black/[0.05] dark:hover:bg-white/[0.08]"
-              style={{ border: '1px solid var(--border)' }}
             >
               <LogOut className="w-4 h-4 mr-2" />
               {t.logout}
@@ -292,7 +281,7 @@ export default function ProfilPage({
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
         >
-          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
             <div className="flex items-center justify-between">
               <Palette className="w-8 h-8" style={{ color: 'var(--icon-sage)' }} />
               <div className="text-right">
@@ -303,7 +292,7 @@ export default function ProfilPage({
           </div>
 
           {/* MASQUÉ TEMPORAIREMENT - Droits d'auteur à clarifier
-          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
             <div className="flex items-center justify-between">
               <BookOpen className="w-8 h-8" style={{ color: 'var(--icon-sky)' }} />
               <div className="text-right">
@@ -313,7 +302,7 @@ export default function ProfilPage({
             </div>
           </div>
 
-          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
             <div className="flex items-center justify-between">
               <Dumbbell className="w-8 h-8" style={{ color: 'var(--icon-terracotta)' }} />
               <div className="text-right">
@@ -324,7 +313,7 @@ export default function ProfilPage({
           </div>
           */}
 
-          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1" style={{ border: '1px solid var(--border)' }}>
             <div className="flex items-center justify-between">
               <Mail className="w-8 h-8" style={{ color: 'var(--icon-sage)' }} />
               <div className="text-right">
@@ -347,7 +336,7 @@ export default function ProfilPage({
           {/* Free Credits - Green */}
           <Link href={`/${lang}/profil/credits`}>
             <div
-              className="rounded-2xl p-5 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
+              className="rounded-2xl p-5 shadow-elevation-1 hover:shadow-elevation-2 transition-shadow cursor-pointer"
               style={{
                 background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
                 border: '1px solid rgba(255,255,255,0.2)'
@@ -364,7 +353,7 @@ export default function ProfilPage({
           {/* Paid Credits - Gold */}
           <Link href={`/${lang}/profil/credits`}>
             <div
-              className="rounded-2xl p-5 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
+              className="rounded-2xl p-5 shadow-elevation-1 hover:shadow-elevation-2 transition-shadow cursor-pointer"
               style={{
                 background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                 border: '1px solid rgba(255,255,255,0.2)'
@@ -381,7 +370,7 @@ export default function ProfilPage({
           {/* Buy Credits CTA */}
           <Link href={`/${lang}/profil/credits`}>
             <div
-              className="bg-surface dark:bg-surface-dark rounded-2xl p-5 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer h-full flex flex-col justify-center"
+              className="bg-surface dark:bg-surface-dark rounded-2xl p-5 shadow-elevation-1 hover:shadow-elevation-2 transition-shadow cursor-pointer h-full flex flex-col justify-center"
               style={{ border: '1px solid var(--border)' }}
             >
               <p className="text-foreground-secondary dark:text-foreground-dark-secondary text-xs">{t.credits}</p>
@@ -392,7 +381,7 @@ export default function ProfilPage({
           {/* My Purchases */}
           <Link href={`/${lang}/profil/achats`}>
             <div
-              className="bg-surface dark:bg-surface-dark rounded-2xl p-5 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer h-full flex flex-col justify-center"
+              className="bg-surface dark:bg-surface-dark rounded-2xl p-5 shadow-elevation-1 hover:shadow-elevation-2 transition-shadow cursor-pointer h-full flex flex-col justify-center"
               style={{ border: '1px solid var(--border)' }}
             >
               <p className="text-foreground-secondary dark:text-foreground-dark-secondary text-xs">{t.myPurchases}</p>
@@ -410,7 +399,7 @@ export default function ProfilPage({
         >
           <Link href={`/${lang}/profil/alertes`}>
             <div
-              className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
+              className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1 hover:shadow-elevation-2 transition-shadow cursor-pointer"
               style={{ border: '1px solid var(--border)' }}
             >
               <div className="flex items-center justify-between">
@@ -438,7 +427,7 @@ export default function ProfilPage({
           >
             <Link href={isOnboardedCreator ? `/${lang}/createur` : `/${lang}/inscription-createur`}>
               <div
-                className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-apple hover:shadow-apple-hover transition-shadow cursor-pointer"
+                className="bg-surface dark:bg-surface-dark rounded-2xl p-6 shadow-elevation-1 hover:shadow-elevation-2 transition-shadow cursor-pointer"
                 style={{ border: '1px solid var(--border)' }}
               >
                 <div className="flex items-center justify-between">
@@ -467,18 +456,14 @@ export default function ProfilPage({
           transition={{ delay: 0.2 }}
         >
           <div className="flex gap-2 mb-6 flex-wrap">
-            <button
+            <Button
               onClick={() => setActiveTab('activities')}
-              className={`px-6 py-3 rounded-full font-semibold transition-colors ${
-                activeTab === 'activities'
-                  ? 'bg-sage text-white'
-                  : 'bg-surface dark:bg-surface-dark text-foreground dark:text-foreground-dark hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
-              }`}
-              style={activeTab !== 'activities' ? { border: '1px solid var(--border)' } : undefined}
+              gem="rose"
+              variant={activeTab === 'activities' ? 'default' : 'outline'}
             >
-              <Heart className="w-4 h-4 inline mr-2" />
+              <Heart className="w-4 h-4 mr-2" />
               {t.myActivities}
-            </button>
+            </Button>
             {/* MASQUÉ TEMPORAIREMENT - Droits d'auteur à clarifier
             <button
               onClick={() => setActiveTab('books')}
@@ -505,29 +490,25 @@ export default function ProfilPage({
               {t.myGames}
             </button>
             */}
-            <button
+            <Button
               onClick={() => setActiveTab('newsletter')}
-              className={`px-6 py-3 rounded-full font-semibold transition-colors ${
-                activeTab === 'newsletter'
-                  ? 'bg-foreground dark:bg-foreground-dark text-surface dark:text-surface-dark'
-                  : 'bg-surface dark:bg-surface-dark text-foreground dark:text-foreground-dark hover:bg-black/[0.05] dark:hover:bg-white/[0.08]'
-              }`}
-              style={activeTab !== 'newsletter' ? { border: '1px solid var(--border)' } : undefined}
+              gem="sage"
+              variant={activeTab === 'newsletter' ? 'default' : 'outline'}
             >
-              <Mail className="w-4 h-4 inline mr-2" />
+              <Mail className="w-4 h-4 mr-2" />
               Newsletter
-            </button>
+            </Button>
           </div>
 
           {/* Tab Content */}
-          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-6 md:p-8" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-elevation-1 p-6 md:p-8" style={{ border: '1px solid var(--border)' }}>
             {activeTab === 'activities' && (
               activities.length === 0 ? (
                 <div className="py-16 text-center">
                   <Heart className="w-16 h-16 text-foreground/20 dark:text-foreground-dark/20 mx-auto mb-4" />
                   <p className="text-foreground-secondary dark:text-foreground-dark-secondary mb-4">{t.noActivities}</p>
                   <Link href={`/${lang}/activites`}>
-                    <Button className="bg-sage hover:bg-sage-light text-white">
+                    <Button gem="sage">
                       {t.discover}
                     </Button>
                   </Link>
@@ -614,7 +595,7 @@ export default function ProfilPage({
                     <Button
                       onClick={handleToggleNewsletter}
                       variant="outline"
-                      className="border-terracotta text-terracotta hover:bg-terracotta/10"
+                      gem="terracotta"
                     >
                       {t.unsubscribe}
                     </Button>
@@ -625,7 +606,7 @@ export default function ProfilPage({
                       <p className="text-foreground-secondary dark:text-foreground-dark-secondary mb-4">{t.notSubscribedYet}</p>
                       <Button
                         onClick={handleToggleNewsletter}
-                        className="bg-sage hover:bg-sage-light text-white"
+                        gem="sage"
                       >
                         <Mail className="w-4 h-4 mr-2" />
                         {t.subscribe}

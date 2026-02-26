@@ -1,9 +1,12 @@
 'use client'
 
-import { X } from 'lucide-react'
+import React from 'react'
+import { X, Check } from 'lucide-react'
 import type { Language } from '@/lib/types'
 import type { ResourceFormData } from '../ResourceWizard'
 import AutocompleteTag, { TagItem } from './AutocompleteTag'
+import { GEMS, type GemColor } from '@/components/ui/button'
+import { FilterIcon } from '@/lib/constants/resourceIcons'
 
 const translations = {
   fr: {
@@ -54,18 +57,24 @@ const translations = {
 }
 
 // Types d'activité (catégories principales) - liste fermée
-const categoryOptions = [
-  { value: 'sensoriel', label: { fr: 'Sensoriel', en: 'Sensory', es: 'Sensorial' }, emoji: '🖐️' },
-  { value: 'motricite-fine', label: { fr: 'Motricité fine', en: 'Fine motor', es: 'Motricidad fina' }, emoji: '✂️' },
-  { value: 'motricite-globale', label: { fr: 'Motricité globale', en: 'Gross motor', es: 'Motricidad gruesa' }, emoji: '🏃' },
-  { value: 'art-plastique', label: { fr: 'Art plastique', en: 'Visual arts', es: 'Artes plásticas' }, emoji: '🎨' },
-  { value: 'nature-plein-air', label: { fr: 'Nature & plein air', en: 'Nature & outdoor', es: 'Naturaleza' }, emoji: '🌿' },
-  { value: 'diy-recup', label: { fr: 'DIY & récup', en: 'DIY & recycling', es: 'DIY & reciclaje' }, emoji: '♻️' },
-  { value: 'cuisine', label: { fr: 'Cuisine', en: 'Cooking', es: 'Cocina' }, emoji: '👩‍🍳' },
-  { value: 'jeux-symboliques', label: { fr: 'Jeux symboliques', en: 'Imaginative play', es: 'Juego simbólico' }, emoji: '🎭' },
-  { value: 'rituels-routines', label: { fr: 'Rituels & routines', en: 'Routines', es: 'Rutinas' }, emoji: '📋' },
-  { value: 'imprimables', label: { fr: 'Imprimables', en: 'Printables', es: 'Imprimibles' }, emoji: '🖨️' }
+// Chaque catégorie a sa couleur gemme distincte
+const categoryOptions: { value: string; label: Record<string, string>; emoji: string; gem: GemColor }[] = [
+  { value: 'sensoriel', label: { fr: 'Sensoriel', en: 'Sensory', es: 'Sensorial' }, emoji: '🖐️', gem: 'rose' },
+  { value: 'motricite-fine', label: { fr: 'Motricité fine', en: 'Fine motor', es: 'Motricidad fina' }, emoji: '✂️', gem: 'mauve' },
+  { value: 'motricite-globale', label: { fr: 'Motricité globale', en: 'Gross motor', es: 'Motricidad gruesa' }, emoji: '🏃', gem: 'sky' },
+  { value: 'art-plastique', label: { fr: 'Art plastique', en: 'Visual arts', es: 'Artes plásticas' }, emoji: '🎨', gem: 'terracotta' },
+  { value: 'nature-plein-air', label: { fr: 'Nature & plein air', en: 'Nature & outdoor', es: 'Naturaleza' }, emoji: '🌿', gem: 'sage' },
+  { value: 'diy-recup', label: { fr: 'DIY & récup', en: 'DIY & recycling', es: 'DIY & reciclaje' }, emoji: '♻️', gem: 'amber' },
+  { value: 'cuisine', label: { fr: 'Cuisine', en: 'Cooking', es: 'Cocina' }, emoji: '👩‍🍳', gem: 'terracotta' },
+  { value: 'jeux-symboliques', label: { fr: 'Jeux symboliques', en: 'Imaginative play', es: 'Juego simbólico' }, emoji: '🎭', gem: 'mauve' },
+  { value: 'rituels-routines', label: { fr: 'Rituels & routines', en: 'Routines', es: 'Rutinas' }, emoji: '📋', gem: 'neutral' },
+  { value: 'imprimables', label: { fr: 'Imprimables', en: 'Printables', es: 'Imprimibles' }, emoji: '🖨️', gem: 'sky' }
 ]
+
+function hexToRgb(hex: string) {
+  const n = parseInt(hex.replace("#", ""), 16)
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
+}
 
 // Thèmes prédéfinis (avec possibilité d'ajout custom)
 const predefinedThemes: TagItem[] = [
@@ -157,6 +166,16 @@ interface StepCategoriesProps {
 export default function StepCategories({ formData, updateFormData, lang }: StepCategoriesProps) {
   const t = translations[lang]
 
+  // Detect dark mode
+  const [isDark, setIsDark] = React.useState(false)
+  React.useEffect(() => {
+    const check = () => setIsDark(document.documentElement.classList.contains('dark'))
+    check()
+    const obs = new MutationObserver(check)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+
   // Categories (liste fermée)
   const toggleCategory = (value: string) => {
     const current = formData.categories
@@ -222,41 +241,123 @@ export default function StepCategories({ formData, updateFormData, lang }: StepC
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="font-quicksand text-2xl font-bold text-[#5D5A4E]">{t.title}</h2>
-        <p className="text-[#5D5A4E]/60 mt-1">{t.subtitle}</p>
+        <h2 className="font-quicksand text-2xl font-bold text-[#5D5A4E] dark:text-white">{t.title}</h2>
+        <p className="text-[#5D5A4E]/60 dark:text-white/50 mt-1">{t.subtitle}</p>
       </div>
 
-      {/* Categories (Type d'activité) - Liste fermée */}
+      {/* Categories (Type d'activité) - Gemstone Buttons */}
       <div>
-        <label className="block text-sm font-medium text-[#5D5A4E] mb-2">
+        <label className="block text-sm font-medium text-[#5D5A4E] dark:text-[#C8CED6] mb-2">
           {t.categories}
         </label>
-        <p className="text-xs text-[#5D5A4E]/50 mb-3">{t.categoriesHelp}</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {categoryOptions.map(cat => (
-            <button
-              key={cat.value}
-              type="button"
-              onClick={() => toggleCategory(cat.value)}
-              className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
-                formData.categories.includes(cat.value)
-                  ? 'bg-[#A8B5A0] text-white'
-                  : 'bg-[#F5E6D3] text-[#5D5A4E] hover:bg-[#A8B5A0]/20'
-              }`}
-            >
-              <span>{cat.emoji}</span>
-              <span className="truncate">{cat.label[lang]}</span>
-            </button>
-          ))}
+        <p className="text-xs text-[#5D5A4E]/50 dark:text-[#C8CED6]/50 mb-3">{t.categoriesHelp}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {categoryOptions.map(cat => {
+            const selected = formData.categories.includes(cat.value)
+            const g = GEMS[cat.gem]
+            const rgb = hexToRgb(isDark ? g.dark : g.light)
+            const glowRGB = isDark ? g.glowDark : g.glow
+            const atMax = formData.categories.length >= 3 && !selected
+
+            return (
+              <button
+                key={cat.value}
+                type="button"
+                onClick={() => toggleCategory(cat.value)}
+                disabled={atMax}
+                className="group relative overflow-hidden transition-all duration-300 active:scale-[0.97]"
+                style={{
+                  borderRadius: 14,
+                  padding: 1.5,
+                  background: selected
+                    ? `linear-gradient(135deg, rgba(${glowRGB},0.7) 0%, rgba(${glowRGB},0.4) 50%, rgba(${glowRGB},0.6) 100%)`
+                    : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(200,205,215,0.45)',
+                  boxShadow: selected
+                    ? `0 0 16px rgba(${glowRGB},${isDark ? 0.5 : 0.35}), 0 2px 8px rgba(0,0,0,${isDark ? 0.25 : 0.06}), inset 0 0.5px 0 rgba(255,255,255,${isDark ? 0.15 : 0.5})`
+                    : `0 2px 8px rgba(0,0,0,${isDark ? 0.2 : 0.04}), inset 0 0.5px 0 rgba(255,255,255,${isDark ? 0.06 : 0.45})`,
+                  opacity: atMax ? 0.4 : 1,
+                  cursor: atMax ? 'not-allowed' : 'pointer',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '10px 14px',
+                    borderRadius: 12.5,
+                    fontSize: 13,
+                    fontWeight: 650,
+                    letterSpacing: '-0.01em',
+                    color: selected
+                      ? (isDark ? g.textDark : g.text)
+                      : (isDark ? '#C8CED6' : '#5D5A4E'),
+                    background: selected
+                      ? `linear-gradient(170deg, rgba(${rgb.r},${rgb.g},${rgb.b},${isDark ? 0.26 : 0.34}) 0%, rgba(${rgb.r},${rgb.g},${rgb.b},${isDark ? 0.20 : 0.28}) 50%, rgba(${rgb.r},${rgb.g},${rgb.b},${isDark ? 0.24 : 0.32}) 100%)`
+                      : isDark ? 'rgba(30,30,34,0.80)' : 'rgba(255,255,255,0.88)',
+                    backdropFilter: selected ? 'blur(12px) saturate(140%)' : 'none',
+                    WebkitBackdropFilter: selected ? 'blur(12px) saturate(140%)' : 'none',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  {/* Frost overlay for selected state */}
+                  {selected && (
+                    <span
+                      aria-hidden
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        pointerEvents: 'none',
+                        background: isDark
+                          ? 'linear-gradient(170deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.04) 100%)'
+                          : 'linear-gradient(170deg, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0.40) 45%, rgba(255,255,255,0.44) 100%)',
+                        borderRadius: 12.5,
+                      }}
+                    />
+                  )}
+                  {/* Glass shine top */}
+                  {selected && (
+                    <span
+                      aria-hidden
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: '6%',
+                        right: '6%',
+                        height: '45%',
+                        pointerEvents: 'none',
+                        background: `linear-gradient(180deg, rgba(255,255,255,${isDark ? 0.10 : 0.28}) 0%, rgba(255,255,255,${isDark ? 0.02 : 0.06}) 50%, transparent 100%)`,
+                        borderRadius: '12.5px 12.5px 50% 50%',
+                      }}
+                    />
+                  )}
+                  {/* Content */}
+                  <span style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+                    <FilterIcon value={cat.value} size={18} className="flex-shrink-0" />
+                    <span className="truncate flex-1 text-left">{cat.label[lang]}</span>
+                    {selected && (
+                      <Check
+                        className="w-3.5 h-3.5 flex-shrink-0"
+                        style={{ color: isDark ? g.textDark : g.text }}
+                        strokeWidth={3}
+                      />
+                    )}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* Themes avec autocomplete */}
       <div>
-        <label className="block text-sm font-medium text-[#5D5A4E] mb-2">
+        <label className="block text-sm font-medium text-[#5D5A4E] dark:text-white/80 mb-2">
           {t.themes}
         </label>
-        <p className="text-xs text-[#5D5A4E]/50 mb-3">{t.themesHelp}</p>
+        <p className="text-xs text-[#5D5A4E]/50 dark:text-white/40 mb-3">{t.themesHelp}</p>
         <AutocompleteTag
           lang={lang}
           predefinedOptions={predefinedThemes}
@@ -265,16 +366,16 @@ export default function StepCategories({ formData, updateFormData, lang }: StepC
           onRemove={handleRemoveTheme}
           placeholder={t.themesPlaceholder}
           allowCustom={true}
-          colorClass="bg-[#C8D8E4]/50"
+          gem="sky"
         />
       </div>
 
       {/* Competences avec autocomplete */}
       <div>
-        <label className="block text-sm font-medium text-[#5D5A4E] mb-2">
+        <label className="block text-sm font-medium text-[#5D5A4E] dark:text-white/80 mb-2">
           {t.competences}
         </label>
-        <p className="text-xs text-[#5D5A4E]/50 mb-3">{t.competencesHelp}</p>
+        <p className="text-xs text-[#5D5A4E]/50 dark:text-white/40 mb-3">{t.competencesHelp}</p>
         <AutocompleteTag
           lang={lang}
           predefinedOptions={predefinedCompetences}
@@ -283,22 +384,22 @@ export default function StepCategories({ formData, updateFormData, lang }: StepC
           onRemove={handleRemoveCompetence}
           placeholder={t.competencesPlaceholder}
           allowCustom={true}
-          colorClass="bg-[#D4A59A]/20"
+          gem="rose"
         />
       </div>
 
       {/* Keywords (libres) */}
       <div>
-        <label className="block text-sm font-medium text-[#5D5A4E] mb-2">
+        <label className="block text-sm font-medium text-[#5D5A4E] dark:text-white/80 mb-2">
           {t.keywords}
         </label>
-        <p className="text-xs text-[#5D5A4E]/50 mb-3">{t.keywordsHelp}</p>
+        <p className="text-xs text-[#5D5A4E]/50 dark:text-white/40 mb-3">{t.keywordsHelp}</p>
 
         <input
           type="text"
           onKeyDown={addKeyword}
           placeholder={t.keywordsPlaceholder}
-          className="w-full px-4 py-3 rounded-xl border border-[#A8B5A0]/30 focus:border-[#A8B5A0] focus:ring-2 focus:ring-[#A8B5A0]/20 outline-none transition-all mb-3"
+          className="w-full px-4 py-3 rounded-xl border border-[#A8B5A0]/30 focus:border-[#A8B5A0] focus:ring-2 focus:ring-[#A8B5A0]/20 outline-none transition-all dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-white/30 mb-3"
         />
 
         {formData.keywords.length > 0 && (
@@ -306,7 +407,7 @@ export default function StepCategories({ formData, updateFormData, lang }: StepC
             {formData.keywords.map(keyword => (
               <span
                 key={keyword}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-[#5D5A4E]/10 text-[#5D5A4E] rounded-full text-sm"
+                className="inline-flex items-center gap-1 px-3 py-1 bg-[#5D5A4E]/10 dark:bg-white/10 text-[#5D5A4E] dark:text-white/80 rounded-full text-sm"
               >
                 {keyword}
                 <button

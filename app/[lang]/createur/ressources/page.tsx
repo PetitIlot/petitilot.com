@@ -135,7 +135,7 @@ function CreatorResourcesContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark">
+    <div className="min-h-screen bg-background dark:bg-background-dark pt-16">
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Success Toast */}
         {showSuccess && (
@@ -147,12 +147,11 @@ function CreatorResourcesContent() {
 
         {/* Header */}
         <div className="mb-8">
-          <Link
-            href={`/${lang}/createur`}
-            className="inline-flex items-center text-sm text-foreground-secondary dark:text-foreground-dark-secondary hover:text-foreground dark:hover:text-foreground-dark mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            {t.back}
+          <Link href={`/${lang}/createur`}>
+            <Button variant="outline" gem="neutral" size="sm" className="mb-4">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              {t.back}
+            </Button>
           </Link>
           <div className="flex items-center justify-between">
             <div>
@@ -160,7 +159,7 @@ function CreatorResourcesContent() {
               <p className="text-foreground-secondary dark:text-foreground-dark-secondary mt-1">{t.subtitle}</p>
             </div>
             <Link href={`/${lang}/createur/ressources/nouvelle`}>
-              <Button className="bg-sage hover:bg-sage-light text-white">
+              <Button gem="sage">
                 <Plus className="w-4 h-4 mr-2" />
                 {t.newResource}
               </Button>
@@ -170,14 +169,14 @@ function CreatorResourcesContent() {
 
         {/* Resources List */}
         {resources.length === 0 ? (
-          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-apple p-12 text-center" style={{ border: '1px solid var(--border)' }}>
+          <div className="bg-surface dark:bg-surface-dark rounded-3xl shadow-elevation-1 p-12 text-center" style={{ border: '1px solid var(--border)' }}>
             <div className="w-16 h-16 bg-surface-secondary dark:bg-surface-dark rounded-full flex items-center justify-center mx-auto mb-4">
               <Package className="w-8 h-8 text-foreground/40 dark:text-foreground-dark/40" />
             </div>
             <h2 className="text-xl font-semibold text-foreground dark:text-foreground-dark mb-2">{t.noResources}</h2>
             <p className="text-foreground-secondary dark:text-foreground-dark-secondary mb-6">{t.createFirst}</p>
             <Link href={`/${lang}/createur/ressources/nouvelle`}>
-              <Button className="bg-sage hover:bg-sage-light text-white">
+              <Button gem="sage">
                 <Plus className="w-4 h-4 mr-2" />
                 {t.newResource}
               </Button>
@@ -193,7 +192,7 @@ function CreatorResourcesContent() {
               return (
                 <div
                   key={resource.id}
-                  className="bg-surface dark:bg-surface-dark rounded-2xl shadow-apple p-4 flex items-center gap-4"
+                  className="bg-surface dark:bg-surface-dark rounded-2xl shadow-elevation-1 p-4 flex items-center gap-4"
                   style={{ border: '1px solid var(--border)' }}
                 >
                   {/* Preview Image */}
@@ -239,7 +238,7 @@ function CreatorResourcesContent() {
 
                   {/* Actions */}
                   <Link href={`/${lang}/createur/ressources/${resource.id}/modifier`}>
-                    <Button variant="outline" size="sm" style={{ border: '1px solid var(--border)' }}>
+                    <Button gem="terracotta" size="sm">
                       <FileEdit className="w-4 h-4 mr-1" />
                       {t.edit}
                     </Button>

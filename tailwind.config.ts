@@ -60,9 +60,19 @@ const config: Config = {
         'apple-xl': '24px',
       },
       boxShadow: {
+        // Legacy (keep for backward compat)
         'apple': '0 2px 8px rgba(0, 0, 0, 0.04)',
         'apple-hover': '0 8px 24px rgba(0, 0, 0, 0.08)',
         'apple-elevated': '0 12px 40px rgba(0, 0, 0, 0.12)',
+        // Elevation system — multi-layer, sage-tinted
+        'elevation-0': 'none',
+        'elevation-1': '0 1px 2px rgba(122,139,111,0.06), 0 4px 8px rgba(122,139,111,0.04)',
+        'elevation-2': '0 2px 4px rgba(122,139,111,0.08), 0 8px 16px rgba(122,139,111,0.06)',
+        'elevation-3': '0 4px 8px rgba(122,139,111,0.1), 0 16px 32px rgba(122,139,111,0.08)',
+        // Component-specific
+        'btn-inset': 'inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 3px rgba(122,139,111,0.12)',
+        'badge-volume': 'inset 0 1px 0 rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.06)',
+        'input-focus': '0 0 0 3px rgba(122,139,111,0.15)',
       },
       fontSize: {
         // Apple typography scale
@@ -81,6 +91,13 @@ const config: Config = {
       },
       transitionTimingFunction: {
         'apple': 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+        'spring-bounce': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'spring-smooth': 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
+      transitionDuration: {
+        'fast': '150ms',
+        'normal': '250ms',
+        'slow': '400ms',
       },
       backdropBlur: {
         'apple': '20px',

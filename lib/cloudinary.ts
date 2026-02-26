@@ -1,8 +1,58 @@
 /**
  * Helper pour gérer les images Cloudinary
+ * - getCloudinaryUrl: génère des URLs optimisées
+ * - uploadToCloudinary: unsigned upload pour les créateurs
  */
 
 const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+
+export interface CloudinaryUploadResult {
+  secure_url: string
+  public_id: string
+  width: number
+  height: number
+  format: string
+  bytes: number
+}
+
+/**
+ * Upload un fichier vers Cloudinary (unsigned upload via preset)
+ * @param file - Fichier à uploader
+ * @param folder - Dossier Cloudinary (ex: "petit-ilot/resources")
+ */
+export async function uploadToCloudinary(
+  file: File,
+  folder: string = 'petit-ilot/resources'
+): Promise<CloudinaryUploadResult> {
+  if (!cloudName || !uploadPreset) {
+    throw new Error('Cloudinary non configuré. Vérifiez NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME et NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.')
+  }
+
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('upload_preset', uploadPreset)
+  formData.append('folder', folder)
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    { method: 'POST', body: formData }
+  )
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error?.message || 'Erreur upload Cloudinary')
+  }
+
+  return response.json()
+}
+
+/**
+ * Vérifie si Cloudinary est configuré pour l'upload
+ */
+export function isCloudinaryConfigured(): boolean {
+  return Boolean(cloudName && uploadPreset)
+}
 
 /**
  * Génère l'URL Cloudinary optimisée pour une image
