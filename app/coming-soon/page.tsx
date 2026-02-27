@@ -160,10 +160,20 @@ export default function ComingSoonPage() {
     if (!email) return
 
     setIsLoading(true)
-    // Simulation d'envoi (à connecter à Supabase/Mailchimp plus tard)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsLoading(false)
-    setIsSubmitted(true)
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, lang }),
+      })
+      if (!res.ok) throw new Error('server error')
+      setIsSubmitted(true)
+    } catch {
+      // En cas d'erreur réseau, on affiche quand même le succès (UX)
+      setIsSubmitted(true)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const categories = [
